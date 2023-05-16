@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "packaging-service"
+version = "0.1.0"
+description = ""
+authors = ["Eko Indarto <eko.indarto@dans.knaw.nl>"]
+readme = "README.md"
+packages = [{include = "src"}]
+include = ["resources/*", "logs/*", "conf/*"]
+
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = "^0.95.1"
+uvicorn = "^0.22.0"
+dynaconf = "^3.1.12"
+requests = "^2.30.0"
+python-multipart = "^0.0.6"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
