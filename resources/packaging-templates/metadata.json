@@ -1,0 +1,33 @@
+{
+    "id": "pid-1234-12341",
+    "metadata": [
+        {
+            "name": "identifier",
+            "id": "77540d01-9e63-450a-b52f-42ee8681b95a",
+            "value": "pid-1234-12341"
+        },
+        {
+            "name": "title",
+            "id": "d7ce3a0e-b7ee-48bb-a842-ea535c0d499f",
+            "value": "Hiraeth"
+        },
+        {
+            "name": "description",
+            "id": "b59fbf6b-4b2c-45b5-a425-3dbb39fca5f5",
+            "value": "For a home, you can't return to"
+        },
+        {
+            "name": "author",
+            "id": "3e4998df-2150-4e32-ac2b-70a968505fd3",
+            "value": "eko indarto"
+        }
+    ],
+    "file-metadata": [
+        {
+            "id": "000-0000-00000-unique-id",
+            "name": "akmi.txt",
+            "size": 1234123341,
+            "mimetypes": "text/plain"
+        }
+    ]
+}

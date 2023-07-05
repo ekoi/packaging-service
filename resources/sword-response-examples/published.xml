@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:sword="http://purl.org/net/sword/terms/" xmlns:ns3="http://purl.org/net/sword/">
+    <id>https://sword2.dar.dans.knaw.nl/statement/9a9e1382-597f-48ee-ad25-33123478955d</id>
+    <link href="https://sword2.dar.dans.knaw.nl/statement/9a9e1382-597f-48ee-ad25-33123478955d" rel="self"/>
+    <title type="text">Deposit 9a9e1382-597f-48ee-ad25-33123478955d</title>
+    <author>
+        <name>DANS SWORD2</name>
+    </author>
+    <updated>2023-06-29T12:22:19.547977+02:00</updated>
+    <entry>
+        <id>urn:uuid:9a9e1382-597f-48ee-ad25-33123478955d</id>
+        <title type="text">Resource urn:uuid:9a9e1382-597f-48ee-ad25-33123478955d</title>
+        <summary type="text">Resource Part</summary>
+        <content src="urn:uuid:9a9e1382-597f-48ee-ad25-33123478955d" type="multipart/related"/>
+        <updated>2023-06-29T12:52:12.529381+02:00</updated>
+        <link href="https://doi.org/doi:10.5072/DAR/KGPWGY" rel="self"/>
+        <link href="https://www.persistent-identifier.nl?identifier=urn:nbn:nl:ui:13-953dc235-1f75-4509-8201-a0c0e8675b96" rel="self"/>
+    </entry>
+    <category label="State" scheme="http://purl.org/net/sword/terms/state" term="PUBLISHED">The deposit was successfully ingested in the Data Station and will be automatically archived</category>
+</feed>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:sword="http://purl.org/net/sword/terms/" xmlns:ns3="http://purl.org/net/sword/">
+    <id>https://sword2.dar.dans.knaw.nl/statement/f9538979-5aec-45fc-9443-ea4db1bcf977</id>
+    <link href="https://sword2.dar.dans.knaw.nl/statement/f9538979-5aec-45fc-9443-ea4db1bcf977" rel="self"/>
+    <title type="text">Deposit f9538979-5aec-45fc-9443-ea4db1bcf977</title>
+    <author>
+        <name>DANS SWORD2</name>
+    </author>
+    <updated>2023-06-29T07:35:30.184497+02:00</updated>
+    <entry>
+        <id>urn:uuid:f9538979-5aec-45fc-9443-ea4db1bcf977</id>
+        <title type="text">Resource urn:uuid:f9538979-5aec-45fc-9443-ea4db1bcf977</title>
+        <summary type="text">Resource Part</summary>
+        <content src="urn:uuid:f9538979-5aec-45fc-9443-ea4db1bcf977" type="multipart/related"/>
+        <updated>2023-06-29T07:36:52.767981+02:00</updated>
+    </entry>
+    <category label="State" scheme="http://purl.org/net/sword/terms/state" term="FAILED">Required metadata field 'title' is missing</category>
+</feed>

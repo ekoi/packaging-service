@@ -1,11 +1,11 @@
 [tool.poetry]
 name = "packaging-service"
-version = "0.1.0"
+version = "0.1.5"
 description = ""
 authors = ["Eko Indarto <eko.indarto@dans.knaw.nl>"]
 readme = "README.md"
 packages = [{include = "src"}]
-include = ["resources/*", "logs/*", "conf/*"]
+include = ["resources/*", "logs/*", "conf/*", "data/*"]
 
 
 [tool.poetry.dependencies]
@@ -15,6 +15,16 @@ uvicorn = "^0.22.0"
 dynaconf = "^3.1.12"
 requests = "^2.30.0"
 python-multipart = "^0.0.6"
+public = "^2020.12.3"
+jsonpath-ng = "^1.5.3"
+jsonpatch = "^1.32"
+bagit = "^1.8.1"
+sword2 = "^0.3"
+self-certifi = "^1.0.0"
+bibtexparser = "^1.4.0"
+jinja2 = "^3.1.2"
+et = "^0.0.2"
+polling2 = "^0.5.0"
 
 
 [build-system]

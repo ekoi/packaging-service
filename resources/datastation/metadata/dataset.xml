@@ -1,0 +1,30 @@
+<ddm:DDM
+        xmlns:dc="http://purl.org/dc/elements/1.1/"
+        xmlns:dcx-dai="http://easy.dans.knaw.nl/schemas/dcx/dai/"
+        xmlns:ddm="http://schemas.dans.knaw.nl/dataset/ddm-v2/"
+        xmlns:dcterms="http://purl.org/dc/terms/"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <ddm:profile>
+        <dc:title>{{ds_title}}</dc:title>
+        <dcterms:description>{{ds_description}}</dcterms:description>
+        <dcx-dai:creatorDetails>
+            <dcx-dai:author>
+                <dcx-dai:titles>Eko</dcx-dai:titles>
+                <dcx-dai:initials>P</dcx-dai:initials>
+                <dcx-dai:surname>Indarto</dcx-dai:surname>
+                <dcx-dai:organization>
+                    <dcx-dai:name xml:lang="en">akmi.org</dcx-dai:name>
+                </dcx-dai:organization>
+            </dcx-dai:author>
+        </dcx-dai:creatorDetails>
+        <ddm:created>2020-01-01</ddm:created>
+        <ddm:available>2025-01-01</ddm:available>
+        <ddm:audience>D16300</ddm:audience>
+        <ddm:accessRights>OPEN_ACCESS</ddm:accessRights>
+        <ddm:personalData present="No"/>
+    </ddm:profile>
+    <ddm:dcmiMetadata>
+        <dcterms:license xsi:type="dcterms:URI">http://opensource.org/licenses/MIT</dcterms:license>
+        <dcterms:rightsHolder>I Lastname</dcterms:rightsHolder>
+    </ddm:dcmiMetadata>
+</ddm:DDM>

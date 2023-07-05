@@ -1,0 +1,5 @@
+curl http://localhost:2005/inbox/files -F formId=metadata-form-name-unique-1234-1234 -F file=@/$BASE_DIR/packaging-service/resources/files-example/1.txt -F fileId=000-0000-00000-unique-id
+
+curl -X POST  -H "Authorization: Bearer API_KEY" http://localhost:2005/inbox/metadata --data @/packaging-service/resources/misc/metadata.json
+
+curl -X POST  -H "Authorization: Bearer API_KEY" http://localhost:2005/inbox/files -F metadataId=metadata-form-name-unique-1234-1234 -F file=@/$BASE_DIR/packaging-service/resources/files-example/1.txt

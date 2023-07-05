@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:sword="http://purl.org/net/sword/terms/" xmlns:ns3="http://purl.org/net/sword/">
+    <id>https://sword2.dar.dans.knaw.nl/statement/31da8f3b-6bef-4ae6-b616-b6458ea4ef31</id>
+    <link href="https://sword2.dar.dans.knaw.nl/statement/31da8f3b-6bef-4ae6-b616-b6458ea4ef31" rel="self"/>
+    <title type="text">Deposit 31da8f3b-6bef-4ae6-b616-b6458ea4ef31</title>
+    <author>
+        <name>DANS SWORD2</name>
+    </author>
+    <updated>2023-07-03T16:39:25.671982+02:00</updated>
+    <entry>
+        <id>urn:uuid:31da8f3b-6bef-4ae6-b616-b6458ea4ef31</id>
+        <title type="text">Resource urn:uuid:31da8f3b-6bef-4ae6-b616-b6458ea4ef31</title>
+        <summary type="text">Resource Part</summary>
+        <content src="urn:uuid:31da8f3b-6bef-4ae6-b616-b6458ea4ef31" type="multipart/related"/>
+        <updated>2023-07-03T16:39:54.558738+02:00</updated>
+    </entry>
+    <category label="State" scheme="http://purl.org/net/sword/terms/state" term="REJECTED">Rejected /var/opt/dans.knaw.nl/tmp/auto-ingest/inbox/31da8f3b-6bef-4ae6-b616-b6458ea4ef31: Bag was not valid according to Profile Version 1.0.0. Violations: - [3.1.1] metadata/dataset.xml does not conform to dataset.xml:
+ - cvc-complex-type.2.3: Element 'ddm:DDM' cannot have character [children], because the type's content type is element-only.
+ - cvc-complex-type.2.4.b: The content of element 'ddm:DDM' is not complete. One of '{"http://schemas.dans.knaw.nl/dataset/ddm-v2/":profile, "http://schemas.dans.knaw.nl/dataset/ddm-v2/":dcmiMetadata}' is expected.</category>
+</feed>

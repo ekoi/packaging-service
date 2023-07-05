@@ -1,14 +1,22 @@
 [default]
 #FastAPI
-fastapi_title = "packaging-service"
+fastapi_title = "Packaging Service"
 fastapi_description = "This service supports .."
 
 
-resources_path = "@format {env[BASE_DIR]}/resources/linkset"
+data_db_file = "@format {env[BASE_DIR]}/data/db/dans_packaging.db"
+data_tmp_base_dir_upload = "@format {env[BASE_DIR]}/data/tmp/uploads"
+data_tmp_base_dir_bags = "@format {env[BASE_DIR]}/data/tmp/bags"
+data_tmp_base_dir_zips = "@format {env[BASE_DIR]}/data/tmp/zips"
+
+jinja_template_dir =  "@format {env[BASE_DIR]}/resources/datastation/metadata"
+
+repo_selection_url = "http://0.0.0.0:2810/repository"
+transformer_url = "http://localhost:1745/transform"
+#interval in seconds
+interval_check_sword_status = 20
+
 
 log_file = "@format {env[BASE_DIR]}/logs/ps.log"
-#log_file = "../logs/ps.log"
 log_level = 10
 log_format = "%(asctime)s %(levelname)s %(name)s %(threadName)s : %(message)s"
-
-dans_formats_url = "https://raw.githubusercontent.com/ekoi/DANS-File-Formats/draft/dans-file-formats.json"

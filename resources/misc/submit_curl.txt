@@ -1,0 +1,18 @@
+## Curl example of metadata and files submission
+
+## Post metadata of the form plus files, as JSON
+
+curl http://httpbin.org/post \
+     --header "Content-Type: application/json" \
+     --request POST \
+     --data '{"id":"unique-id-1234-1234","metadata":[{"name":"identifier","id":"77540d01-9e63-450a-b52f-42ee8681b95a","value":"XXX"},{"name":"language","id":"50e92647-35b5-4f62-8aa4-bda3f0bb9eed","value":"en"},{"name":"dateAvailable","id":"65dc3557-3f1c-4606-8127-4dab700881f6","value":"2023-05-25"},{"name":"title","id":"d7ce3a0e-b7ee-48bb-a842-ea535c0d499f","value":"Supertitle"},{"name":"subtitle","id":"2597d80c-b6eb-47db-bcdc-fd6d8972846b","value":["Asubtitle","Anotherone"]},{"name":"contributorGroup","id":"1e4cc5a3-c683-44f5-880b-7f3678144dee","value":[[{"name":"contributorName","id":"481c8555-d83c-479e-9c73-b725cf593015","value":"0000-0001-8200-9962","typeaheadApi":"orcid"},{"name":"contributorFunction","id":"fb9e161d-3d3b-48ca-8f37-5287973ab77f","value":"Tester"}],[{"name":"contributorName","id":"b2fcb6e7-365a-49bf-ae45-4b072de20858","value":"0000-0001-7726-108X","typeaheadApi":"orcid"},{"name":"contributorFunction","id":"3b468e00-d2e8-45cd-9e94-d7f102f3be4c","value":"Testerrrr"}]]},{"name":"description","id":"b59fbf6b-4b2c-45b5-a425-3dbb39fca5f5","value":"Sometext"},{"name":"publisher","id":"3e4998df-2150-4e32-ac2b-70a968505fd3","value":"https://ror.org/022wvzp87","typeaheadApi":"ror"},{"name":"publicationDate","id":"0ddefa33-7c1d-457a-b3a1-982be02d90bd","value":"2023-06-01"},{"name":"depositor","id":"221c2acd-c055-48a5-9309-e56809eede40","value":"UserXXX"},{"name":"geoLocation","id":"bf9875ee-d463-4af9-a9dc-8aea0b8a8543","value":[3358100,1668644,1676358],"typeaheadApi":"geonames"},{"name":"startEndDateTimeGroup","id":"48bef96b-8ac0-4ad7-ac6d-6764bcf8b917","value":[[{"name":"startDateTime","id":"e2a846e9-fe5c-4ae7-8725-bb1ecae93349","value":"1990-10-10T10:10"},{"name":"endDateTime","id":"1ef7e946-00da-49ca-8378-a83215d98fac","value":"1991-10-10T10:01"}],[{"name":"startDateTime","id":"b03d812d-cfdd-40a1-aff9-15f61f92d7d3","value":"2011-12-12T11:11"},{"name":"endDateTime","id":"ecaa56f0-d2e9-4d04-9e3e-5269602774f5","value":"2012-11-11T11:11"}]]},{"name":"keywords","id":"4bd58f38-2c8a-402c-9009-be95424032f1"},{"name":"rdaKeywords","id":"1a404e63-7c3e-4b24-885a-d44486838d43"},{"name":"origin","id":"b19af7af-4f9f-4372-984b-cf46c475c17f"},{"name":"relation","id":"0bfbdb10-4d6a-457c-9eb3-242f60e31d1a","value":["DC13BC0D","594BB0DB","9543A3D2"]},{"name":"rightsHolder","id":"880873cc-76a7-4acd-a7ea-bb2d8e66300d","value":"https://ror.org/04vp8rw50","typeaheadApi":"ror"},{"name":"license","id":"0dc3690f-6569-4a56-9bc5-309d0399a7dd"}],"fileMetadata":[{"id":"111-1111-11111-unique-id","name":"testfile.pdf","size":1234123341,"private":true,"role":["someoptions","notyetspecced"],"processing":["someoptions","notyetspecced"]},{"id":"000-0000-00000-unique-id","name":"Audio.mp3","size":1234123341}]}'
+
+
+## Post files themselves, each in a separate request, as multipart form data
+## Identified with unique id of the form
+## And with the unique id of the file
+## So you can look up all file metadata in the JSON above
+
+curl http://localhost:2005/box -F formId=unique-id-1234-1234 -F file=@testfile.pdf -F fileId=111-1111-11111-unique-id
+
+curl http://httpbin.org/post -F formId=unique-id-1234-1234 -F file=@Audio.mp3 -F fileId=000-0000-00000-unique-id
