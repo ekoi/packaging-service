@@ -10,11 +10,13 @@ data_tmp_base_dir_bags = "@format {env[BASE_DIR]}/data/tmp/bags"
 data_tmp_base_dir_zips = "@format {env[BASE_DIR]}/data/tmp/zips"
 
 jinja_template_dir =  "@format {env[BASE_DIR]}/resources/datastation/metadata"
-
 repo_selection_url = "http://0.0.0.0:2810/repository"
 transformer_url = "http://localhost:1745/transform"
+
+#ca_certs_file = "/Users/akmi/Downloads/sarchaeology-dans-knaw-nl.pem"
+ca_certs_file = "/Users/akmi/git/ekoi/poc-4-wim-ssl/packaging-service/resources/misc/dar-cacert.pem"
 #interval in seconds
-interval_check_sword_status = 20
+interval_check_sword_status = 15
 
 
 log_file = "@format {env[BASE_DIR]}/logs/ps.log"

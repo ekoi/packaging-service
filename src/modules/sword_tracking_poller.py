@@ -1,13 +1,12 @@
 import os
-import shutil
-from datetime import datetime
-
 import polling2
 import requests
+import shutil
+import xml.etree.ElementTree as ET
+from datetime import datetime
 
 from src import db
-from src.commons import settings
-import xml.etree.ElementTree as ET
+from src.commons import settings, dmz_headers
 
 
 class Sword_Tracking_Poller:
@@ -20,10 +19,15 @@ class Sword_Tracking_Poller:
     def is_published(self, deposit_state):
         resp_link = db.find_progress_state_url_by_metadata_id(settings.DATA_DB_FILE, self.metadata_id)[0][0]
         print(resp_link)
-        response = requests.get(resp_link, auth=(self.sword_username, self.sword_password))
+        ca_certs = None
+        if settings.exists("ca_certs_file", fresh=False):
+            ca_certs = settings.CA_CERTS_FILE
+        sword_response = requests.get(resp_link, headers=dmz_headers(self.sword_username, self.sword_password),
+                                      verify=ca_certs)
+
         # rsp.status_code != 200:
-        if response.status_code == 200:
-            xml_content = response.text
+        if sword_response.status_code == 200:
+            xml_content = sword_response.text
             print(xml_content)
             # Parse the XML data
             root = ET.fromstring(xml_content)
@@ -39,7 +43,7 @@ class Sword_Tracking_Poller:
             db.update_form_metadata_progress_state(settings.DATA_DB_FILE, self.metadata_id, deposit_state)
 
             # Print the attribute value
-            print(deposit_state)
+            print(f'States: {deposit_state}')
             """Check that the deposit_state returned 'SUBMITTED'"""
             if 'SUBMITTED' == deposit_state or 'FINALIZING' == deposit_state:
                 # Continue to poll
@@ -67,7 +71,7 @@ class Sword_Tracking_Poller:
 
             return True
 
-        print('Error occurred:', response.status_code)
+        print('Error occurred:', sword_response.status_code)
         # TODO: Return exception!
         return True  # exit the polling
 

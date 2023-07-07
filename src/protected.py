@@ -2,26 +2,19 @@ import json
 import logging
 import os
 import shutil
-import uuid
-from datetime import datetime
-from typing import List
-import xml.etree.ElementTree as ET
-
 import threading
+import xml.etree.ElementTree as ET
+from datetime import datetime
+
 import requests
 # import codecs
-from fastapi import APIRouter, Request, status, UploadFile, Form, File, HTTPException
+from fastapi import APIRouter, Request, UploadFile, Form, File, HTTPException
 from jsonpath_ng.ext import parse
 
-from starlette.responses import JSONResponse
-
 from src import db
-from src.commons import settings, metadata_status_initial, data, reserved_filename
+from src.commons import settings, data, reserved_filename, dmz_headers
 from src.modules.datastation_bag_composer import Datastation_Bag_Composer
 from src.modules.sword_ingester import SwordIngester
-
-import xml.etree.ElementTree as ET
-
 from src.modules.sword_tracking_poller import Sword_Tracking_Poller
 
 # from src.main import settings
@@ -45,9 +38,13 @@ async def process_metadata(request: Request, repo_target: str):
     if (deposit_username or deposit_password) is None:
         raise HTTPException(status_code=401, detail="Please provide username and/or password.")
     repo_url = f'{settings.repo_selection_url}/{repo_target}'
-    rsp = requests.get(repo_url)
-    if rsp.status_code != 200:
-        raise HTTPException(status_code=404, detail=f"{repo_url} not found")
+    try:
+        rsp = requests.get(repo_url)
+        if rsp.status_code != 200:
+            raise HTTPException(status_code=404, detail=f"{repo_url} not found")
+    except Exception as ex:
+        logging.debug(ex)
+        raise HTTPException(status_code=404, detail=f"Error, caused by: {repo_url} could be down.")
     repo_json = rsp.json()
     try:
         form_metadata_json = await request.json()
@@ -67,7 +64,6 @@ async def process_metadata(request: Request, repo_target: str):
         form_metadata_record = (metadata_id, datetime.now().strftime("%m/%d/%Y %H:%M:%S.%f"))
 
         # TODO : Return error when something wrong during database insert
-        # TODO: Say to Daan - reserve file name: original-metadata.json. Also, replace when send the same id
         # Create temp folder
         tmp_dir = os.path.join(settings.DATA_TMP_BASE_DIR_UPLOAD, metadata_id)
         if os.path.exists(tmp_dir):
@@ -92,13 +88,13 @@ async def process_metadata(request: Request, repo_target: str):
     except Exception as ex:
         error_msg = 'Unknown Error'
         for em in ex.args:
+            logging.debug(em)
             if isinstance(em, str):
                 error_msg = em
 
         if "UNIQUE constraint" in error_msg:
             error_msg = f"Metadata id" \
                         f" '{metadata_id}' already exist."
-        #if "SWORD Error" in error_msg:
         else:
             db.delete_record_by_metadata_id(settings.DATA_DB_FILE, metadata_id)
         raise HTTPException(status_code=500, detail=error_msg)
@@ -113,6 +109,7 @@ async def process_metadata(request: Request, repo_target: str):
 
 async def ingest_sword(form_metadata_json, tmp_dir, xslt_name, sword_url, sword_username, sword_password):
     print(f'sword_url: {sword_url}, sword_username: {sword_username}, sword_password: {sword_password}')
+
     si = SwordIngester(sword_url, sword_username, sword_password)
 
     dbc = Datastation_Bag_Composer(json.dumps(form_metadata_json), tmp_dir, xslt_name)
@@ -120,7 +117,13 @@ async def ingest_sword(form_metadata_json, tmp_dir, xslt_name, sword_url, sword_
     logging.debug(bagzip)
 
     receipt_links = si.ingest(bagzip)
-    sword_response = requests.get(receipt_links, auth=(sword_username, sword_password))
+
+    ca_certs = None
+    if settings.exists("ca_certs_file", fresh=False):
+        ca_certs = settings.CA_CERTS_FILE
+    sword_response = requests.get(receipt_links, headers=dmz_headers(sword_username, sword_password),
+                                  verify=ca_certs)
+
     if sword_response.status_code == 200:
         xml_content = sword_response.text
         logging.debug(xml_content)

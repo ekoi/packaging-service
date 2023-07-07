@@ -1,4 +1,3 @@
-import json
 import logging
 import mimetypes
 import os
@@ -6,30 +5,27 @@ import shutil
 from datetime import datetime, timezone
 
 import bagit
-import jinja2
 import requests
 
-from src.commons import settings
+from src.commons import settings, data
 
 
 #Create metadata folder
 def create_bagit_file(source, destination):
     base = os.path.basename(destination)
     name = base.split('.')[0]
-    format = base.split('.')[1]
+    fmt = base.split('.')[1]
     archive_from = os.path.dirname(source)
     archive_to = os.path.basename(source.strip(os.sep))
-    logging.debug(source, destination, archive_from, archive_to)
-    shutil.make_archive(name, format, archive_from, archive_to)
-    shutil.move('%s.%s' % (name, format), destination)
+    logging.debug(f'source:{source} destination:{destination}, archive_from:{archive_from}, archive_to:{archive_to}')
+    shutil.make_archive(name, fmt, archive_from, archive_to)
+    shutil.move('%s.%s' % (name, fmt), destination)
 
 
 class Datastation_Bag_Composer:
     def __init__(self, metadata_json, files_folder, xslt_name):
         self.bag_dir = files_folder
-        # Initiate jinja template. TODO: refactoring - move to other class(?) or startup
-        self.templateEnv = jinja2.Environment(loader=jinja2.FileSystemLoader(
-            searchpath=settings.jinja_template_dir))
+        self.templateEnv = data['template-env']
         #Create a bag, a data folder will be created and move all files to data folder
         bag = bagit.make_bag(self.bag_dir, checksums=["sha1"])
         self.bag_data_dir = os.path.join(self.bag_dir, 'data')

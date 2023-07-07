@@ -1,33 +1,27 @@
-import glob
 import logging
 import os
-import hashlib
-import datetime
-import json
-import shutil
 
-import bagit
 from sword2 import Connection
+
+from src.commons import settings, dmz_headers
+
 
 class SwordIngester:
     def __init__(self, sd_iri, username, password):
         self.sd_iri = sd_iri
         self.username = username
         self.password = password
-        sword_conn = Connection(self.sd_iri, self.username, self.password)
+        ca_certs = None
+        if settings.exists("ca_certs_file", fresh=False):
+            ca_certs = settings.CA_CERTS_FILE
+
+        sword_conn = Connection(self.sd_iri, self.username, self.password, ca_certs=ca_certs, headers=dmz_headers(username, password))
         if sword_conn is None:
             raise ValueError("SWORD Error: Invalid value in one or more parameters: SD IRI, username, password.")
         self.connection = sword_conn
     def ingest(self, bagit_file):
-        # pick the first collection within the first workspace:
-        # workspace_1_title, workspace_1_collections = self.connection.workspaces[0]
-        # collection = workspace_1_collections[0]
-        # logging.debug(collection)
-        # logging.debug(collection.href)
-        # print(f'collection.href: {collection.href}')
-        # logging.debug(f'bagit_file: {bagit_file}')
-        # logging.debug(f'os.path.basename(bagit_file): {os.path.basename(bagit_file)}')
-        print(f'self.sd_iri: {self.sd_iri}')
+        logging.debug(f'self.sd_iri: {self.sd_iri}')
+        logging.debug(f'bagit_file: {bagit_file}')
         with open(bagit_file,
                   "rb") as pkg:
             receipt = self.connection.create(col_iri=self.sd_iri,
