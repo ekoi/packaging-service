@@ -3,6 +3,7 @@
       {% for file in files %}
     <file filepath="data/{{file['filename']}}">
         <dcterms:format>{{file['mimetype']}}</dcterms:format>
+        <accessibleToRights>{{file['accessibility']}}</accessibleToRights>
     </file>
      {% endfor %}
 </files>
