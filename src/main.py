@@ -18,14 +18,6 @@ from starlette.middleware.cors import CORSMiddleware
 from src import public, protected, tus_files
 from src.commons import settings, setup_logger, logger, data, InspectBridgeModule, db_manager
 
-from fastapi_tusd import TusRouter
-
-from src.tus_files import upload_files
-
-
-# logging.basicConfig(filename=settings.LOG_FILE, level=settings.LOG_LEVEL,
-#                     format=settings.LOG_FORMAT)
-
 @asynccontextmanager
 async def lifespan(application: FastAPI):
     print('start up')
