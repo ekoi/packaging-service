@@ -18,7 +18,6 @@ from starlette.middleware.cors import CORSMiddleware
 from src import public, protected, tus_files
 from src.commons import settings, setup_logger, logger, data, InspectBridgeModule, db_manager
 
-
 from fastapi_tusd import TusRouter
 
 from src.tus_files import upload_files
@@ -40,8 +39,6 @@ async def lifespan(application: FastAPI):
 
 app = FastAPI(title=settings.FASTAPI_TITLE, description=settings.FASTAPI_DESCRIPTION,
               version=__version__, lifespan=lifespan)
-
-
 
 app.add_middleware(
     CORSMiddleware,
@@ -93,14 +90,14 @@ def auth_header(request: Request, api_key: str = Depends(oauth2_scheme)):
 
 
 app.include_router(upload_files,
-    tags=["Upload Files"],
-    prefix="/files",
-)
+                   tags=["Upload Files"],
+                   prefix="/files",
+                   )
 
 app.include_router(tus_files.router,
-    tags=["Upload Files"],
-    prefix="",
-)
+                   tags=["Upload Files"],
+                   prefix="",
+                   )
 
 app.include_router(
     public.router,
@@ -145,8 +142,8 @@ def iterate_saved_bridge_module_dir():
 
 if __name__ == "__main__":
     import platform
+
     print(f'Python version: {platform.python_version()}')
     setup_logger()
-
 
     uvicorn.run("src.main:app", host="0.0.0.0", port=2005, reload=False)
