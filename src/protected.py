@@ -1,23 +1,24 @@
-import json
-import logging
-import os
-import shutil
-import threading
-import xml.etree.ElementTree as ET
+import time
 from datetime import datetime
+import hashlib
+import json
+import mimetypes
+import os
+import threading
+from typing import Callable, Awaitable, Any
 
+import jmespath
 import requests
 # import codecs
 from fastapi import APIRouter, Request, UploadFile, Form, File, HTTPException
-from jsonpath_ng.ext import parse
+from starlette.responses import FileResponse
 
-from src import db
-from src.commons import settings, data, reserved_filename, dmz_headers
-from src.modules.datastation_bag_composer import Datastation_Bag_Composer
-from src.modules.sword_ingester import SwordIngester
-from src.modules.sword_tracking_poller import Sword_Tracking_Poller
-
-# from src.main import settings
+from src.models.assistant_datamodel import RepoAssistantModel, Target
+from src.commons import settings, logger, data, db_manager, get_class, assistant_repo_headers, handle_ps_exceptions
+from src.dbz import TargetRepo, DataFile, Dataset, ReleaseVersion, DepositStatus, FilePermissions, \
+    DatasetWorkState, DataFileWorkState
+from src.models.app_model import ResponseModel, InboxDatasetDC
+from src.models.target_datamodel import TargetsCredentialsModel
 
 router = APIRouter()
 
@@ -27,205 +28,267 @@ async def get_settings():
     return settings
 
 
-@router.post("/inbox/metadata")
-async def process_metadata(request: Request, repo_target: str):
-    files_name = []
-    file_records = []
-    filemetadata = {}
-    logging.debug(repo_target)
-    deposit_username = request.headers.get("target-username")
-    deposit_password = request.headers.get("target-password")
-    if (deposit_username or deposit_password) is None:
-        raise HTTPException(status_code=401, detail="Please provide username and/or password.")
-    repo_url = f'{settings.repo_selection_url}/{repo_target}'
-    try:
-        rsp = requests.get(repo_url)
-        if rsp.status_code != 200:
-            raise HTTPException(status_code=404, detail=f"{repo_url} not found")
-    except Exception as ex:
-        logging.debug(ex)
-        raise HTTPException(status_code=404, detail=f"Error, caused by: {repo_url} could be down.")
-    repo_json = rsp.json()
-    try:
-        form_metadata_json = await request.json()
-        logging.debug(form_metadata_json)
-        jsonpath_metadata_id = parse("$.id")
+@router.post("/register-bridge-module/{name}/{overwrite}")
+async def register_module(name: str, bridge_file: Request, overwrite: bool | None = False) -> {}:
+    if not overwrite and name in data["bridge-modules"]:
+        raise HTTPException(status_code=400,
+                            detail=f'The {name} is already exist. Consider /register-bridge-module/{name}/true')
 
-        for match in jsonpath_metadata_id.find(form_metadata_json):
-            metadata_id = match.value
-            break
+    if bridge_file.headers['Content-Type'] != 'text/x-python':
+        raise HTTPException(status_code=400, detail=f"{bridge_file.headers['Content-Type']} supported content type")
 
-        jsonpath_filemetadata_names = parse("$.file-metadata[*].name")
-        for match in jsonpath_filemetadata_names.find(form_metadata_json):
-            filename = match.value
-            files_name.append(filename)
-            file_records.append((filename, metadata_id))
-
-        form_metadata_record = (metadata_id, datetime.now().strftime("%m/%d/%Y %H:%M:%S.%f"))
-
-        # TODO : Return error when something wrong during database insert
-        # Create temp folder
-        tmp_dir = os.path.join(settings.DATA_TMP_BASE_DIR_UPLOAD, metadata_id)
-        if os.path.exists(tmp_dir):
-            shutil.rmtree(tmp_dir)
-        os.makedirs(tmp_dir)
-        # Write to original-metadata.json
-        with open(os.path.join(tmp_dir, reserved_filename), mode="wt") as f:
-            f.write(json.dumps(form_metadata_json))
-        if len(file_records) == 0:
-            if repo_json['deposit-protocol'] == 'SWORD2':
-                # Ingest using sword
-
-                receipt_links = await ingest_sword(form_metadata_json, tmp_dir, repo_json['transformer-name'],
-                                                   repo_json['deposit-url'], deposit_username, deposit_password)
-                db.insert_record(settings.DATA_DB_FILE, form_metadata_record, file_records)
-                db.update_form_metadata_progress_state_url(settings.data_db_file, metadata_id, receipt_links)
-                track_deposit(metadata_id, deposit_username, deposit_password)
-                return {"status": "OK", "id": metadata_id, "receipt-links": receipt_links}
-            else:
-                raise HTTPException(status_code=501, detail=f"{repo_json['deposit-protocol']} is not implemented yet.")
-        db.insert_record(settings.DATA_DB_FILE, form_metadata_record, file_records)
-    except Exception as ex:
-        error_msg = 'Unknown Error'
-        for em in ex.args:
-            logging.debug(em)
-            if isinstance(em, str):
-                error_msg = em
-
-        if "UNIQUE constraint" in error_msg:
-            error_msg = f"Metadata id" \
-                        f" '{metadata_id}' already exist."
-        else:
-            db.delete_record_by_metadata_id(settings.DATA_DB_FILE, metadata_id)
-        raise HTTPException(status_code=500, detail=error_msg)
-    # save sword username/password when files need to upload
-    # in this step, it means that the upload isn't finish yet
-    if metadata_id in data:
-        data.pop(metadata_id)
-    data.update({metadata_id: {"transformer-name": repo_json['transformer-name'], "deposit-url": repo_json['deposit-url'],
-                               "deposit-username": deposit_username, "deposit-password": deposit_password}})
-    return {"status": "OK", "id": metadata_id, "files": files_name}
-
-
-async def ingest_sword(form_metadata_json, tmp_dir, xslt_name, sword_url, sword_username, sword_password):
-    print(f'sword_url: {sword_url}, sword_username: {sword_username}, sword_password: {sword_password}')
-
-    si = SwordIngester(sword_url, sword_username, sword_password)
-
-    dbc = Datastation_Bag_Composer(json.dumps(form_metadata_json), tmp_dir, xslt_name)
-    bagzip = dbc.create_ds_bagit()
-    logging.debug(bagzip)
-
-    receipt_links = si.ingest(bagzip)
-
-    ca_certs = None
-    if settings.exists("ca_certs_file", fresh=False):
-        ca_certs = settings.CA_CERTS_FILE
-    sword_response = requests.get(receipt_links, headers=dmz_headers(sword_username, sword_password),
-                                  verify=ca_certs)
-
-    if sword_response.status_code == 200:
-        xml_content = sword_response.text
-        logging.debug(xml_content)
+    m_file = await bridge_file.body()
+    bridge_path = os.path.join(settings.MODULES_DIR, name)
+    with open(bridge_path, mode="w+") as file:
+        file.write(str(m_file))
+    # check real mimetype
+    if mimetypes.guess_type(bridge_path)[0] != 'text/x-python':
+        db_manager.add(name)
     else:
-        logging.debug('Error occurred:', sword_response.status_code)
-    # Parse the XML data
-    root = ET.fromstring(xml_content)
-    # Define the namespace
-    namespace = {'atom': 'http://www.w3.org/2005/Atom'}
-    # Find the element with the desired attribute value
-    category_element = root.find('.//atom:category[@label="State"]', namespace)
-    # Retrieve the attribute value
-    attribute_value = category_element.attrib['term']
-    # Print the attribute value
-    logging.debug(f'PROTECTED: {attribute_value}')
-    # Find the link element with the desired attribute value
-    link_element = root.find('.//atom:link[@rel="self"][@href]', namespace)
+        os.remove(bridge_path)
+        raise HTTPException(status_code=400, detail=f'{name} is not supported file type')
 
-    # Retrieve the value of the 'href' attribute
-    attribute_value1 = link_element.attrib['href']
-    return receipt_links
+    return {"status": "ok", "bridge-module-name": name}
+
+
+@handle_ps_exceptions
+async def get_inbox_dataset_dc(request: Request, release_version: ReleaseVersion) -> (
+        Callable)[[Request, ReleaseVersion], Awaitable[InboxDatasetDC]]:
+    return InboxDatasetDC(assistant_name=request.headers.get('assistant-config-name'),
+                          release_version=release_version, owner_id=request.headers.get('user-id'),
+                          title=request.headers.get('title', default=''),
+                          target_creds=request.headers.get('targets-credentials'), metadata=await request.json())
+
+
+@router.post("/inbox/dataset/{release_version}")
+async def process_inbox_dataset_metadata(request: Request, release_version: ReleaseVersion) -> {}:
+    idh = await get_inbox_dataset_dc(request, release_version)
+    logger(f'Start inbox: {idh}', 'debug', 'ps')
+    datasetId = jmespath.search("id", idh.metadata)
+    repo_config = retrieve_targets_configuration(idh.assistant_name)
+    try:
+        repo_assistant = RepoAssistantModel.model_validate_json(repo_config)  # TODO: Check the given transformer exist.
+        # Create temp folder
+        tmp_dir = os.path.join(settings.DATA_TMP_BASE_DIR, repo_assistant.app_name, datasetId)
+        if not os.path.exists(tmp_dir):
+            os.makedirs(tmp_dir)
+
+        db_recs_target_repo = process_target_repos(repo_assistant, idh.target_creds)
+
+        db_record_metadata, registered_files = process_metadata_record(datasetId, idh, repo_assistant, tmp_dir)
+        process_db_records(datasetId, db_record_metadata, db_recs_target_repo, registered_files)
+
+    except HTTPException as ex:
+        return ex
+    except Exception as ex:
+        logger(f'Errors during dataset ingest: {ex.with_traceback(ex.__traceback__)}', 'debug', 'ps')
+        raise HTTPException(status_code=400, detail='Error occurred. Please contact application owner.')
+    # Check whether all files uploaded
+    start_process = db_manager.is_dataset_ready(datasetId)
+    if start_process and db_manager.are_files_uploaded(datasetId):
+        bridge_task(datasetId, f"/inbox/dataset/{idh.release_version}")
+        # logger(f"------------- START THREADING from inbox/dataset  {datasetId}-------------------", 'debug', 'ps')
+        #
+        # t1 = threading.Thread(target=follow_bridge, args=(datasetId,))
+        # t1.start()
+
+    resp_model = ResponseModel()
+    resp_model.status = "OK"
+    resp_model.dataset_id = datasetId
+    resp_model.start_process = start_process
+    return resp_model.model_dump(by_alias=True)
+
+
+@handle_ps_exceptions
+def process_db_records(datasetId, db_record_metadata, db_recs_target_repo, registered_files) -> type(None):
+    if not db_manager.is_dataset_exist(datasetId):
+        db_manager.insert_dataset_and_target_repo(db_record_metadata, db_recs_target_repo)
+    else:
+        if db_manager.is_dataset_published(datasetId):
+            raise HTTPException(status_code=400, detail='Dataset is already published.')
+        db_manager.update_metadata(db_record_metadata)
+        db_manager.replace_targets_record(datasetId, db_recs_target_repo)
+    if registered_files:
+        db_manager.insert_datafiles(registered_files)
+
+
+@handle_ps_exceptions
+def process_metadata_record(datasetId, idh, repo_assistant, tmp_dir):
+    registered_files = []
+    file_names = jmespath.search('"file-metadata"[*].name', idh.metadata)
+    already_uploaded_files = [f.name for f in db_manager.find_files(datasetId)]
+    list_files_from_metadata = file_names
+    files_name_to_be_deleted = list(set(already_uploaded_files).difference(list_files_from_metadata))
+    logger(f'files_name_to_be_deleted: {files_name_to_be_deleted}', 'debug', 'ps')
+    files_name_to_be_added = list(set(list_files_from_metadata).difference(already_uploaded_files))
+    logger(f'files_name_to_be_added: {files_name_to_be_added}', 'debug', 'ps')
+
+    for f_name_to_be_deleted in files_name_to_be_deleted:
+        f = os.path.join(str(tmp_dir), f_name_to_be_deleted)
+        os.remove(f)
+        logger(f'{f} ---- {f} is deleted', 'debug', 'ps')
+        db_manager.delete_datafile(datasetId, f_name_to_be_deleted)
+
+    for f_name_tobe_added in files_name_to_be_added:
+        file_path = os.path.join(str(tmp_dir), f_name_tobe_added)
+        f_permission = jmespath.search(f'"file-metadata"[?name == \'{f_name_tobe_added}\'].private',
+                                       idh.metadata)
+
+        fp = FilePermissions.PRIVATE if f_permission[0] else FilePermissions.PUBLIC
+        registered_files.append(DataFile(name=f_name_tobe_added, path=file_path, ds_id=datasetId, permissions=fp))
+
+    ready_for_ingest = DatasetWorkState.READY if len(files_name_to_be_added) == 0 else DatasetWorkState.NOT_READY
+    db_record_metadata = Dataset(id=datasetId, title=idh.title, owner_id=idh.owner_id,
+                                 app_name=repo_assistant.app_name, release_version=idh.release_version,
+                                 state=ready_for_ingest, md=json.dumps(idh.metadata))
+    return db_record_metadata, registered_files
+
+
+@handle_ps_exceptions
+def process_target_repos(repo_assistant, target_creds) -> [TargetRepo]:
+    db_recs_target_repo = []
+    tgc = {"targets-credentials": json.loads(target_creds)}
+    input_target_cred_model = TargetsCredentialsModel.model_validate(tgc)
+    for repo_target in repo_assistant.targets:
+        if repo_target.bridge_module_class not in data.keys():
+            raise HTTPException(status_code=404, detail=f'Module "{repo_target.bridge_module_class}" not found.',
+                                headers={})
+        target_repo_name = repo_target.repo_name
+        logger(f'target_repo_name: {target_repo_name}', 'debug', 'ps')
+        for depositor_cred in input_target_cred_model.targets_credentials:
+            if depositor_cred.target_repo_name == repo_target.repo_name and depositor_cred.credentials.username:
+                repo_target.username = depositor_cred.credentials.username
+            if depositor_cred.target_repo_name == repo_target.repo_name and depositor_cred.credentials.password:
+                repo_target.password = depositor_cred.credentials.password
+
+        db_recs_target_repo.append(TargetRepo(name=repo_target.repo_name, url=repo_target.target_url,
+                                              display_name=repo_target.repo_display_name,
+                                              config=repo_target.model_dump_json(by_alias=True, exclude_none=True)))
+    return db_recs_target_repo
 
 
 @router.post("/inbox/file")
-async def process_files(metadataId: str = Form(), fileName: str = Form(), file: UploadFile = File()):
+async def process_inbox_dataset_file(datasetId: str = Form(), fileName: str = Form(), file: UploadFile = File(...)) -> {}:
     files_name = []
     submitted_filename = fileName
-    print(f"submitted_filename: {submitted_filename}")
-    # Process the formId field
-    if metadataId is not None:
-        results = db.find_record_by_metadata_id(settings.data_db_file, metadataId)
-        if not results:
-            raise HTTPException(status_code=404, detail=f"metadataId '{metadataId}' not found.")
+    logger(f"submitted_filename: {submitted_filename} from metadataid: {datasetId}", 'debug', 'ps')
+    db_record_metadata = db_manager.find_dataset(datasetId)
+    tmp_dir = os.path.join(settings.DATA_TMP_BASE_DIR, db_record_metadata.app_name, datasetId)
 
-        tmp_dir = os.path.join(settings.DATA_TMP_BASE_DIR_UPLOAD, metadataId)
-
-    else:
-        raise HTTPException(status_code=404, detail=f"Not found")
+    db_records_uploaded_file = db_manager.find_files(datasetId)
     # Process the files
-    files_uploaded_status = []
-    if file is not None:
-        metadata_id, file_name, uploaded = results[0] #results from database query
-        for r in results:
-            file_name, uploaded = r[1:] #start from column index 1 (file_name)
-            # Save the uploaded file
-            if submitted_filename == file_name:
-                contents = await file.read()
-                with open(os.path.join(tmp_dir, submitted_filename), "wb") as f:
-                    f.write(contents)
+    f_upload_st = []
+    for db_rec_uploaded_f in db_records_uploaded_file:
+        # Save the uploaded file
+        if submitted_filename == db_rec_uploaded_f.name:
+            file_contents = await file.read()
+            md5_hash = hashlib.md5(file_contents).hexdigest()
+            file_path = os.path.join(str(tmp_dir), submitted_filename)
+            with open(file_path, "wb") as f:
+                f.write(file_contents)
 
-                update_success = db.update_file_uploaded_status(settings.data_db_file, metadata_id, submitted_filename)
-                if not update_success:
-                    raise HTTPException(status_code=404, detail=f"metadata_id: {metadata_id}, submitted_filename: {submitted_filename} not found")
-                files_uploaded_status.append({"name": file_name, "uploaded": True})
-            else:
-                if uploaded == 0:
-                    files_uploaded_status.append({"name": file_name, "uploaded": False})
-                else:
-                    files_uploaded_status.append({"name": file_name, "uploaded": True})
-
-
-    else:
-        raise HTTPException(status_code=404, detail=f"Not found")
+            # NOTES: There are many way to get the mime type of file, This rather the simplest then the best.
+            file_mimetype = mimetypes.guess_type(file_path)[0]
+            db_manager.update_file(df=DataFile(ds_id=datasetId, name=submitted_filename, checksum_value=md5_hash,
+                                               size=os.path.getsize(file_path), mime_type=file_mimetype, path=file_path,
+                                               date_added=datetime.utcnow(), state=DataFileWorkState.UPLOADED))
+            f_upload_st.append({"name": db_rec_uploaded_f.name, "uploaded": True})
+        else:
+            f_upload_st.append(
+                {"name": db_rec_uploaded_f.name, "uploaded": False}) if db_rec_uploaded_f.date_added is None \
+                else f_upload_st.append({"name": db_rec_uploaded_f.name, "uploaded": True})
 
     all_files_uploaded = True
-    for fus in files_uploaded_status:
+    for fus in f_upload_st:
         if fus['uploaded'] is False:
             all_files_uploaded = False
             break
-
     # Update record
     if all_files_uploaded:
-        with open(os.path.join(tmp_dir, reserved_filename), 'r') as f:
-            form_metadata_json = json.loads(f.read())
+        db_manager.set_ready_for_ingest(datasetId)
 
-        try:
-            user_data = data[metadata_id]
-            if user_data is None:
-                raise HTTPException(status_code=404, detail=f"metadata_id: {metadata_id} not found.")
-        except KeyError as ke:
-            raise HTTPException(status_code=404, detail=f"Error on metadata_id: {metadata_id}. Caused by: {ke.args[0]} not found.")
+    start_process = db_manager.is_dataset_ready(datasetId)
 
-        receipt_links = await ingest_sword(form_metadata_json, tmp_dir, user_data['transformer-name'],
-                                                   user_data['deposit-url'], user_data['deposit-username'], user_data['deposit-password'])
-        db.update_form_metadata_progress_state_url(settings.DATA_DB_FILE, metadata_id, receipt_links)
-        track_deposit(metadata_id, user_data['deposit-username'], user_data['deposit-password'])
-        return {"status": "SUBMITTED", "id": metadata_id, "receipt-links": receipt_links}
+    if start_process:
+        # func_name = inspect.currentframe().f_code.co_name # Slow
+        # func_name = sys._getframe().f_code.co_name  # Faster 3x, but it uses 'private' method _getframe()
+        bridge_task(datasetId, f'/inbox/file/{fileName}')
 
-    return {"status": "OK", "id": metadataId, "files": files_uploaded_status}
+    response = ResponseModel()
+    response.status = "OK"
+    response.dataset_id = datasetId
+    response.start_process = start_process
+    return response.model_dump(by_alias=True)
 
 
-@router.delete("/inbox/{metadataId}")
-def delete_inbox(metadataId: str):
-    num_rows_deleted = db.delete_form_metadata_record(settings.DATA_DB_FILE, metadataId)
-    return {"Deleted": "OK", "num-row-deleted": num_rows_deleted}
+def bridge_task(datasetId: str, msg: str) -> type(None):
+    print("bridge_task")
+    logger(f">> START THREADING from {msg} for datasetId: {datasetId}-------------------", 'debug', 'ps')
+    # Start the threads
+    print(f"Thread executed: {msg}")
+    try:
+        follow_bridge_task = threading.Thread(target=follow_bridge, args=(datasetId,))
+        follow_bridge_task.start()
+        print(f'follow_bridge_task: {follow_bridge_task}')
+    except Exception as e:
+        logger(f"ERROR: Follow bridge: {msg}. For datasetId: {datasetId}. Exception: "
+               f"{e.with_traceback(e.__traceback__)}", 'error', 'ps')
+    print(f"Thread execution completed: {msg}")
+    logger(f">> Thread execution for {datasetId} is completed. {msg}", 'debug', 'ps')
 
 
-def check_sword_status(metadata_id, sword_username, sword_password):
-    stp = Sword_Tracking_Poller(metadata_id, sword_username, sword_password, settings.interval_check_sword_status)
-    stp.run()
+@router.get('/logs/{app_name}', include_in_schema=False)
+async def get_log(app_name: str):
+    return FileResponse(path=f"{os.environ['BASE_DIR']}/logs/{app_name}.log", filename=f"{app_name}.log",
+                        media_type='text/plain')
 
 
-def track_deposit(metadata_id, sword_username, sword_password):
-    t1 = threading.Thread(target=check_sword_status, args=(metadata_id, sword_username, sword_password,))
-    t1.start()
+def follow_bridge(datasetId) -> type(None):
+    print("Follow bridge")
+    logger(f"-------------- EXECUTE follow_bridge for datasetId: {datasetId}", 'debug', 'ps')
+    db_manager.submitted_now(datasetId)
+    target_repo_recs = db_manager.find_target_repos_by_ds_id(datasetId)
+    result = []
+    rsp = {"dataset-id": datasetId, "targets-result": result}
+
+    for target_repo_rec in target_repo_recs:
+        target_repo_id = target_repo_rec.id
+        target_repo_json = json.loads(target_repo_rec.config)
+        tg = Target(**target_repo_json)
+        bridge_class = data[tg.bridge_module_class]
+
+        logger(f'EXECUTING {bridge_class} for target_repo_id: {target_repo_id}', 'debug', 'ps')
+        start = time.perf_counter()
+        a = get_class(bridge_class)
+        k = a(dataset_id=datasetId, target=tg)
+        m = k.deposit()  # deposit return type: s BridgeOutputModel
+        finish = time.perf_counter()
+        m.response.duration = round(finish - start, 2)
+        logger(f'Result from Deposit: {m.model_dump_json()}', 'debug', 'ps')
+        k.save_state(m)
+        if m.deposit_status in [DepositStatus.FINISH, DepositStatus.ACCEPTED, DepositStatus.SUCCESS]:
+            logger(f'Finish deposit for {bridge_class} to target_repo_id: {target_repo_id}. Result: {m}', 'debug', 'ps')
+            result.append(m)
+        else:
+            logger(f'Executing {bridge_class} is FAILED. Resp: {m.model_dump_json()}', 'debug', 'ps')
+            break
+
+    logger(f"----------- END follow_bridge for datasetId: {datasetId}", 'debug', 'ps')
+    logger(f'>>>>Executed: {len(result)} of {len(target_repo_recs)}', 'debug', 'ps')
+
+
+@handle_ps_exceptions
+def retrieve_targets_configuration(assistant_config_name: str) -> str:
+    repo_url = f'{settings.ASSISTANT_CONFIG_URL}/{assistant_config_name}'
+    rsp = requests.get(repo_url, headers=assistant_repo_headers)
+    if rsp.status_code != 200:
+        raise HTTPException(status_code=404, detail=f"{repo_url} not found")
+    repo_config = rsp.json()
+    logger(f'Given repo config: {json.dumps(repo_config)}', 'debug', 'ps')
+    return repo_config
+
+#
+# @router.delete("/inbox/{datasetId}")
+# def delete_inbox(datasetId: str):
+#     num_rows_deleted = db_manager.delete_metadata_record(datasetId)
+#     return {"Deleted": "OK", "num-row-deleted": num_rows_deleted}
