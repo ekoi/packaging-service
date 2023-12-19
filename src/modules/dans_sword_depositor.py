@@ -9,14 +9,13 @@ from time import sleep
 import bagit
 import jmespath
 import requests
+from simple_file_checksum import get_checksum
 from sword2 import Connection
 
-from simple_file_checksum import get_checksum
-
-from src.bridge import Bridge, BridgeOutputModel
-from src.models.bridge_output_model import TargetResponse, TargetResponseType, IdentifierProtocol
+from src.bridge import Bridge, BridgeOutputDataModel
 from src.commons import (settings, transform, logger, db_manager, handle_deposit_exceptions)
 from src.dbz import DataFile, DepositStatus, FilePermissions
+from src.models.bridge_output_model import TargetResponse, ResponseContentType, IdentifierProtocol, IdentifierItem
 
 
 def dmz_headers(username, password) -> {}:
@@ -33,7 +32,7 @@ def dmz_headers(username, password) -> {}:
 class DansSwordDepositor(Bridge):
 
     @handle_deposit_exceptions
-    def deposit(self) -> BridgeOutputModel:
+    def deposit(self) -> BridgeOutputDataModel:
         md_json = json.loads(self.metadata_rec.md)
         files_metadata = jmespath.search('"file-metadata"[*]', md_json)
         # Creating generated file
@@ -57,7 +56,7 @@ class DansSwordDepositor(Bridge):
 
         return output_response
 
-    def __ingest(self, bagit_path: str) -> BridgeOutputModel:
+    def __ingest(self, bagit_path: str) -> BridgeOutputDataModel:
         sword_conn = Connection(self.target.target_url, headers=dmz_headers('API_KEY',
                                                                             self.target.password))
         logger(f'SENDING SWORD for {bagit_path} filename: {bagit_path}', 'debug', self.app_name)
@@ -86,7 +85,7 @@ class DansSwordDepositor(Bridge):
                     sleep(settings.interval_check_sword)
                 else:
                     break
-        bridge_output_model = BridgeOutputModel(message=target_resp.message, response=target_resp)
+        bridge_output_model = BridgeOutputDataModel(message=target_resp.message, response=target_resp)
         bridge_output_model.deposit_status = deposit_state
         return bridge_output_model
 
@@ -163,11 +162,10 @@ class DansSwordDepositor(Bridge):
     def __is_published(self, resp_link: str) -> TargetResponse:
         logger(f'is_publish: {resp_link}. ds_api_key: {self.target.password}', 'debug', self.app_name)
         retries = False
-        identifiers = []
+        identifier_items = []
         deposit_state = DepositStatus.SUCCESS
         message = ''
         sword_resp = requests.get(resp_link, headers=dmz_headers('API_KEY', self.target.password), verify=False)
-        # logging.debug(f'sword_resp.status_code: {sword_resp.status_code}')
         logger(f'sword_resp.status_code: {sword_resp.status_code}', 'debug', self.app_name)
         if sword_resp.status_code == 200:
             logger(f'dans_sword_response_xml: {sword_resp.text}', 'debug', self.app_name)
@@ -177,23 +175,24 @@ class DansSwordDepositor(Bridge):
             message = category_element.text
             deposit_state = category_element.attrib['term'].lower()
             logger(f'deposit_state: {deposit_state}', 'debug', self.app_name)
-            if deposit_state == DepositStatus.PUBLISHED.value:
-                # Find the link elements with the desired attribute values
-                link_elements = root.findall('.//atom:link[@rel="self"][@href]', namespace)
-                # Retrieve the values of the 'href' attributes
-                attribute_values = [link_element.attrib['href'] for link_element in link_elements]
-                # Print the attribute values
+            if deposit_state == DepositStatus.ACCEPTED.value:
+                link_element = root.find('.//atom:link[@rel="self"][@href]', namespace)
+                url = root.find('.//atom:entry/atom:link[@rel="self"][@href]', namespace).attrib['href']
+                doi = url.split("doi.org/")[1]
+                ideni = IdentifierItem(value=doi, url=url, protocol=IdentifierProtocol('doi'))
+                identifier_items.append(ideni)
 
-                for value in attribute_values:
-                    identifiers.append(IdentifierProtocol(value))
+
+
 
         else:
             logger(
                 f'Error. sword_resp.status_code:{sword_resp.status_code} sword_resp.tex: '
                 f'{sword_resp.text}', 'error', self.app_name)
             raise ValueError(f'Error word_resp.status_code:{sword_resp.status_code} - {sword_resp.text}')
+        logger(f'sword_resp.text: {sword_resp.text}', 'debug', self.app_name)
         target_repo = TargetResponse(url=resp_link, status=deposit_state, message=message,
-                                     identifiers=identifiers, content=sword_resp.text)
-        target_repo.content_type = TargetResponseType.XML
+                                     identifiers=identifier_items, content=sword_resp.text)
+        target_repo.content_type = ResponseContentType.XML
         target_repo.status_code = sword_resp.status_code
         return target_repo

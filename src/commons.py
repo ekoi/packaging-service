@@ -6,14 +6,14 @@ import time
 from datetime import datetime
 from functools import wraps
 from logging.handlers import TimedRotatingFileHandler
-from typing import Any, Callable, Tuple, Dict
+from typing import Any, Callable
 
 import requests
 from dynaconf import Dynaconf
 from fastapi import HTTPException
 
 from src.dbz import DatabaseManager, DepositStatus
-from src.models.bridge_output_model import BridgeOutputModel, TargetResponse
+from src.models.bridge_output_model import BridgeOutputDataModel, TargetResponse
 
 settings = Dynaconf(root_path=f'{os.getenv("BASE_DIR")}/conf', settings_files=["*.toml"],
                     environments=True)
@@ -38,15 +38,15 @@ def setup_logger():
     for log in settings.LOGGERS:
         log_setup = logging.getLogger(log.get('name'))
         formatter = logging.Formatter(log.get('log_format'))
-        fileHandler = logging.FileHandler(log.get('log_file'), mode='a')
-        fileHandler.setFormatter(formatter)
-        streamHandler = logging.StreamHandler()
-        streamHandler.setFormatter(formatter)
-        rotatingHandler = TimedRotatingFileHandler(log.get('log_file'), when="H", interval=8, backupCount=10)
-        log_setup.addHandler(rotatingHandler)
+        file_handler = logging.FileHandler(log.get('log_file'), mode='a')
+        file_handler.setFormatter(formatter)
+        stream_handler = logging.StreamHandler()
+        stream_handler.setFormatter(formatter)
+        rotating_handler = TimedRotatingFileHandler(log.get('log_file'), when="H", interval=8, backupCount=10)
+        log_setup.addHandler(rotating_handler)
         log_setup.setLevel(log.get('log_level'))
-        log_setup.addHandler(fileHandler)
-        log_setup.addHandler(streamHandler)
+        log_setup.addHandler(file_handler)
+        log_setup.addHandler(stream_handler)
         logger(f"Start {log.get('name')} at {now} Pyton version: {platform.python_version()}",
                'debug', log.get('name'))
 
@@ -62,7 +62,6 @@ def logger(msg, level, logfile):
 def get_class(kls) -> Any:
     parts = kls.split('.')
     module = ".".join(parts[:-1])
-    import src.modules.dans_sword_depositor
     try:
         m = __import__(module)
         for comp in parts[1:]:
@@ -74,10 +73,10 @@ def get_class(kls) -> Any:
     return None
 
 
-def transform(transformer_url: str, input: str) -> str:
+def transform(transformer_url: str, str_tobe_transformed: str) -> str:
     logger(f'transformer_url: {transformer_url}', 'debug', 'ps')
-    logger(f'input: {input}', 'debug', 'ps')
-    transformer_response = requests.post(transformer_url, headers=transformer_headers, data=input)
+    logger(f'str_tobe_transformed: {str_tobe_transformed}', 'debug', 'ps')
+    transformer_response = requests.post(transformer_url, headers=transformer_headers, data=str_tobe_transformed)
     if transformer_response.status_code == 200:
         transformed_metadata = transformer_response.json()
         str_transformed_metadata = transformed_metadata.get('result')
@@ -85,11 +84,11 @@ def transform(transformer_url: str, input: str) -> str:
         return str_transformed_metadata
 
     logger(f'transformer_response.status_code: {transformer_response.status_code}', 'error', 'ps')
-    raise ValueError(f"Error - Transfomer response status code: {transformer_response.status_code}")
+    raise ValueError(f"Error - Transformer response status code: {transformer_response.status_code}")
 
 
 # def transform(transformer_url: str, input: str) -> str:
-#     logger(f'transformer_url: {transformer_url}', 'debug', 'ps')
+#     logger(transformer_url: {transformer_url}', 'debug', 'ps')
 #     logger(f'input: {input}', 'debug', 'ps')
 #     try:
 #         transformer_response = requests.post(transformer_url, headers=transformer_headers, data=input)
@@ -98,8 +97,8 @@ def transform(transformer_url: str, input: str) -> str:
 #             str_transformed_metadata = transformed_metadata.get('result')
 #             logger(f'Transformer result: {str_transformed_metadata}', 'debug', 'ps')
 #             return str_transformed_metadata
-#         logger(f'transformer_response.status_code: {transformer_response.status_code}', 'error', 'ps')
-#         raise ValueError(f"Error - Transfomer response status code: {transformer_response.status_code}")
+#         logger(transformer_response.status_code: {transformer_response.status_code}', 'error', 'ps')
+#         raise ValueError(f"Error - Transformer response status code: {transformer_response.status_code}")
 #     except ConnectionError as ce:
 #         logger(f'Errors during transformer: {ce.with_traceback(ce.__traceback__)}', 'debug', 'ps')
 #         raise ValueError(f"Error - {ce.with_traceback(ce.__traceback__)}")
@@ -155,10 +154,10 @@ def save_duration(target_id: int) -> type(None):
     return decorator
 
 
-def handle_deposit_exceptions(func) -> Callable[[tuple[Any, ...], dict[str, Any]], BridgeOutputModel | Any]:
+def handle_deposit_exceptions(func) -> Callable[[tuple[Any, ...], dict[str, Any]], BridgeOutputDataModel | Any]:
     @wraps(func)
     def wrapper(*args, **kwargs):
-        logger(f'handle_deposit_exceptions for {func.__name__}. args: {args}', 'debug', 'ps')
+        logger(f'Enter to handle_deposit_exceptions for {func.__name__}. args: {args}', 'debug', 'ps')
         try:
             rv = func(*args, **kwargs)
             return rv
@@ -166,9 +165,8 @@ def handle_deposit_exceptions(func) -> Callable[[tuple[Any, ...], dict[str, Any]
             logger(f'Errors in {func.__name__}: {ex} - {ex.with_traceback(ex.__traceback__)}',
                    'debug', 'ps')
             target = args[0].target
-            bom = BridgeOutputModel()
+            bom = BridgeOutputDataModel()
             bom.deposit_status = DepositStatus.ERROR
-            bom.message = f'Errors in {func.__name__}: {ex.with_traceback(ex.__traceback__)}'
             tr = TargetResponse()
             tr.url = target.target_url
             tr.status = DepositStatus.ERROR
@@ -184,17 +182,15 @@ def handle_ps_exceptions(func) -> Any:
     @wraps(func)
     def wrapper(*args, **kwargs):
         try:
-            logger(f'handle_ps_exceptions:: {func.__name__}', 'debug', 'ps')
+            logger(f'Enter to handle_ps_exceptions:: {func.__name__}', 'debug', 'ps')
             rv = func(*args, **kwargs)
             return rv
         except HTTPException as ex:
-            print("INDARTO1")
             logger(
                 f'handle_ps_exceptions: Errors in {func.__name__}. status code: {ex.status_code}. Details: {ex.detail}. '
                 f'args: {args}', 'debug', 'ps')
             raise ex
         except Exception as ex:
-            print("INDARTO222")
             logger(f'handle_ps_exceptions: Errors in {func.__name__}: {ex} - {ex.with_traceback(ex.__traceback__)}',
                    'debug', 'ps')
             raise ex
@@ -231,7 +227,7 @@ class InspectBridgeModule:
         return None
 
     class PackagingServiceException(Exception):
-        def __init__(self, bom: BridgeOutputModel, message: str):
+        def __init__(self, bom: BridgeOutputDataModel, message: str):
             self.bom = bom
             self.message = message
             super().__init__(self.message)

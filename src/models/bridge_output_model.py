@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 from src.dbz import DepositStatus
 
 
-class TargetResponseType(StrEnum):
+class ResponseContentType(StrEnum):
     XML = auto()
     JSON = auto()
     TEXT = auto()
@@ -21,6 +21,7 @@ class IdentifierProtocol(StrEnum):
     DOI = auto()
     HANDLE = auto()
     URN_NBN = 'urn:nbn'
+    URN_UUID = 'urn:uuid'
     UNDEFINED = auto()
 
 
@@ -38,13 +39,13 @@ class IdentifierItem(BaseModel):
 class TargetResponse(BaseModel):
     url: Optional[str] = None
     status_code: int = Field(default=-10122004, alias='status-code')
+    duration: float = 0.0
     status: Optional[str] = None
     error: Optional[str] = None
-    duration: int = 0
     message: str = None
     identifiers: Optional[List[IdentifierItem]] = None
     content: str = None
-    content_type: TargetResponseType = Field(None, alias='content-type')
+    content_type: ResponseContentType = Field(None, alias='content-type')
 
 
 # # it = IdentifierItem()
@@ -53,20 +54,17 @@ class TargetResponse(BaseModel):
 # print(y.model_dump_json())
 
 
-class BridgeOutputModel(BaseModel):
-    timestamp: Optional[str] = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S.%f")
+class BridgeOutputDataModel(BaseModel):
+    deposit_time: Optional[str] = Field(datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S.%f"), alias='deposit-time')
     deposit_status: DepositStatus = Field(DepositStatus.UNDEFINED, alias='deposit-status')
-    message: str = None
+    notes: str = None  # This is for any message/text
     response: TargetResponse = None
 
 
-# z = BridgeOutputModel(message="ekoindart", response=y)
-# print(type(z.deposit_status.value))
-# print(z)
-#
 json_output_model = {
-    "timestamp": "",
-    "deposit-status": "",
+    "deposit-time": "",
+    "deposit-status": "initial",
+    "duration": 0.0,
     "message": "Any message from Bridge. e.g: Sword ingest is accepted. It can be the same as Target Response message.",
     "response": {
         "url": "",
@@ -86,7 +84,7 @@ json_output_model = {
             }
         ],
         "content": "",
-        "content-type": TargetResponseType.XML
+        "content-type": ResponseContentType.XML
     }
 }
 response_json = {
@@ -96,7 +94,7 @@ response_json = {
     "message": "Any message from response.",
     "identifiers": [],
     "content": "",
-    "content-type": TargetResponseType.XML
+    "content-type": ResponseContentType.XML
 }
 # z = BridgeOutputModel(response=TargetResponse())
 # z = TargetResponse.model_validate(response_json)

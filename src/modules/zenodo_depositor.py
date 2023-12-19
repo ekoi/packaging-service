@@ -8,14 +8,14 @@ import json
 import requests
 
 from src.bridge import Bridge
-from src.models.bridge_output_model import BridgeOutputModel, TargetResponse, TargetResponseType, IdentifierItem
+from src.models.bridge_output_model import BridgeOutputDataModel, TargetResponse, ResponseContentType, IdentifierItem
 from src.commons import transform, logger, handle_deposit_exceptions
 from src.dbz import DepositStatus
 
 
 class ZenodoApiDepositor(Bridge):
     @handle_deposit_exceptions
-    def deposit(self) -> BridgeOutputModel:
+    def deposit(self) -> BridgeOutputDataModel:
         zenodo_resp = self.__create_initial_dataset()  # TODO if zenodo_resp return {}
         zenodo_id = zenodo_resp.get("id")
         str_zenodo_dataset_metadata = transform(self.target.metadata.transformed_metadata[0].transformer_url,
@@ -24,7 +24,7 @@ class ZenodoApiDepositor(Bridge):
         url = f'{self.target.target_url}/{zenodo_id}?{self.target.username}={self.target.password}'
         logger(f"Send to {url}", 'debug', self.app_name)
         zen_resp = requests.put(url, data=str_zenodo_dataset_metadata, headers={"Content-Type": "application/json"})
-        bridge_output_model = BridgeOutputModel()
+        bridge_output_model = BridgeOutputDataModel()
         if zen_resp.status_code == 200:
             zm = ZenodoModel(**zen_resp.json())
             bridge_output_model.deposit_status = DepositStatus.SUCCESS
@@ -33,7 +33,7 @@ class ZenodoApiDepositor(Bridge):
                                          content=json.dumps(zen_resp.json()), message="")
             target_resp.status_code = zen_resp.status_code
             target_resp.identifiers = [IdentifierItem(value=zm.metadata.prereserve_doi.doi, url=zm.links.html)]
-            target_resp.content_type = TargetResponseType.JSON
+            target_resp.content_type = ResponseContentType.JSON
             bridge_output_model.response = target_resp
         return bridge_output_model
 

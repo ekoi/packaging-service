@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 from src.bridge import Bridge
-from src.models.bridge_output_model import BridgeOutputModel
+from src.models.bridge_output_model import BridgeOutputDataModel
 
 
 class SwhSwordDepositor(Bridge):
 
-    def deposit(self) -> BridgeOutputModel:
+    def deposit(self) -> BridgeOutputDataModel:
 
-        bridge_output_model = BridgeOutputModel()
+        bridge_output_model = BridgeOutputDataModel()
 
         return bridge_output_model
 

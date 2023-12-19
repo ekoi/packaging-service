@@ -287,6 +287,7 @@ class DatabaseManager:
                 target_repo_record.deposit_status = target_repo.deposit_status
                 target_repo_record.output = target_repo.output
                 target_repo_record.deposit_time = datetime.utcnow()
+                target_repo_record.duration = target_repo.duration
                 session.add(target_repo_record)
                 session.commit()
                 session.refresh(target_repo_record)

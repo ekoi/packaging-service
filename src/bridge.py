@@ -4,8 +4,8 @@ import os
 from abc import ABC, abstractmethod
 
 from src.models.assistant_datamodel import Target
-from src.models.bridge_output_model import BridgeOutputModel
-from src.commons import settings, db_manager
+from src.models.bridge_output_model import BridgeOutputDataModel
+from src.commons import settings, db_manager, logger
 
 from src.dbz import TargetRepo, DepositStatus, DatabaseManager, Dataset, DataFile
 
@@ -65,30 +65,34 @@ class Bridge(ABC):
 
     @classmethod
     @abstractmethod
-    def deposit(cls) -> BridgeOutputModel:
+    def deposit(cls) -> BridgeOutputDataModel:
         """
         Abstract method to deposit data into the target repository.
 
         Subclasses must provide a concrete implementation of this method.
 
         Returns:
-            BridgeOutputModel: An instance of BridgeOutputModel representing the output of the deposit process.
+            BridgeOutputDataModel: An instance of BridgeOutputModel representing the output of the deposit process.
         """
         ...
 
-    def save_state(self, bridge_output_model: BridgeOutputModel = None) -> type(None):
+    def save_state(self, output_data_model: BridgeOutputDataModel = None) -> type(None):
         """
         Saves the state of the deposit process, updating the deposit status in the database.
 
         Args:
-            bridge_output_model (BridgeOutputModel, optional): An instance of BridgeOutputModel representing the
+            output_data_model (BridgeOutputModel, optional): An instance of BridgeOutputModel representing the
                 output of the deposit process. Defaults to None.
         """
         deposit_status = DepositStatus.PROGRESS
         output = ''
-        if bridge_output_model:
-            print(bridge_output_model)
-            deposit_status = bridge_output_model.deposit_status
-            output = bridge_output_model.model_dump_json()
+        duration = 0.0
+        if output_data_model:
+            deposit_status = output_data_model.deposit_status
+            duration = output_data_model.response.duration
+            output = output_data_model.model_dump_json()
+            logger(f'Save state for dataset_id: {self.dataset_id}. Target: {self.target.repo_name}', 'debug'
+                   , self.app_name)
         db_manager.update_target_repo_deposit_status(TargetRepo(ds_id=self.dataset_id, name=self.target.repo_name,
-                                                                deposit_status=deposit_status, output=output))
+                                                                deposit_status=deposit_status, output=output,
+                                                                duration=duration))

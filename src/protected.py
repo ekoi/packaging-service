@@ -1,3 +1,5 @@
+# Import necessary modules and packages
+# Import necessary libraries and modules
 import time
 from datetime import datetime
 import hashlib
@@ -9,25 +11,28 @@ from typing import Callable, Awaitable, Any
 
 import jmespath
 import requests
-# import codecs
 from fastapi import APIRouter, Request, UploadFile, Form, File, HTTPException
 from starlette.responses import FileResponse
 
-from src.models.assistant_datamodel import RepoAssistantModel, Target
+# Import custom modules and classes
+from src.models.assistant_datamodel import RepoAssistantDataModel, Target
 from src.commons import settings, logger, data, db_manager, get_class, assistant_repo_headers, handle_ps_exceptions
 from src.dbz import TargetRepo, DataFile, Dataset, ReleaseVersion, DepositStatus, FilePermissions, \
     DatasetWorkState, DataFileWorkState
-from src.models.app_model import ResponseModel, InboxDatasetDC
+from src.models.app_model import ResponseDataModel, InboxDatasetDataModel
 from src.models.target_datamodel import TargetsCredentialsModel
 
+# Create an API router instance
 router = APIRouter()
 
 
+# Endpoint to retrieve application settings
 @router.get("/settings")
 async def get_settings():
     return settings
 
 
+# Endpoint to register a bridge module
 @router.post("/register-bridge-module/{name}/{overwrite}")
 async def register_module(name: str, bridge_file: Request, overwrite: bool | None = False) -> {}:
     if not overwrite and name in data["bridge-modules"]:
@@ -51,15 +56,17 @@ async def register_module(name: str, bridge_file: Request, overwrite: bool | Non
     return {"status": "ok", "bridge-module-name": name}
 
 
+# Helper function to process inbox dataset metadata
 @handle_ps_exceptions
 async def get_inbox_dataset_dc(request: Request, release_version: ReleaseVersion) -> (
-        Callable)[[Request, ReleaseVersion], Awaitable[InboxDatasetDC]]:
-    return InboxDatasetDC(assistant_name=request.headers.get('assistant-config-name'),
-                          release_version=release_version, owner_id=request.headers.get('user-id'),
-                          title=request.headers.get('title', default=''),
-                          target_creds=request.headers.get('targets-credentials'), metadata=await request.json())
+        Callable)[[Request, ReleaseVersion], Awaitable[InboxDatasetDataModel]]:
+    return InboxDatasetDataModel(assistant_name=request.headers.get('assistant-config-name'),
+                                 release_version=release_version, owner_id=request.headers.get('user-id'),
+                                 title=request.headers.get('title', default=''),
+                                 target_creds=request.headers.get('targets-credentials'), metadata=await request.json())
 
 
+# Endpoint to process inbox dataset metadata
 @router.post("/inbox/dataset/{release_version}")
 async def process_inbox_dataset_metadata(request: Request, release_version: ReleaseVersion) -> {}:
     idh = await get_inbox_dataset_dc(request, release_version)
@@ -67,7 +74,7 @@ async def process_inbox_dataset_metadata(request: Request, release_version: Rele
     datasetId = jmespath.search("id", idh.metadata)
     repo_config = retrieve_targets_configuration(idh.assistant_name)
     try:
-        repo_assistant = RepoAssistantModel.model_validate_json(repo_config)  # TODO: Check the given transformer exist.
+        repo_assistant = RepoAssistantDataModel.model_validate_json(repo_config)  # TODO: Check the given transformer exist.
         # Create temp folder
         tmp_dir = os.path.join(settings.DATA_TMP_BASE_DIR, repo_assistant.app_name, datasetId)
         if not os.path.exists(tmp_dir):
@@ -91,12 +98,10 @@ async def process_inbox_dataset_metadata(request: Request, release_version: Rele
         #
         # t1 = threading.Thread(target=follow_bridge, args=(datasetId,))
         # t1.start()
-
-    resp_model = ResponseModel()
-    resp_model.status = "OK"
-    resp_model.dataset_id = datasetId
-    resp_model.start_process = start_process
-    return resp_model.model_dump(by_alias=True)
+    rdm = ResponseDataModel(status="OK")
+    rdm.dataset_id = datasetId
+    rdm.start_process = start_process
+    return rdm.model_dump(by_alias=True)
 
 
 @handle_ps_exceptions
@@ -168,7 +173,8 @@ def process_target_repos(repo_assistant, target_creds) -> [TargetRepo]:
 
 
 @router.post("/inbox/file")
-async def process_inbox_dataset_file(datasetId: str = Form(), fileName: str = Form(), file: UploadFile = File(...)) -> {}:
+async def process_inbox_dataset_file(datasetId: str = Form(), fileName: str = Form(),
+                                     file: UploadFile = File(...)) -> {}:
     files_name = []
     submitted_filename = fileName
     logger(f"submitted_filename: {submitted_filename} from metadataid: {datasetId}", 'debug', 'ps')
@@ -214,11 +220,10 @@ async def process_inbox_dataset_file(datasetId: str = Form(), fileName: str = Fo
         # func_name = sys._getframe().f_code.co_name  # Faster 3x, but it uses 'private' method _getframe()
         bridge_task(datasetId, f'/inbox/file/{fileName}')
 
-    response = ResponseModel()
-    response.status = "OK"
-    response.dataset_id = datasetId
-    response.start_process = start_process
-    return response.model_dump(by_alias=True)
+    rdm = ResponseDataModel(status="OK")
+    rdm.dataset_id = datasetId
+    rdm.start_process = start_process
+    return rdm.model_dump(by_alias=True)
 
 
 def bridge_task(datasetId: str, msg: str) -> type(None):

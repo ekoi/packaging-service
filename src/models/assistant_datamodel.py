@@ -57,7 +57,7 @@ class FileConversion(BaseModel):
     conversion_url: str = Field(..., alias='conversion-url')
 
 
-class RepoAssistantModel(BaseModel):
+class RepoAssistantDataModel(BaseModel):
     assistant_config_name: str = Field(..., alias='assistant-config-name')
     description: str
     app_name: str = Field(..., alias='app-name')

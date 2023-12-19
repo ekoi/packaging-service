@@ -7,16 +7,16 @@ import json
 import requests
 
 from src.bridge import Bridge
-from src.models.bridge_output_model import BridgeOutputModel, TargetResponse, TargetResponseType
+from src.models.bridge_output_model import BridgeOutputDataModel, TargetResponse, ResponseContentType
 from src.commons import logger, settings
 from src.dbz import DepositStatus
 
 
 class SwhApiDepositor(Bridge):
 
-    def deposit(self) -> BridgeOutputModel:
+    def deposit(self) -> BridgeOutputDataModel:
         target_resp = TargetResponse()
-        bridge_output_model = BridgeOutputModel(response= target_resp)
+        bridge_output_model = BridgeOutputDataModel(response= target_resp)
         headers = {'Content-Type': 'application/json', 'Authorization': f'Bearer {settings.SWH_ACCESS_TOKEN}'}
         api_resp = requests.post(self.target.target_url, data="{}", headers=headers)
         if api_resp.status_code == 200:
@@ -38,7 +38,7 @@ class SwhApiDepositor(Bridge):
                     elif swh_resp_json.get('snapshot_swhid'):
                         bridge_output_model.deposit_status = DepositStatus.FINISH
                         target_resp.status_code = check_resp.status_code
-                        target_resp.content_type = TargetResponseType.JSON
+                        target_resp.content_type = ResponseContentType.JSON
                         target_resp.content = json.dumps(swh_resp_json)
                         target_resp.status = DepositStatus.SUCCESS
                         break
