@@ -26,12 +26,6 @@ from src.models.target_datamodel import TargetsCredentialsModel
 router = APIRouter()
 
 
-# Endpoint to retrieve application settings
-@router.get("/settings")
-async def get_settings():
-    return settings
-
-
 # Endpoint to register a bridge module
 @router.post("/register-bridge-module/{name}/{overwrite}")
 async def register_module(name: str, bridge_file: Request, overwrite: bool | None = False) -> {}:
@@ -74,7 +68,8 @@ async def process_inbox_dataset_metadata(request: Request, release_version: Rele
     datasetId = jmespath.search("id", idh.metadata)
     repo_config = retrieve_targets_configuration(idh.assistant_name)
     try:
-        repo_assistant = RepoAssistantDataModel.model_validate_json(repo_config)  # TODO: Check the given transformer exist.
+        repo_assistant = RepoAssistantDataModel.model_validate_json(
+            repo_config)  # TODO: Check the given transformer exist.
         # Create temp folder
         tmp_dir = os.path.join(settings.DATA_TMP_BASE_DIR, repo_assistant.app_name, datasetId)
         if not os.path.exists(tmp_dir):
@@ -242,12 +237,6 @@ def bridge_task(datasetId: str, msg: str) -> type(None):
     logger(f">> Thread execution for {datasetId} is completed. {msg}", 'debug', 'ps')
 
 
-@router.get('/logs/{app_name}', include_in_schema=False)
-async def get_log(app_name: str):
-    return FileResponse(path=f"{os.environ['BASE_DIR']}/logs/{app_name}.log", filename=f"{app_name}.log",
-                        media_type='text/plain')
-
-
 def follow_bridge(datasetId) -> type(None):
     print("Follow bridge")
     logger(f"-------------- EXECUTE follow_bridge for datasetId: {datasetId}", 'debug', 'ps')
@@ -292,8 +281,26 @@ def retrieve_targets_configuration(assistant_config_name: str) -> str:
     logger(f'Given repo config: {json.dumps(repo_config)}', 'debug', 'ps')
     return repo_config
 
+
 #
-# @router.delete("/inbox/{datasetId}")
-# def delete_inbox(datasetId: str):
-#     num_rows_deleted = db_manager.delete_metadata_record(datasetId)
-#     return {"Deleted": "OK", "num-row-deleted": num_rows_deleted}
+@router.delete("/inbox/{datasetId}", include_in_schema=False)
+def delete_inbox(datasetId: str):
+    num_rows_deleted = db_manager.delete_metadata_record(datasetId)
+    return {"Deleted": "OK", "num-row-deleted": num_rows_deleted}
+
+
+# Endpoint to retrieve application settings
+@router.get("/settings", include_in_schema=False)
+async def get_settings():
+    return settings
+
+
+@router.get('/logs/{app_name}', include_in_schema=False)
+async def get_log(app_name: str):
+    return FileResponse(path=f"{os.environ['BASE_DIR']}/logs/{app_name}.log", filename=f"{app_name}.log",
+                        media_type='text/plain')
+
+
+@router.get("/logs-list", include_in_schema=False)
+async def get_log_list():
+    return os.listdir(path=f"{os.environ['BASE_DIR']}/logs")

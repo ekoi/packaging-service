@@ -12,6 +12,8 @@ from datetime import datetime
 from typing import List, Optional
 from pydantic import BaseModel
 
+from src.models.app_model import OwnerAssetsModel, Asset, Target
+
 '''
 import logging
 logging.basicConfig()
@@ -87,7 +89,7 @@ class TargetRepo(SQLModel, table=True):
     deposit_status: Optional[DepositStatus]
     deposit_time: Optional[datetime]
     duration: float = 0.0
-    output: Optional[str]
+    target_output: Optional[str]
     # Optional since some repo uses the same uername/password
     # e.g. dataverse username is always API_KEY, SWH API uses the same username/password for every user.
     # username: Optional[str]
@@ -170,6 +172,34 @@ class DatabaseManager:
             result = results.one_or_none()
         return result
 
+    def find_dataset_and_targets(self, ds_id: str) -> Asset:
+        with Session(self.engine) as session:
+            dataset = session.exec(select(Dataset).where(Dataset.id == ds_id)).one_or_none()
+            if dataset:
+                asset = Asset()
+                asset.dataset_id = dataset.id
+                asset.release_version = dataset.release_version
+                asset.title = dataset.title
+                asset.md = dataset.md
+                asset.created_date = dataset.created_date
+                asset.saved_date = dataset.saved_date
+                asset.submitted_date = dataset.submitted_date
+                asset.release_version = dataset.release_version
+                asset.version = dataset.version
+                targets_repo = session.exec(select(TargetRepo).where(TargetRepo.ds_id == dataset.id)).all()
+                for target_repo in targets_repo:
+                    target = Target()
+                    target.repo_name = target_repo.name
+                    target.display_name = target_repo.display_name
+                    target.deposit_status = target_repo.deposit_status
+                    target.deposit_time = target_repo.deposit_time
+                    target.duration = target_repo.duration
+                    if target_repo.target_output is not None and target_repo.target_output != '':
+                        target.output_response = json.loads(target_repo.target_output)
+                    asset.targets.append(target)
+                return asset
+            return Asset()
+
     def find_target_repos_by_ds_id(self, ds_id: str) -> [TargetRepo]:
         with Session(self.engine) as session:
             statement = select(TargetRepo).where(TargetRepo.ds_id == ds_id)
@@ -207,24 +237,37 @@ class DatabaseManager:
             result = results.one()
         return result
 
-    def find_progress_state_by_owner_id(self, owner_id: str):
-        with closing(sqlite3.connect(self.db_file)) as connection:
-            with connection:
-                cursor = connection.cursor()
-                sql_query = '''
-                            SELECT json_object('metadata-id', ds.id, 'title', ds.title, 
-                            'created-date', ds.created_date, 'saved-date', ds.saved_date,
-                            'submitted-date', ds.submitted_date,
-                            'release-version', ds.release_version,'targets', 
-                            json_group_array(json_object('target-repo-name', tr.name, 
-                                'target-repo-display-name', tr.display_name, 'target-url', tr.url, 
-                                'ingest-status', tr.deposit_status, 'target-output', json(tr.output) ))) 
-                                FROM target_repo tr, dataset ds WHERE tr.ds_id = ds.id and ds.owner_id=?  
-                                GROUP BY ds.id
-                        '''
-                cursor.execute(sql_query, (owner_id,))
-                rows = cursor.fetchall()
-                return rows
+    def find_owner_assets(self, owner_id: str) -> OwnerAssetsModel | None:
+        with Session(self.engine) as session:
+            datasets = session.exec(select(Dataset).where(Dataset.owner_id == owner_id)).all()
+            if datasets:
+                oam = OwnerAssetsModel()
+                oam.owner_id = owner_id
+                for dataset in datasets:
+                    asset = Asset()
+                    asset.dataset_id = dataset.id
+                    asset.release_version = dataset.release_version
+                    asset.title = dataset.title
+                    asset.created_date = dataset.created_date
+                    asset.saved_date = dataset.saved_date
+                    asset.submitted_date = dataset.submitted_date
+                    asset.release_version = dataset.release_version
+                    asset.version = dataset.version
+                    targets_repo = session.exec(select(TargetRepo).where(TargetRepo.ds_id == dataset.id)).all()
+                    for target_repo in targets_repo:
+                        target = Target()
+                        target.repo_name = target_repo.name
+                        target.display_name = target_repo.display_name
+                        target.deposit_status = target_repo.deposit_status
+                        target.deposit_time = target_repo.deposit_time
+                        target.duration = target_repo.duration
+                        if target_repo.target_output is not None and target_repo.target_output != '':
+                            target.output_response = json.loads(target_repo.target_output)
+                        asset.targets.append(target)
+                    oam.assets.append(asset)
+
+                return oam
+            return None
 
     # TODO: REFACTOR - Using sqlmodel
     def find_dataset_by_id(self, id):
@@ -285,7 +328,7 @@ class DatabaseManager:
             target_repo_record = results.one_or_none()
             if target_repo:
                 target_repo_record.deposit_status = target_repo.deposit_status
-                target_repo_record.output = target_repo.output
+                target_repo_record.target_output = target_repo.target_output
                 target_repo_record.deposit_time = datetime.utcnow()
                 target_repo_record.duration = target_repo.duration
                 session.add(target_repo_record)
@@ -298,7 +341,7 @@ class DatabaseManager:
             results = session.exec(statement)
             target_repo_record = results.one_or_none()
             if target_repo_record:
-                target_repo_record.output = target_repo.output
+                target_repo_record.target_output = target_repo.target_output
                 session.add(target_repo_record)
                 session.commit()
                 session.refresh(target_repo_record)

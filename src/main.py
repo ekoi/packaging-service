@@ -37,9 +37,10 @@ __version__ = importlib.metadata.metadata("packaging-service")["version"]
 from starlette import status
 from starlette.middleware.cors import CORSMiddleware
 
-from src import public, protected
+from src import public, protected, tus_files
 from src.commons import settings, setup_logger, data, InspectBridgeModule, db_manager
 
+from src.tus_files import upload_files
 
 # logging.basicConfig(filename=settings.LOG_FILE, level=settings.LOG_LEVEL,
 #                     format=settings.LOG_FORMAT)
@@ -142,6 +143,9 @@ def auth_header(request: Request, api_key: str = Depends(oauth2_scheme)):
 app.include_router(public.router, tags=["Public"], prefix="")
 app.include_router(protected.router, tags=["Protected"], prefix="", dependencies=[Depends(auth_header)])
 
+# app.include_router(upload_files, prefix="/files", dependencies=[Depends(auth_header)])
+app.include_router(tus_files.router, prefix="", dependencies=[Depends(auth_header)])
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -187,4 +191,38 @@ if __name__ == "__main__":
     print(f'Python version: {platform.python_version()}')
     setup_logger()
 
-    uvicorn.run("src.main:app", host="0.0.0.0", port=2005, reload=False)
+    uvicorn.run("src.main:app", host="0.0.0.0", port=10124, reload=False, workers= 1)
+
+
+import multiprocessing
+
+from gunicorn.app.wsgiapp import WSGIApplication
+
+
+class PackagingServiceApplication(WSGIApplication):
+    def __init__(self, app_uri, options=None):
+        self.options = options or {}
+        self.app_uri = app_uri
+        super().__init__()
+
+    def load_config(self):
+        config = {
+            key: value
+            for key, value in self.options.items()
+            if key in self.cfg.settings and value is not None
+        }
+        for key, value in config.items():
+            self.cfg.set(key.lower(), value)
+
+
+def run():
+    options = {
+        "bind": "0.0.0.0:10124",
+        "workers": (multiprocessing.cpu_count() * 2) + 1,
+        "worker_class": "uvicorn.workers.UvicornWorker",
+    }
+    PackagingServiceApplication("src.main:app", options).run()
+
+# if __name__ == "__main__":
+#     setup_logger()
+#     run()

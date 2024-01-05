@@ -1,0 +1,78 @@
+import json
+import logging
+
+import jmespath
+import requests
+
+from src.experiments import db
+from src.commons import settings
+
+
+class ZenodoIngester:
+
+    def __init__(self, metadata_id, target_repo_json):
+        self.metadata = db.find_dataset_by_id(metadata_id)
+        self.files = db.find_files_by_dataset_id(metadata_id)
+        input_from_previous_repo = jmespath.search('input', target_repo_json)
+        if input_from_previous_repo:
+            input_from_repo_name = jmespath.search('from', input_from_previous_repo)
+            d = db.find_target_repo_output_by_metadata_id_and_repo_name(metadata_id, input_from_repo_name)
+            input_object_name = jmespath.search('"object-name"', input_from_previous_repo)
+            z = json.loads(self.metadata)
+            z[input_object_name].append(json.loads(d))
+            self.metadata = json.dumps(z)
+            print(z)
+
+        target_repo_url = jmespath.search('"target-url"', target_repo_json)
+        self.access_token = jmespath.search('password', target_repo_json)
+        print(self.access_token)
+        transformer_dataset_url = jmespath.search(
+            f'transformer[?name==\'{settings.TRANSFORMER_NAME_ZENODO_DATASET}\'].url', target_repo_json)
+        transformer_file_url = jmespath.search(
+            f'transformer[?name==\'{settings.TRANSFORMER_NAME_ZENODO_FILE}\'].url', target_repo_json)
+        self.server_url = target_repo_url
+        self.transformer_dataset_url = transformer_dataset_url[0]
+        self.transformer_file_url = transformer_file_url[0]
+        self.zenodo_dataset_id = self.create_initial_dataset()
+
+    def create_initial_dataset(self):
+        url = f"{self.server_url}?access_token={self.access_token}"
+        headers = {"Content-Type": "application/json"}
+        r = requests.post(url, data="{}", headers=headers)
+        print(r.status_code)
+        if r.status_code == 201:
+            r_json = r.json()
+            return r_json.get("id")
+        return r.get('id')
+
+    def deposit(self):
+        str_zenodo_dataset_metadata = self.create_zenodo_metadata()
+        print(str_zenodo_dataset_metadata)
+        logging.debug(str_zenodo_dataset_metadata)
+        data = json.loads(str_zenodo_dataset_metadata)
+        url = f'{self.server_url}/{self.zenodo_dataset_id}?access_token={self.access_token}'
+        logging.debug(f'url: {url}')
+        headers = {"Content-Type": "application/json"}
+
+        r = requests.put(url, data=str_zenodo_dataset_metadata, headers=headers)
+        if r.status_code == 200:
+            return r.json()
+        else:
+            # TODO: Much more error description
+            raise ValueError(f"Error - response status code: {r.status_code}")
+
+    def create_zenodo_metadata(self):
+        transformer_headers = {
+            'Content-Type': 'application/json',
+            'Authorization': f'Bearer {settings.dans_transformer_api_key}'
+        }
+
+        transformer_response = requests.post(self.transformer_dataset_url, headers=transformer_headers,
+                                             data=self.metadata)
+        if transformer_response.status_code == 200:
+            zenodo_metadata = transformer_response.json()
+            str_zenodo_metadata = zenodo_metadata['result']
+            logging.debug(str_zenodo_metadata)
+            return str_zenodo_metadata
+
+        raise ValueError(f"Error - Transfomer response status code: {transformer_response.status_code}")

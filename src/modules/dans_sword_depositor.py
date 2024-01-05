@@ -53,6 +53,12 @@ class DansSwordDepositor(Bridge):
         bagit_path = self.__create_bag(str_updated_metadata_json)
         output_response = self.__ingest(bagit_path=bagit_path)
         logger(f'dans_sword_response_xml: {output_response}', 'debug', self.app_name)
+        # if ingest is successfully, clean bagit
+        if output_response.deposit_status == DepositStatus.ACCEPTED:
+            logger(f'Successfully ingested {output_response}: {output_response}', 'debug', self.app_name)
+            logger(f'Deleting bagit file: {bagit_path}', 'debug', self.app_name)
+            os.remove(bagit_path)
+            os.rmdir(self.dataset_dir)
 
         return output_response
 

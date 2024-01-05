@@ -1,0 +1,246 @@
+import json
+import mimetypes
+import os
+import shutil
+import xml.etree.ElementTree as ET
+from datetime import datetime, timezone
+from time import sleep
+
+import bagit
+import jmespath
+import requests
+from sword2 import Connection
+
+from src.commons import (settings, IngestStatus, transform, TargetRepoParser, template_deposit_response_json, logger,
+                         dmz_headers)
+from src.dbx import DatabaseManager
+
+# TODO: Refactoring - Use Inheritance
+db_manager = DatabaseManager(settings.DATA_DB_FILE)
+
+
+class DansSwordIngester:
+
+    def __init__(self, metadata_id, app_name, target_repo_json):
+        logger(f"Execute __init__{self.__class__.__name__} for metadata_id: {metadata_id}. app_name: {app_name} "
+               f"and target_repo_json: {target_repo_json}", 'debug', app_name)
+        self.metadataId = metadata_id
+        self.str_metadata = db_manager.find_dataset_by_id(metadata_id)
+        self.files = db_manager.find_files_name_and_path_by_metadata_id(metadata_id)
+        rap = TargetRepoParser(target_repo_json)
+        self.generated_files = rap.get_generated_files()
+        self.target_repo_name = rap.get_target_repo_name()
+        self.dans_sword_iri = rap.get_target_url()
+        self.dans_sword_base_url = rap.get_base_url()
+        self.ds_api_key = rap.get_password()
+        self.transformer_ds_dataset_url = rap.get_transformer(settings.TRANSFORMER_NAME_DATAVERSE_DATASET)
+        self.transformer_dv_file_url = rap.get_transformer(settings.TRANSFORMER_NAME_DATAVERSE_FILE)
+        self.app_name = app_name
+
+        db_manager.update_ingest_status_by_id(IngestStatus.PROGRESS, self.metadataId, self.target_repo_name)
+
+    def deposit(self):
+        logger(f"Execute depposit of {self.__class__.__name__} for metadata_id: {self.metadataId}. "
+               f"app_name: {self.app_name}", 'debug', self.app_name)
+        # Createing bag directory and copy files from upload directory
+        bag_dir = os.path.join(settings.DATA_TMP_BASE_DIR_BAGS, self.app_name, self.metadataId)
+        if os.path.exists(bag_dir):
+            shutil.rmtree(bag_dir)
+        os.makedirs(bag_dir)
+        tmp_dir = os.path.join(settings.DATA_TMP_BASE_DIR_UPLOAD, self.app_name, self.metadataId)
+        shutil.copytree(tmp_dir, bag_dir, dirs_exist_ok=True)
+
+        metadata_json = json.loads(self.str_metadata)
+        files_metadata = jmespath.search('"file-metadata"[*]', metadata_json)
+        for file_metadata in files_metadata:
+            f_path = db_manager.find_file_path_by_metadata_id_and_name(self.metadataId, file_metadata.get("name"))
+            file_mimetype = mimetypes.guess_type(f_path)[0]
+            file_metadata.update({"mimetype": file_mimetype})
+
+        # logging.debug(f'this is will be added with generated file: {json.dumps(metadata_json)}')
+        logger(f'this is will be added with generated file: {json.dumps(metadata_json)}', 'debug', self.app_name)
+        # Creating generated file
+
+        self.create_generated_files(bag_dir, files_metadata)
+
+        metadata_json.update({"file-metadata": files_metadata})
+        logger(f'FINAL JSON METADATA: {json.dumps(metadata_json)}', 'debug', self.app_name)
+        str_metadata_json = json.dumps(metadata_json)
+        logger(f'THIS IS for files.xml str_metadata_json: {str_metadata_json}', 'debug', self.app_name)
+        logger(f'THIS IS FOR dataset.xml str_metadata: {self.str_metadata}', 'debug', self.app_name)
+        bagit_path = self.create_bag(bag_dir, str_metadata_json)
+
+        logger(f'Trying to make sword connection to {self.dans_sword_iri} with API_KEY: {self.ds_api_key}', 'debug',
+               self.app_name)
+        ingest_status, message, target_response_xml_or_text = self.ingest(bagit_path)
+
+        db_manager.update_ingest_status_by_id(ingest_status, self.metadataId, self.target_repo_name)
+        logger(f'dans_sword_response_xml: {target_response_xml_or_text}', 'debug', self.app_name)
+        xml_dict = {"sword-response": str(target_response_xml_or_text)}
+        uu = template_deposit_response_json.render(ingest_status=IngestStatus.FINISH,
+                                                   message=message,
+                                                   target_repo_url=self.dans_sword_iri,
+                                                   target_response_json=json.dumps(
+                                                       xml_dict))
+
+        return json.loads(uu)
+
+    def ingest(self, bagit_path):
+        ingest_status = IngestStatus.PROGRESS
+        message = 'Deposit to sword'
+        target_response_xml_or_text = ''
+        sword_conn = Connection(self.dans_sword_iri, headers=dmz_headers('API_KEY', self.ds_api_key))
+        if sword_conn is None:
+            logger('ERROR: PROBLEM with SWORD Connection.....', 'debug', self.app_name)
+            ingest_status = IngestStatus.ERROR
+            message = 'Error during Sword connection'
+            target_response_xml_or_text = "ERROR: PROBLEM with SWORD Connection...."
+        else:
+            logger(f'SENDING SWORD for {bagit_path} with filename: {os.path.basename(bagit_path)}', 'debug',
+                   self.app_name)
+            with open(bagit_path,
+                      "rb") as pkg:
+                try:
+                    receipt = sword_conn.create(col_iri=self.dans_sword_iri,
+                                                payload=pkg,
+                                                mimetype="application/zip",
+                                                filename=os.path.basename(bagit_path),
+                                                packaging='http://purl.org/net/sword/package/BagIt',
+                                                in_progress=False)  # As the deposit isn't yet finished
+
+                    receipt_link = receipt.links['http://purl.org/net/sword/terms/statement'][0]['href']
+                    logger(f'receipt_link: {receipt_link}', 'debug', self.app_name)
+                except:
+                    ingest_status = IngestStatus.ERROR
+                    message = 'Timeout - Error during Sword connection'
+                    target_response_xml_or_text = "ERROR: TIMEOUT PROBLEM with SWORD Connection...."
+
+                while True:
+                    logger(f'CHECKING every {settings.interval_check_dans_sword_status} seconds', 'debug',
+                           self.app_name)
+                    retries, deposit_state, dans_sword_response_xml = self.is_published(receipt_link)
+                    ingest_status = deposit_state
+                    message = f'Sword ingest is {ingest_status}'
+                    target_response_xml_or_text = dans_sword_response_xml
+                    if retries:
+                        logger(
+                            f"I'm going to sleep for {settings.INTERVAL_CHECK_DANS_SWORD_STATUS} seconds. Please wait for me!",
+                            'debug', self.app_name)
+                        sleep(settings.interval_check_dans_sword_status)
+                    else:
+                        break
+
+
+        return ingest_status, message, target_response_xml_or_text
+
+    def create_bag(self, bag_dir, str_metadata_json):
+        str_dataset_xml = transform(transformer_url=self.transformer_ds_dataset_url, input=self.str_metadata)
+        str_file_xml = transform(transformer_url=self.transformer_dv_file_url, input=str_metadata_json)
+        bag = bagit.make_bag(bag_dir, checksums=["sha1"])
+        bag_metadata_dir = os.path.join(bag_dir, 'metadata')
+        os.makedirs(bag_metadata_dir)
+        # write dataset.xml
+        with open(os.path.join(bag_metadata_dir, 'dataset.xml'), mode="wt") as f:
+            f.write(str_dataset_xml)
+        # write files.xml
+        with open(os.path.join(bag_metadata_dir, 'files.xml'), mode="wt") as f:
+            f.write(str_file_xml)
+        bag = bagit.Bag(bag_dir)
+        bag.info['Created'] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.000+00:00")
+        bag.save(manifests=True)
+        logger("BagIt file created successfully!", 'debug', self.app_name)
+        bagit_path = ''
+        # validate
+        try:
+            bag.validate()
+            logger("BagIt file validated successfully!", 'debug', self.app_name)
+            zip_name = os.path.basename(bag_dir)
+            logger(f'zip_name: {zip_name}', 'debug', self.app_name)
+            zip_output_path = f'{os.path.join(settings.data_tmp_base_dir_zips, zip_name)}.zip'
+            logger(f'zip_output_path: {zip_output_path}', 'debug', self.app_name)
+            self.create_bagit_file(bag_dir, zip_output_path)
+            bagit_path = os.path.abspath(zip_output_path)
+            logger(f'bagit_path: {bagit_path}', 'debug', self.app_name)
+
+        except bagit.BagValidationError as e:
+            # TODO: throw error and cancel further action!
+            for d in e.details:
+                if isinstance(d, bagit.ChecksumMismatch):
+                    logger("expected %s to have %s checksum of %s but found %s" %
+                           (d.path, d.algorithm, d.expected, d.found), 'debug', self.app_name)
+        return bagit_path
+
+    def create_generated_files(self, bag_dir, files_metadata):
+        # Create
+        for generated_file in self.generated_files:
+            gf_filename = generated_file.get("name")
+            gf_mimetype = generated_file.get('mimetype')
+            gf_restricted = generated_file.get("restricted")
+            files_metadata.append({"name": gf_filename, "mimetype": gf_mimetype, "private": gf_restricted})
+
+            gf_transformer = generated_file.get("transformer-url")
+            gf_path = os.path.join(bag_dir, gf_filename)
+            if gf_transformer:
+                # generate file content
+                gf_str = transform(gf_transformer, self.str_metadata)
+                # write file
+                if gf_mimetype == 'application/json':
+                    gf_str = json.dumps(gf_str, indent=4)
+                with open(gf_path, mode="wt") as f:
+                    f.write(gf_str)
+                # add metadata to the file-metadata
+            else:
+                with open(gf_path, mode="wt") as f:
+                    f.write(self.str_metadata)
+            if os.path.isfile(gf_path):
+                logger(f'{gf_path} is created. The size is {os.path.getsize(gf_path)}', 'debug', self.app_name)
+            else:
+                logger(f'ERROR: {gf_path} does not exist.', 'error', self.app_name)
+                #TODO: throw error and cancel further action!
+    def create_bagit_file(self, source, destination):
+        base = os.path.basename(destination)
+        name = base.split('.')[0]
+        format = base.split('.')[1]
+        archive_from = os.path.dirname(source)
+        archive_to = os.path.basename(source.strip(os.sep))
+        logger(f'source:{source} destination:{destination}, archive_from:{archive_from}, archive_to:{archive_to}',
+               'debug', self.app_name)
+        shutil.make_archive(name, format, archive_from, archive_to)
+        shutil.move('%s.%s' % (name, format), destination)
+
+    def is_published(self, resp_link):
+        logger(f'is_publish: {resp_link} and ds_api_key: {self.ds_api_key}', 'debug', self.app_name)
+        dans_sword_response_xml = ''
+        retries = False
+        deposit_state = IngestStatus.SUCCESS
+        sword_response = requests.get(resp_link, headers=dmz_headers('API_KEY', self.ds_api_key), verify=False)
+        # logging.debug(f'sword_response.status_code: {sword_response.status_code}')
+        logger(f'sword_response.status_code: {sword_response.status_code}', 'debug', self.app_name)
+        if sword_response.status_code in [200, 201]:
+            dans_sword_response_xml = sword_response.text
+            logger(f'dans_sword_response_xml: {dans_sword_response_xml}', 'debug', self.app_name)
+            # Parse the XML data
+            root = ET.fromstring(dans_sword_response_xml)
+            # Define the namespace
+            namespace = {'atom': 'http://www.w3.org/2005/Atom'}
+            # Find the element with the desired attribute value
+            category_element = root.find('.//atom:category[@label="State"]', namespace)
+            # Retrieve the attribute value
+            deposit_state = category_element.attrib['term'].lower()
+            # Print the attribute value
+            logger(f'deposit_state: {deposit_state}', 'debug', self.app_name)
+            """Check that the deposit_state returned 'SUBMITTED'"""
+            if deposit_state in [IngestStatus.SUBMITTED, IngestStatus.FINALIZING]:
+                # Continue to poll
+                retries = True
+                logger(f'deposit_state is SUBMITTED OR FINALIZING', 'debug', self.app_name)
+            elif deposit_state == IngestStatus.ACCEPTED:
+                logger(f'deposit_state is ACCEPTED', 'debug', self.app_name)
+            else:
+                # When Failed or rejected
+                logger(f'category_element.text: {category_element.text}', 'error', self.app_name)
+        else:
+            logger(
+                f'Error. sword_response.status_code:{sword_response.status_code} sword_response.tex: '
+                f'{sword_response.text}', 'error', self.app_name)
+        return retries, deposit_state, dans_sword_response_xml

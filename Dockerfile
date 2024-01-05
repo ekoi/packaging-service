@@ -1,6 +1,13 @@
 FROM python:3.11.3-slim-bullseye
 
-ARG VERSION=0.1.5
+ARG VERSION=0.4.4.1
+
+RUN  apt-get update -y && \
+     apt-get upgrade -y && \
+     apt-get dist-upgrade -y && \
+     apt-get install -y git && \
+     apt-get install -y curl
+#     useradd -ms /bin/bash eee
 
 RUN useradd -ms /bin/bash dans
 
@@ -8,16 +15,23 @@ USER dans
 WORKDIR /home/dans
 ENV PYTHONPATH=/home/dans/packaging-service/src
 ENV BASE_DIR=/home/dans/packaging-service
-RUN mkdir -p ${BASE_DIR}
 
 COPY ./dist/*.* .
 
-#
-RUN mkdir -p ${BASE_DIR} && \
+
+RUN mkdir -p ${BASE_DIR}    && \
+    mkdir -p ${BASE_DIR}/data/tmp/bags && \
+    mkdir -p ${BASE_DIR}/data/tmp/zips  && \
     pip install --no-cache-dir *.whl && rm -rf *.whl && \
-    tar xf packaging_service-${VERSION}.tar.gz -C ${BASE_DIR} --strip-components 1
+    tar xf packaging_service-${VERSION}.tar.gz -C ${BASE_DIR} --strip-components 1 && \
+    rm ${BASE_DIR}/conf/*
 
-WORKDIR ${BASE_DIR}
+#RUN mkdir -p ${BASE_DIR} && mkdir -p ${BASE_DIR}/data/tmp/bags ${BASE_DIR}/data/tmp/zips  && \
+#    pip install --no-cache-dir *.whl && rm -rf *.whl && \
+#    tar xf packaging_service-${VERSION}.tar.gz -C ${BASE_DIR} --strip-components 1 && \
+#    rm ${BASE_DIR}/conf/*
 
-CMD ["python", "src/main.py"]
+WORKDIR ${BASE_DIR}/src
+
+CMD ["python", "main.py"]
 #CMD ["tail", "-f", "/dev/null"]

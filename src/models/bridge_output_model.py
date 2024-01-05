@@ -65,7 +65,6 @@ json_output_model = {
     "deposit-time": "",
     "deposit-status": "initial",
     "duration": 0.0,
-    "message": "Any message from Bridge. e.g: Sword ingest is accepted. It can be the same as Target Response message.",
     "response": {
         "url": "",
         "status-code": 200,
@@ -96,15 +95,5 @@ response_json = {
     "content": "",
     "content-type": ResponseContentType.XML
 }
-# z = BridgeOutputModel(response=TargetResponse())
-# z = TargetResponse.model_validate(response_json)
-# url: Optional[str]
-# status_code: Optional[int] = Field(..., alias='status-code')
-# error: Optional[str]
-# message: str
-# identifiers: Optional[List[IdentifierItem]]
-# content: str
-# content_type: TargetResponseType = Field(..., alias='content-type')
-# y = TargetResponse(url="", status_code=123, error="", message="ll", identifiers=[], content='xxx', content_type=TargetResponseType.XML)
-# x = BridgeOutputModel.model_validate(json_output_model)
-# print(x.model_dump_json(by_alias=True, indent=4))
+
+

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "packaging-service"
-version = "0.4.2"
+version = "0.4.4.1"
 description = ""
 authors = ["Eko Indarto <eko.indarto@dans.knaw.nl>"]
 readme = "README.md"
@@ -22,14 +22,14 @@ jinja2 = "^3.1.2"
 et = "^0.0.2"
 polling2 = "^0.5.0"
 sword2 = {git = "https://github.com/ekoi/python-client-sword2"}
-lxml = "^4.9.3"
+lxml = "^5.0.0"
 fastapi-keycloak = "^1.0.10"
 authlib = "^1.2.1"
 python-keycloak = "^3.3.0"
 jmespath = "^1.0.1"
 swh-deposit = "^1.3.3"
-fastapi = "^0.105.0"
-uvicorn = "^0.24.0.post1"
+fastapi = "^0.108.0"
+uvicorn = "^0.25.0"
 sqlmodel = "^0.0.14"
 loguru = "^0.7.2"
 tenacity = "^8.2.3"
@@ -38,6 +38,7 @@ pydantic = "^2.5.2"
 emoji = "^2.9.0"
 simple-file-checksum = "^1.2.2"
 fastapi-tusd = "^0.100.1"
+gunicorn = "^21.2.0"
 
 
 [build-system]
