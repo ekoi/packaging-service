@@ -1,0 +1,6 @@
+[default]
+#FastAPI
+
+transformer_name_dataverse_dataset="dataverse-dataset"
+transformer_name_dataverse_file="dataverse-file"
+

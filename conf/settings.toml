@@ -1,24 +1,24 @@
 [default]
+dynaconf_merge = true
+loggers = [{"name"="ps", "log_file"="@format {env[BASE_DIR]}/logs/ps.log", "log_level"=10, "log_format" = "%(asctime)s %(levelname)s %(name)s %(threadName)s : %(message)s" }]
+
 #FastAPI
 fastapi_title = "Packaging Service"
 fastapi_description = "This service supports .."
+db_dialect="sqlite"
+db_url = "@format ///{env[BASE_DIR]}/data/db/dans_packaging.db"
+data_db_file = "sqlite:{@format {env[BASE_DIR]}/data/db/dans_packaging.db}"
+data_tmp_base_dir = "@format {env[BASE_DIR]}/data/tmp"
 
-
-data_db_file = "@format {env[BASE_DIR]}/data/db/dans_packaging.db"
-data_tmp_base_dir_upload = "@format {env[BASE_DIR]}/data/tmp/uploads"
-data_tmp_base_dir_bags = "@format {env[BASE_DIR]}/data/tmp/bags"
-data_tmp_base_dir_zips = "@format {env[BASE_DIR]}/data/tmp/zips"
+# In the implementation, APP_NAME will be replace with app_name from Metadata record using str.replace(old, new)
+#data_tmp_base_dir_inbox =  "@format {env[BASE_DIR]}/data/tmp/-APP_NAME-/inbox"
+prefix_generated_file = "__generated__"
+modules_dir = "@format {env[BASE_DIR]}/src/modules"
+tus_files_dir = "@format {env[BASE_DIR]}/data/tmp/tus"
 
 jinja_template_dir =  "@format {env[BASE_DIR]}/resources/datastation/metadata"
-repo_selection_url = "http://0.0.0.0:2810/repository"
-transformer_url = "http://localhost:1745/transform"
 
-#ca_certs_file = "/Users/akmi/Downloads/sarchaeology-dans-knaw-nl.pem"
-ca_certs_file = "/Users/akmi/git/ekoi/poc-4-wim-ssl/packaging-service/resources/misc/dar-cacert.pem"
-#interval in seconds
-interval_check_sword_status = 15
+assistant_config_url = "https://repository-assistant.labs.dans.knaw.nl" #http://localhost:2810"
+transformer_url = "https://transformer.labs.dans.knaw.nl/transform" #http://localhost:1745l/transform"
+deployment= "production"
 
-
-log_file = "@format {env[BASE_DIR]}/logs/ps.log"
-log_level = 10
-log_format = "%(asctime)s %(levelname)s %(name)s %(threadName)s : %(message)s"

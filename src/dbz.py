@@ -4,12 +4,13 @@ from contextlib import closing
 from enum import StrEnum, auto
 
 from jinja2 import Environment, BaseLoader
-from sqlalchemy import text
+from sqlalchemy import text, delete, inspect
+from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import NoResultFound
 from sqlmodel import SQLModel, Field, create_engine, Session, select
 from datetime import datetime
 
-from typing import List, Optional
+from typing import List, Optional, Sequence, Any
 from pydantic import BaseModel
 
 from src.models.app_model import OwnerAssetsModel, Asset, Target
@@ -116,14 +117,27 @@ class DatabaseManager:
     def __init__(self, db_dialect: str, db_url: str):
         self.conn_url = f'{db_dialect}:{db_url}'
         self.engine = create_engine(self.conn_url, pool_size=10)
-        # TODO: VERY IMPORTANT!!! REFACTOR - Using sqlmodel.
         # TODO: Remove db_file = self.conn_url.split("///")[1]
         # TODO use self.engine
         self.db_file = self.conn_url.split("///")[1]  # sqlite:////
         # self.engine = create_engine("sqlite:////Users/akmi/git/ekoi/poc-4-wim/packaging-service/data/db/abc.db")
+        # self.session_local = sessionmaker(autocommit=False, autoflush=False, bind=self.engine)
+
+    # def get_db(self):
+    #     database = self.session_local()
+    #     try:
+    #         yield database
+    #     finally:
+    #         database.close()
 
     def create_db_and_tables(self):
-        SQLModel.metadata.create_all(self.engine)
+        # checkfirst=True means if not exist create one, otherwise skip it.
+        # But it doesn't work in multiple uvicorn workers
+        if not inspect(self.engine).has_table("Dataset"):
+            SQLModel.metadata.create_all(self.engine, checkfirst=True)
+        else:
+            from src.commons import logger
+            logger('TABLES ALREADY CREATED', 'debug', 'ps')
 
     def insert_dataset_and_target_repo(self, ds_record: Dataset, repo_records: [TargetRepo]) -> type(None):
         with Session(self.engine) as session:
@@ -150,6 +164,16 @@ class DatabaseManager:
                 session.delete(file_record)
                 session.commit()
 
+    def delete_all(self) -> type(None):
+        with Session(self.engine) as session:
+            tabs = {}
+            for _ in [DataFile, TargetRepo, Dataset]:
+                statement = delete(_)
+                result = session.exec(statement)
+                session.commit()
+                tabs.update({str(_.__qualname__): result.rowcount})
+            return tabs
+
     def is_dataset_exist(self, dataset_id: str) -> bool:
         with Session(self.engine) as session:
             statement = select(Dataset).where(Dataset.id == dataset_id)
@@ -160,7 +184,7 @@ class DatabaseManager:
     def is_dataset_published(self, dataset_id: str) -> bool:
         with Session(self.engine) as session:
             statement = select(Dataset).where(Dataset.id == dataset_id,
-                                              Dataset.release_version == ReleaseVersion.PUBLISH)
+                                              Dataset.release_version == ReleaseVersion.PUBLISHED)
             results = session.exec(statement)
             result = results.one_or_none()
         return result is not None
@@ -170,6 +194,12 @@ class DatabaseManager:
             statement = select(Dataset).where(Dataset.id == ds_id)
             results = session.exec(statement)
             result = results.one_or_none()
+        return result
+
+    def find_all_datasets(self) -> Sequence[Dataset]:
+        with Session(self.engine) as session:
+            results = session.exec( select(Dataset))
+            result = results.all()
         return result
 
     def find_dataset_and_targets(self, ds_id: str) -> Asset:
@@ -222,12 +252,14 @@ class DatabaseManager:
             result = results.all()
         return result
 
-    def execute_raw_sql(self) -> [DataFile]:
+    def execute_raw_sql(self) -> Any:
+        rst = []
         with Session(self.engine) as session:
-            statement = text("select json_object('metadata-id', ds.id, 'title', ds.title) from dataset ds")
-            results = session.execute(statement)
-            result = results.all()
-        return result
+            results = session.execute(text("select json_object('metadata-id', ds.id, 'owner', ds.owner_id,  'title', "
+                                           "ds.title, 'release-version', ds.release_version) from dataset ds")).all()
+            for result in results:
+                rst.append(json.loads(result[0]))
+        return rst
 
     def find_file_by_dataset_id_and_name(self, ds_id: str, file_name: str) -> DataFile:
         with Session(self.engine) as session:
@@ -316,6 +348,18 @@ class DatabaseManager:
             if md_record:
                 # md_record.release_version = ReleaseVersion.PUBLISH
                 md_record.state = DatasetWorkState.READY
+                session.add(md_record)
+                session.commit()
+                session.refresh(md_record)
+
+    def set_dataset_published(self, id: str) -> type(None):
+        with Session(self.engine) as session:
+            statement = select(Dataset).where(Dataset.id == id)
+            results = session.exec(statement)
+            md_record = results.one_or_none()
+            if md_record:
+                # md_record.release_version = ReleaseVersion.PUBLISH
+                md_record.release_version = ReleaseVersion.PUBLISHED
                 session.add(md_record)
                 session.commit()
                 session.refresh(md_record)
@@ -431,109 +475,3 @@ class ProgressModel(BaseModel):
     targets: List[ProgressTarget]
 
 
-template_deposit_response_json = Environment(loader=BaseLoader()).from_string('''
- {
-        "metadata-id": "{{mid}}",
-        "title": "Amalin Title",
-        "created-date": "2023-11-26 16:15:48.238064",
-        "submitted-date": "2023-11-27 12:14:23.755198",
-        "saved-date": "2023-11-27 12:14:23.755198",
-        "release-version": "PUBLISH",
-        "targets": [
-            {
-                "target-repo-name": "demo.ssh.datastations.nl",
-                "target-repo-display-name": "SSH Datastation",
-                "target-url": "https://demo.sword2.ssh.datastations.nl/collection/1",
-                "ingest-status": "processing",
-                "target-output": None
-            }
-        ]
-    }
-''')
-
-json_data = [
-    {
-        "metadata-id": "cc66cd92-7e46-455c-b18b-7e84ef6ab797",
-        "eko": "indarto",
-        "title": "Amalin Title",
-        "created-date": "2023-11-26 16:15:48.238064",
-        "submitted-date": "2023-11-27 12:14:23.755198",
-        "saved-date": "2023-11-27 12:14:23.755198",
-        "release-version": "PUBLISH",
-        "targets": [
-            {
-                "target-repo-name": "demo.ssh.datastations.nl",
-                "target-repo-display-name": "SSH Datastation",
-                "target-url": "https://demo.sword2.ssh.datastations.nl/collection/1",
-                "ingest-status": "processing",
-                "target-output": None
-            }
-        ]
-    }
-]
-
-
-# Convert JSON to Pydantic model
-
-
-def main():
-    #
-    db_manager = DatabaseManager('sqlite',
-                                 '////Users/akmi/git/ekoi/poc-4-wim/packaging-service/data/db/dans_packaging.db')
-    try:
-        s = db_manager.are_files_uploaded('jad2db079-ad2b-44c3-afb8-989bf9c551bc')
-        print(s)
-    except NoResultFound as e:
-        print(e)
-
-#     import inspect
-#     print(inspect.getmembers(db_manager))
-#     x = db_manager.execute_raw_sql()
-# print(x)
-# #     db_manager.create_db_and_tables()
-# db_manager.insert_metadata_and_target_repo_record(md_record=Metadata(md_id="x1", md="abac", owner_id="eko"
-#                                                                  , app_name="ohsmart"),
-#                                               target_repo_records=[TargetRepo(target_repo_name="trm",
-#                                                                               target_repo_display_name="disp",
-#                                                                               target_url="the url",
-#                                                                               target_repo_config="mmmm")])
-# db_manager.insert_file_records([Files(md_id="x1", file_name="xyz")])
-# db_manager.delete_file_by_md_id_and_filename("x1", "abc")
-# db_manager.update_metadata(md_id='x1', release_version="hello", title="EKO TITLE", md="HELLLLLOOOOOOO")
-# db_manager.replace_targets_record(md_id="x1", target_repo_records=[TargetRepo(target_repo_name="tlskfdljrm",
-#                                                                             target_repo_display_name="di---sp",
-#                                                                             target_url="t---he url",
-#                                                                             target_repo_config="m----mmm")])
-
-# s = db_manager.are_files_uploaded("x1")
-# s = db_manager.find_files_by_metadata_id("x1")
-# x=[i.file_name for i in db_manager.find_files_by_metadata_id("x1")]
-# zz = db_manager.is_ready_for_ingest_by_metadata_id(md_id="28f2143d-2d43-4146-8164-bd09d1d2b842")
-
-# print(type(zz))
-# print(zz)
-#
-# for z in zz:
-#     # u = [dict(r) for r in z]
-#     v = json.dumps([dict(r) for r in z], default=alchemyencoder)
-#     print(v)
-#     # print(u)
-# print(type(u))
-# pydantic_models = [ProgressModel(**item) for item in json_data]
-#
-# print(pydantic_models)
-# print("-----")
-# for model in pydantic_models:
-#     # print(model.metadata_id, model.title, model.created_date, model.release_version)
-#     print(model.json())
-#     for target in model.targets:
-#         print(target.target_repo_name, target.target_repo_display_name, target.target_url, target.ingest_status,
-#               target.target_output)
-
-#
-# klm = []
-
-#
-# #
-# if __name__ == "__main__":
-#     main()

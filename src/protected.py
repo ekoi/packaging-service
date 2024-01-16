@@ -14,9 +14,13 @@ import requests
 from fastapi import APIRouter, Request, UploadFile, Form, File, HTTPException
 from starlette.responses import FileResponse
 
+from fastapi.encoders import jsonable_encoder
+from fastapi.responses import JSONResponse
+
 # Import custom modules and classes
 from src.models.assistant_datamodel import RepoAssistantDataModel, Target
-from src.commons import settings, logger, data, db_manager, get_class, assistant_repo_headers, handle_ps_exceptions
+from src.commons import settings, logger, data, db_manager, get_class, assistant_repo_headers, handle_ps_exceptions, \
+    send_mail
 from src.dbz import TargetRepo, DataFile, Dataset, ReleaseVersion, DepositStatus, FilePermissions, \
     DatasetWorkState, DataFileWorkState
 from src.models.app_model import ResponseDataModel, InboxDatasetDataModel
@@ -54,18 +58,22 @@ async def register_module(name: str, bridge_file: Request, overwrite: bool | Non
 @handle_ps_exceptions
 async def get_inbox_dataset_dc(request: Request, release_version: ReleaseVersion) -> (
         Callable)[[Request, ReleaseVersion], Awaitable[InboxDatasetDataModel]]:
+    metadata = await request.json()
+    logger(f'METADATA: \n{metadata}', 'debug', 'ps')
     return InboxDatasetDataModel(assistant_name=request.headers.get('assistant-config-name'),
                                  release_version=release_version, owner_id=request.headers.get('user-id'),
                                  title=request.headers.get('title', default=''),
-                                 target_creds=request.headers.get('targets-credentials'), metadata=await request.json())
+                                 target_creds=request.headers.get('targets-credentials'), metadata=metadata)
 
 
 # Endpoint to process inbox dataset metadata
 @router.post("/inbox/dataset/{release_version}")
 async def process_inbox_dataset_metadata(request: Request, release_version: ReleaseVersion) -> {}:
     idh = await get_inbox_dataset_dc(request, release_version)
-    logger(f'Start inbox: {idh}', 'debug', 'ps')
+    logger(f'Start inbox - release version: {release_version}   - assistant name: {idh.assistant_name}', 'debug', 'ps')
     datasetId = jmespath.search("id", idh.metadata)
+    if db_manager.is_dataset_published(datasetId):
+        raise HTTPException(status_code=400, detail='Dataset is already published.')
     repo_config = retrieve_targets_configuration(idh.assistant_name)
     try:
         repo_assistant = RepoAssistantDataModel.model_validate_json(
@@ -104,8 +112,6 @@ def process_db_records(datasetId, db_record_metadata, db_recs_target_repo, regis
     if not db_manager.is_dataset_exist(datasetId):
         db_manager.insert_dataset_and_target_repo(db_record_metadata, db_recs_target_repo)
     else:
-        if db_manager.is_dataset_published(datasetId):
-            raise HTTPException(status_code=400, detail='Dataset is already published.')
         db_manager.update_metadata(db_record_metadata)
         db_manager.replace_targets_record(datasetId, db_recs_target_repo)
     if registered_files:
@@ -136,7 +142,6 @@ def process_metadata_record(datasetId, idh, repo_assistant, tmp_dir):
 
         fp = FilePermissions.PRIVATE if f_permission[0] else FilePermissions.PUBLIC
         registered_files.append(DataFile(name=f_name_tobe_added, path=file_path, ds_id=datasetId, permissions=fp))
-
     ready_for_ingest = DatasetWorkState.READY if len(files_name_to_be_added) == 0 else DatasetWorkState.NOT_READY
     db_record_metadata = Dataset(id=datasetId, title=idh.title, owner_id=idh.owner_id,
                                  app_name=repo_assistant.app_name, release_version=idh.release_version,
@@ -265,6 +270,7 @@ def follow_bridge(datasetId) -> type(None):
             result.append(m)
         else:
             logger(f'Executing {bridge_class} is FAILED. Resp: {m.model_dump_json()}', 'debug', 'ps')
+            send_mail(f'Executing {bridge_class} is FAILED.', f'Resp:\n {m.model_dump_json()}')
             break
 
     logger(f"----------- END follow_bridge for datasetId: {datasetId}", 'debug', 'ps')
@@ -274,8 +280,12 @@ def follow_bridge(datasetId) -> type(None):
 @handle_ps_exceptions
 def retrieve_targets_configuration(assistant_config_name: str) -> str:
     repo_url = f'{settings.ASSISTANT_CONFIG_URL}/{assistant_config_name}'
+    logger('>>>>>', 'debug', 'ps')
+    logger(f'repo_url: {repo_url}', 'debug', 'ps')
+    logger('<<<<<', 'debug', 'ps')
     rsp = requests.get(repo_url, headers=assistant_repo_headers)
     if rsp.status_code != 200:
+        logger(f'repo_url: {repo_url} NOT FOUND!', 'error', 'ps')
         raise HTTPException(status_code=404, detail=f"{repo_url} not found")
     repo_config = rsp.json()
     logger(f'Given repo config: {json.dumps(repo_config)}', 'debug', 'ps')
@@ -304,3 +314,21 @@ async def get_log(app_name: str):
 @router.get("/logs-list", include_in_schema=False)
 async def get_log_list():
     return os.listdir(path=f"{os.environ['BASE_DIR']}/logs")
+
+
+@router.get("/db-download", include_in_schema=False)
+async def get_db():
+    return FileResponse(path=settings.DB_URL, filename="dans_packaging.db",
+                        media_type='application/octet-stream')
+
+
+@router.delete("/db-delete-all", include_in_schema=False)
+async def delete_all_db():
+    logger('Deleting all', 'debug', 'ps')
+    return db_manager.delete_all()
+
+
+@router.get("/datasets", include_in_schema=False)
+async def get_db():
+    logger("Finding datasets", "debug", "ps")
+    return JSONResponse(content=db_manager.execute_raw_sql())

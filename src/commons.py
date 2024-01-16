@@ -2,15 +2,20 @@ import logging
 import os
 import platform
 import re
+import smtplib
 import time
 from datetime import datetime
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from functools import wraps
 from logging.handlers import TimedRotatingFileHandler
-from typing import Any, Callable
+from typing import Any, Callable, List
 
 import requests
 from dynaconf import Dynaconf
 from fastapi import HTTPException
+from fastapi_mail import ConnectionConfig, MessageSchema
+from pydantic import EmailStr, BaseModel
 
 from src.dbz import DatabaseManager, DepositStatus
 from src.models.bridge_output_model import BridgeOutputDataModel, TargetResponse
@@ -186,15 +191,21 @@ def handle_ps_exceptions(func) -> Any:
             rv = func(*args, **kwargs)
             return rv
         except HTTPException as ex:
+            send_mail(f'handle_ps_exceptions: Errors in {func.__name__}', f'status code: {ex.status_code}.'
+                                                                          f'\nDetails: {ex.detail}.')
             logger(
                 f'handle_ps_exceptions: Errors in {func.__name__}. status code: {ex.status_code}. Details: {ex.detail}. '
                 f'args: {args}', 'debug', 'ps')
             raise ex
         except Exception as ex:
+            send_mail(f'handle_ps_exceptions: Errors in {func.__name__}', f'{ex} - '
+                                                                          f'{ex.with_traceback(ex.__traceback__)}.')
             logger(f'handle_ps_exceptions: Errors in {func.__name__}: {ex} - {ex.with_traceback(ex.__traceback__)}',
                    'debug', 'ps')
             raise ex
         except BaseException as ex:
+            send_mail(f'handle_ps_exceptions: Errors in {func.__name__}', f'{ex} - '
+                                                                          f'{ex.with_traceback(ex.__traceback__)}.')
             logger(f'handle_ps_exceptions: Errors in {func.__name__}:  {ex} - {ex.with_traceback(ex.__traceback__)}',
                    'debug', 'ps')
             raise ex
@@ -226,8 +237,36 @@ class InspectBridgeModule:
 
         return None
 
-    class PackagingServiceException(Exception):
-        def __init__(self, bom: BridgeOutputDataModel, message: str):
-            self.bom = bom
-            self.message = message
-            super().__init__(self.message)
+
+# class PackagingServiceException(Exception):
+#     def __init__(self, bom: BridgeOutputDataModel, message: str):
+#         self.bom = bom
+#         self.message = message
+#         super().__init__(self.message)
+
+def send_mail(subject: str, text: str):
+    sender_email = settings.MAIL_USR
+    app_password = settings.MAIL_PASS  #
+    # recipient_emails = ["eko.indarto@dans.knaw.nl", "eko.indarto.huc@di.huc.knaw.nl", "umar.fth@gmail.com"]
+    recipient_email = settings.MAIL_TO
+    # Create the email message
+    subject = subject
+    body = text
+    message = MIMEMultipart()
+    message['From'] = sender_email
+    message['To'] = recipient_email
+    message['Subject'] = subject
+    message.attach(MIMEText(body, 'plain'))
+
+    # Establish a connection to the SMTP server
+    try:
+        with smtplib.SMTP("smtp.gmail.com", 587) as server:
+            server.starttls()
+            server.login(sender_email, app_password)
+            text = message.as_string()
+            server.sendmail(sender_email,  recipient_email, text)
+        print("Email sent successfully!")
+        logger(f"Email sent successfully to {recipient_email}", "debug", "ps")
+    except Exception as e:
+        print(f"Error: {e}")
+        logger(f"Unsuccessful sent email to {recipient_email}", "error", "ps")

@@ -1,0 +1,23 @@
+[default]
+dynaconf_merge = true
+loggers = [{"name"="faircore4eosc", "log_file"="@format {env[BASE_DIR]}/logs/faircore4eosc.log", "log_level"=10, "log_format" = "%(asctime)s %(levelname)s %(name)s %(threadName)s : %(message)s" }]
+
+swh_delay_poolling = 120
+transformer_name_sword_payload="form-metadata-sword"
+transformer_name_swh_to_dataverse="form-metadata-to-dataverse"
+swh_api_max_retries = 25
+data_tmp_base_dir_sword = "@format {env[BASE_DIR]}/data/tmp/sword"
+
+
+
+[default.keycloak_faircore4eosc_dev]
+    url="http://localhost:9090"
+    realms="faircore4eosc"
+    client_id="faircore4eosc-auth"
+
+[default.keycloak_faircore4eosc_demo]
+    url="https://keycloak.dansdemo.nl"
+    realms="faircore4eosc"
+    client_id="faircore4eosc-auth"
+
+

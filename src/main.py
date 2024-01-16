@@ -22,9 +22,18 @@ Dependencies:
 """
 
 import importlib.metadata
-import logging
 import os
 from contextlib import asynccontextmanager
+
+import multiprocessing
+
+from gunicorn.app.wsgiapp import WSGIApplication
+
+from fastapi_events.dispatcher import dispatch
+from fastapi_events.middleware import EventHandlerASGIMiddleware
+from fastapi_events.handlers.local import local_handler
+
+from datetime import datetime
 
 import emoji
 import uvicorn
@@ -38,12 +47,13 @@ from starlette import status
 from starlette.middleware.cors import CORSMiddleware
 
 from src import public, protected, tus_files
-from src.commons import settings, setup_logger, data, InspectBridgeModule, db_manager
+from src.commons import settings, setup_logger, data, InspectBridgeModule, db_manager, logger, send_mail
 
 from src.tus_files import upload_files
 
-# logging.basicConfig(filename=settings.LOG_FILE, level=settings.LOG_LEVEL,
-#                     format=settings.LOG_FORMAT)
+from fastapi_events.handlers.local import local_handler
+from fastapi_events.typing import Event
+
 
 @asynccontextmanager
 async def lifespan(application: FastAPI):
@@ -62,7 +72,11 @@ async def lifespan(application: FastAPI):
 
     """
     print('start up')
-    db_manager.create_db_and_tables()
+    if not os.path.exists(settings.DB_URL):
+        logger('Creating database', 'debug', 'ps')
+        db_manager.create_db_and_tables()
+    else:
+        logger('Database already exists', 'debug', 'ps')
     iterate_saved_bridge_module_dir()
     print(f'Available bridge classes: {sorted(list(data.keys()))}')
     print(emoji.emojize(':thumbs_up:'))
@@ -85,6 +99,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.add_middleware(EventHandlerASGIMiddleware,
+                   handlers=[local_handler])   # registering handler(s)
 
 # Todo: This is encrypted in the .secrets.toml
 api_keys = [settings.DANS_PACKAGING_SERVICE_API_KEY]
@@ -127,12 +144,13 @@ def auth_header(request: Request, api_key: str = Depends(oauth2_scheme)):
                     realm_name=keycloak_env.REALMS
                 )
                 user_info = keycloak_openid.userinfo(api_key)
-                logging.debug(user_info.items())
+                logger(str(user_info.items()), 'debug', "ps")
+
                 return
             except KeycloakAuthenticationError as e:
-                logging.debug(e.response_code)
+                logger(e.response_code, 'error', 'ps')
             except BaseException as e:
-                logging.debug(e)
+                logger(e, 'error', 'ps')
 
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -143,8 +161,9 @@ def auth_header(request: Request, api_key: str = Depends(oauth2_scheme)):
 app.include_router(public.router, tags=["Public"], prefix="")
 app.include_router(protected.router, tags=["Protected"], prefix="", dependencies=[Depends(auth_header)])
 
-# app.include_router(upload_files, prefix="/files", dependencies=[Depends(auth_header)])
-app.include_router(tus_files.router, prefix="", dependencies=[Depends(auth_header)])
+if settings.DEPLOYMENT != "production":
+    app.include_router(upload_files, prefix="/files", dependencies=[Depends(auth_header)])
+app.include_router(tus_files.router, prefix="")
 
 app.add_middleware(
     CORSMiddleware,
@@ -154,7 +173,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
+# @app.get("/eko")
+# def eko():
+#
+#     return ""
 @app.get('/')
 def info():
     """
@@ -164,8 +186,7 @@ def info():
         dict: A dictionary containing the name and version of the packaging service.
 
     """
-    logging.info("packaging service")
-    logging.debug("info")
+    # dispatch("cat ok", payload={"name": "EKO INDarto"})
     return {"name": "packaging-service", "version": __version__}
 
 
@@ -185,20 +206,6 @@ def iterate_saved_bridge_module_dir():
                 data.update(cls_name)
 
 
-if __name__ == "__main__":
-    import platform
-
-    print(f'Python version: {platform.python_version()}')
-    setup_logger()
-
-    uvicorn.run("src.main:app", host="0.0.0.0", port=10124, reload=False, workers= 1)
-
-
-import multiprocessing
-
-from gunicorn.app.wsgiapp import WSGIApplication
-
-
 class PackagingServiceApplication(WSGIApplication):
     def __init__(self, app_uri, options=None):
         self.options = options or {}
@@ -216,6 +223,7 @@ class PackagingServiceApplication(WSGIApplication):
 
 
 def run():
+    logger('MULTIPLE WORKERS', 'debug', 'ps')
     options = {
         "bind": "0.0.0.0:10124",
         "workers": (multiprocessing.cpu_count() * 2) + 1,
@@ -223,6 +231,26 @@ def run():
     }
     PackagingServiceApplication("src.main:app", options).run()
 
-# if __name__ == "__main__":
-#     setup_logger()
-#     run()
+
+@local_handler.register(event_name="cat*")
+def handle_all_cat_events(event: Event):
+    event_name, payload = event
+    print(f'event_name: {event_name}, payload: {payload}')
+
+if __name__ == "__main__":
+    send_mail(f'{settings.DEPLOYMENT}: Starting the packaging service',
+              f'Started at {datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S.%f")}')
+    setup_logger()
+    logger('START Packaging Service', 'debug', 'ps')
+
+    import platform
+
+    print(f'Python version: {platform.python_version()}')
+    logger(f'Python version: {platform.python_version()}', 'debug', 'ps')
+
+    if os.environ.get('run-local'):
+        logger('SINGLE WORKER', 'debug', 'ps')
+        uvicorn.run("src.main:app", host="0.0.0.0", port=10124, reload=False, workers=1)
+
+    else:
+        run()

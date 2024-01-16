@@ -1,0 +1,5 @@
+[default]
+#FastAPI
+
+transformer_name_zenodo_dataset="zenodo-dataset"
+transformer_name_zenodo_file="zenodo-file"

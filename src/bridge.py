@@ -94,5 +94,5 @@ class Bridge(ABC):
             logger(f'Save state for dataset_id: {self.dataset_id}. Target: {self.target.repo_name}', 'debug'
                    , self.app_name)
         db_manager.update_target_repo_deposit_status(TargetRepo(ds_id=self.dataset_id, name=self.target.repo_name,
-                                                                deposit_status=deposit_status, output=output,
+                                                                deposit_status=deposit_status, target_output=output,
                                                                 duration=duration))

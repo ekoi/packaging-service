@@ -1,0 +1,15 @@
+[default]
+dynaconf_merge = true
+loggers = [{"name"="rda", "log_file"="@format {env[BASE_DIR]}/logs/rda.log", "log_level"=10, "log_format" = "%(asctime)s %(levelname)s %(name)s %(threadName)s : %(message)s" }]
+
+[default.keycloak_rda_local]
+    url="http://localhost:9090"
+    realms="rda"
+    client_id="rda-auth"
+
+[default.keycloak_rda_demo]
+    url="https://keycloak.dansdemo.nl"
+    realms="rda"
+    client_id="rda-auth"
+
+

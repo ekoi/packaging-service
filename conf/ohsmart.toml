@@ -1,0 +1,24 @@
+[default]
+dynaconf_merge = true
+loggers = [{"name"="ohsmart", "log_file"="@format {env[BASE_DIR]}/logs/ohsmart.log", "log_level"=10, "log_format" = "%(asctime)s %(levelname)s %(name)s %(threadName)s : %(message)s" }]
+
+#interval in seconds
+interval_check_sword = 30
+
+
+[default.keycloak_ohsmart_demo]
+    url="https://keycloak.dansdemo.nl"
+    realms="ohsmart"
+    client_id="ohsmart-auth"
+
+[default.keycloak_ohsmart_dev]
+    url="http://localhost:9090"
+    realms="ohsmart"
+    client_id="ohsmart-auth"
+
+[default.keycloak_ohsmart_prod]
+    url="keycloak.dans.knaw.nl"
+    realms="ohsmart"
+    client_id="ohsmart-auth"
+
+

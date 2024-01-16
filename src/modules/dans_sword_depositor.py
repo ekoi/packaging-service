@@ -42,7 +42,7 @@ class DansSwordDepositor(Bridge):
         if generated_files: db_manager.insert_datafiles(generated_files)
         # Update the file-metadata: added some attributes
         md_json.update({"file-metadata": files_metadata})
-        # updating mimetype of user'suploaded files since no mimetype in the form-metadata submission
+        # updating mimetype of user's uploaded files since no mimetype in the form-metadata submission
         for _ in db_manager.find_non_generated_files(ds_id=self.dataset_id):
             f_json = jmespath.search(f'[?name == \'{_.name}\']', files_metadata)
             logger(f'{self.__class__.__name__} f_json: {f_json}', 'debug', self.app_name)
@@ -58,7 +58,7 @@ class DansSwordDepositor(Bridge):
             logger(f'Successfully ingested {output_response}: {output_response}', 'debug', self.app_name)
             logger(f'Deleting bagit file: {bagit_path}', 'debug', self.app_name)
             os.remove(bagit_path)
-            os.rmdir(self.dataset_dir)
+            shutil.rmtree(self.dataset_dir)
 
         return output_response
 
@@ -92,6 +92,7 @@ class DansSwordDepositor(Bridge):
                 else:
                     break
         bridge_output_model = BridgeOutputDataModel(message=target_resp.message, response=target_resp)
+        bridge_output_model.deposit_time = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S.%f")
         bridge_output_model.deposit_status = deposit_state
         return bridge_output_model
 
@@ -182,14 +183,12 @@ class DansSwordDepositor(Bridge):
             deposit_state = category_element.attrib['term'].lower()
             logger(f'deposit_state: {deposit_state}', 'debug', self.app_name)
             if deposit_state == DepositStatus.ACCEPTED.value:
-                link_element = root.find('.//atom:link[@rel="self"][@href]', namespace)
+                # link_element = root.find('.//atom:link[@rel="self"][@href]', namespace)
+                db_manager.set_dataset_published(self.dataset_id)
                 url = root.find('.//atom:entry/atom:link[@rel="self"][@href]', namespace).attrib['href']
                 doi = url.split("doi.org/")[1]
                 ideni = IdentifierItem(value=doi, url=url, protocol=IdentifierProtocol('doi'))
                 identifier_items.append(ideni)
-
-
-
 
         else:
             logger(
