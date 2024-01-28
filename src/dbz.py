@@ -4,7 +4,7 @@ from contextlib import closing
 from enum import StrEnum, auto
 
 from jinja2 import Environment, BaseLoader
-from sqlalchemy import text, delete, inspect
+from sqlalchemy import text, delete, inspect, UniqueConstraint
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import NoResultFound
 from sqlmodel import SQLModel, Field, create_engine, Session, select
@@ -44,6 +44,7 @@ class DepositStatus(StrEnum):
     SUBMITTED = auto()
     PUBLISHED = auto()
     UNDEFINED = auto()
+    DEPOSITED = auto()
 
 
 class DataFileWorkState(StrEnum):
@@ -81,6 +82,9 @@ class Dataset(SQLModel, table=True):
 # Define the TargetRepo model
 class TargetRepo(SQLModel, table=True):
     __tablename__ = "target_repo"
+    __table_args__ = (
+        UniqueConstraint("ds_id", "name", name="unique_dataset_id_target_repo_name"),
+    )
     id: int = Field(default=None, primary_key=True)
     ds_id: str = Field(foreign_key="dataset.id")
     name: str = Field(index=True)
@@ -196,6 +200,23 @@ class DatabaseManager:
             result = results.one_or_none()
         return result
 
+    def find_target_repo(self, ds_id: str, target_name: str) -> TargetRepo:
+        print(ds_id)
+        with Session(self.engine) as session:
+            statement = select(TargetRepo).where(TargetRepo.ds_id == ds_id, TargetRepo.name == target_name)
+            results = session.exec(statement)
+            result = results.one_or_none()
+        return result
+
+    def find_unfinished_target_repo(self, ds_id: str) -> Sequence[TargetRepo]:
+        print(ds_id)
+        with Session(self.engine) as session:
+            statement = select(TargetRepo).where(TargetRepo.ds_id == ds_id,
+                                                 TargetRepo.deposit_status != DepositStatus.FINISH).order_by(TargetRepo.id)
+            results = session.exec(statement)
+            result = results.all()
+        return result
+
     def find_all_datasets(self) -> Sequence[Dataset]:
         with Session(self.engine) as session:
             results = session.exec( select(Dataset))
@@ -232,7 +253,7 @@ class DatabaseManager:
 
     def find_target_repos_by_ds_id(self, ds_id: str) -> [TargetRepo]:
         with Session(self.engine) as session:
-            statement = select(TargetRepo).where(TargetRepo.ds_id == ds_id)
+            statement = select(TargetRepo).where(TargetRepo.ds_id == ds_id).order_by(TargetRepo.id)
             results = session.exec(statement)
             result = results.all()
         # or the compact version: session.exec(select(TargetRepo)).all()
@@ -285,7 +306,7 @@ class DatabaseManager:
                     asset.submitted_date = dataset.submitted_date
                     asset.release_version = dataset.release_version
                     asset.version = dataset.version
-                    targets_repo = session.exec(select(TargetRepo).where(TargetRepo.ds_id == dataset.id)).all()
+                    targets_repo = session.exec(select(TargetRepo).where(TargetRepo.ds_id == dataset.id).order_by(TargetRepo.id)).all()
                     for target_repo in targets_repo:
                         target = Target()
                         target.repo_name = target_repo.name
