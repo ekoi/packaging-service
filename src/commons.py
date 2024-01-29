@@ -81,6 +81,9 @@ def get_class(kls) -> Any:
 def transform(transformer_url: str, str_tobe_transformed: str) -> str:
     logger(f'transformer_url: {transformer_url}', 'debug', 'ps')
     logger(f'str_tobe_transformed: {str_tobe_transformed}', 'debug', 'ps')
+    if type(str_tobe_transformed) is not str:
+        raise ValueError(f"Error - str_tobe_transformed is not a string. It is : {type(str_tobe_transformed)}")
+
     transformer_response = requests.post(transformer_url, headers=transformer_headers, data=str_tobe_transformed)
     if transformer_response.status_code == 200:
         transformed_metadata = transformer_response.json()
@@ -191,8 +194,8 @@ def handle_ps_exceptions(func) -> Any:
             rv = func(*args, **kwargs)
             return rv
         except HTTPException as ex:
-            send_mail(f'handle_ps_exceptions: Errors in {func.__name__}', f'status code: {ex.status_code}.'
-                                                                          f'\nDetails: {ex.detail}.')
+            # send_mail(f'handle_ps_exceptions: Errors in {func.__name__}', f'status code: {ex.status_code}.'
+            #                                                               f'\nDetails: {ex.detail}.')
             logger(
                 f'handle_ps_exceptions: Errors in {func.__name__}. status code: {ex.status_code}. Details: {ex.detail}. '
                 f'args: {args}', 'debug', 'ps')
@@ -255,18 +258,22 @@ def send_mail(subject: str, text: str):
     message = MIMEMultipart()
     message['From'] = sender_email
     message['To'] = recipient_email
-    message['Subject'] = subject
+    message['Subject'] = f'{settings.DEPLOYMENT}: {subject}'
     message.attach(MIMEText(body, 'plain'))
 
-    # Establish a connection to the SMTP server
-    try:
-        with smtplib.SMTP("smtp.gmail.com", 587) as server:
-            server.starttls()
-            server.login(sender_email, app_password)
-            text = message.as_string()
-            server.sendmail(sender_email,  recipient_email, text)
-        print("Email sent successfully!")
-        logger(f"Email sent successfully to {recipient_email}", "debug", "ps")
-    except Exception as e:
-        print(f"Error: {e}")
-        logger(f"Unsuccessful sent email to {recipient_email}", "error", "ps")
+    if settings.get('send_mail', True):
+        # Establish a connection to the SMTP server
+        try:
+            with smtplib.SMTP("smtp.gmail.com", 587) as server:
+                server.starttls()
+                server.login(sender_email, app_password)
+                text = message.as_string()
+                server.sendmail(sender_email,  recipient_email, text)
+            print("Email sent successfully!")
+            logger(f"Email sent successfully to {recipient_email}", "debug", "ps")
+        except Exception as e:
+            print(f"Error: {e}")
+            logger(f"Unsuccessful sent email to {recipient_email}", "error", "ps")
+
+    else:
+        logger(f"{settings.get('send_mail', False)} - Sending email is disabled.", 'debug', 'ps')

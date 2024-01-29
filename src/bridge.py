@@ -39,7 +39,7 @@ class Bridge(ABC):
     dataset_id: str
     target: Target
     db_manager: DatabaseManager = field(init=False)
-    metadata_rec: Dataset = field(init=False)  # TODO: change to dataset_rec
+    metadata_rec: Dataset = field(init=False)
     app_name: str = field(init=False)
     data_file_rec: DataFile = field(init=False)
     dataset_dir: str = field(init=False)
@@ -96,3 +96,6 @@ class Bridge(ABC):
         db_manager.update_target_repo_deposit_status(TargetRepo(ds_id=self.dataset_id, name=self.target.repo_name,
                                                                 deposit_status=deposit_status, target_output=output,
                                                                 duration=duration))
+
+    def deposit_files(self):
+        pass
