@@ -11,6 +11,9 @@ RUN  apt-get update -y && \
 
 RUN useradd -ms /bin/bash dans
 
+RUN apt-get update
+RUN apt-get install -y git
+
 USER dans
 WORKDIR /home/dans
 ENV PYTHONPATH=/home/dans/packaging-service/src
