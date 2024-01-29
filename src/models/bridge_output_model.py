@@ -21,7 +21,8 @@ class IdentifierProtocol(StrEnum):
     DOI = auto()
     HANDLE = auto()
     URN_NBN = 'urn:nbn'
-    URN_UUID = 'urn:uuid'
+    URN_UUID = 'urn:uuid',
+    SWHID = auto()
     UNDEFINED = auto()
 
 

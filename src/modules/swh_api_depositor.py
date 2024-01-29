@@ -24,8 +24,9 @@ class SwhApiDepositor(Bridge):
         bridge_output_model = BridgeOutputDataModel(response=target_response)
         headers = {'Content-Type': 'application/json', 'Authorization': f'Bearer {settings.SWH_ACCESS_TOKEN}'}
         logger(f'self.target.target_url: {self.target.target_url}', 'debug', self.app_name)
-        url = f'{self.target.target_url}/{target_swh[0][0]}/'
-        api_resp = requests.post(url, data="{}", headers=headers)
+        swh_url = f'{self.target.target_url}/{target_swh[0][0]}/'
+        logger(f'swh_url: {swh_url}', 'debug', self.app_name)
+        api_resp = requests.post(swh_url, data="{}", headers=headers)
         logger(f'{api_resp.status_code} {api_resp.text}', 'debug', self.app_name)
         if api_resp.status_code == 200:
             api_resp_json = api_resp.json()
@@ -51,7 +52,7 @@ class SwhApiDepositor(Bridge):
                         target_response.status = DepositStatus.SUCCESS
                         identifier_items = []
                         target_response.identifiers = identifier_items
-                        ideni = IdentifierItem(value=swh_resp_json.get('snapshot_swhid'), url=url,
+                        ideni = IdentifierItem(value=swh_resp_json.get('snapshot_swhid'), url=swh_url,
                                                protocol=IdentifierProtocol('swhid'))
                         identifier_items.append(ideni)
                         break
@@ -67,6 +68,7 @@ class SwhApiDepositor(Bridge):
             target_response.error = json.dumps(api_resp.json())
             target_response.content_type = ResponseContentType.JSON
             target_response.status = DepositStatus.ERROR
+            target_response.url = swh_url
             target_response.content = json.dumps(api_resp.json())
             logger(f'bridge_output_model: {bridge_output_model.model_dump(by_alias=True)}', 'debug', self.app_name)
 
