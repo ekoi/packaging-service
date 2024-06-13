@@ -2,7 +2,8 @@
 dynaconf_merge = true
 loggers = [{"name"="faircore4eosc", "log_file"="@format {env[BASE_DIR]}/logs/faircore4eosc.log", "log_level"=10, "log_format" = "%(asctime)s %(levelname)s %(name)s %(threadName)s : %(message)s" }]
 
-swh_delay_poolling = 120
+swh_delay_polling = 120
+swh_delay_polling_sword = 30
 transformer_name_sword_payload="form-metadata-sword"
 transformer_name_swh_to_dataverse="form-metadata-to-dataverse"
 swh_api_max_retries = 25

@@ -1,0 +1,3706 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map xmlns="http://www.w3.org/2005/xpath-functions">
+   <string key="id">005bb1d8-f4b9-4e87-b80a-57992d527d53</string>
+   <array key="metadata">
+      <map>
+         <string key="id">ohs</string>
+         <map key="title">
+            <string key="en">Oral-history specific</string>
+            <string key="nl">Specifiek voor mondelinge geschiedenis</string>
+         </map>
+         <array key="fields">
+            <map>
+               <string key="type">group</string>
+               <map key="label">
+                  <string key="en">Interviewee</string>
+                  <string key="nl">Geinterviewde</string>
+               </map>
+               <string key="name">interviewee</string>
+               <map key="description">
+                  <string key="en">Information about the person being interviewed. This data will not be public.</string>
+                  <string key="nl">Informatie over de persoon die wordt geinterviewd. Deze data wordt niet gepubliceerd.</string>
+               </map>
+               <array key="fields">
+                  <map>
+                     <string key="type">text</string>
+                     <map key="label">
+                        <string key="en">First name</string>
+                        <string key="nl">Voornaam</string>
+                     </map>
+                     <string key="name">interviewee_first_name</string>
+                     <boolean key="required">true</boolean>
+                     <boolean key="private">false</boolean>
+                     <string key="id">517e184f-4654-4825-a430-4f028a0af568</string>
+                     <string key="value">Oral-history specific - First name Eko</string>
+                     <boolean key="touched">true</boolean>
+                     <boolean key="valid">true</boolean>
+                  </map>
+                  <map>
+                     <string key="type">text</string>
+                     <map key="label">
+                        <string key="en">Last name</string>
+                        <string key="nl">Achternaam</string>
+                     </map>
+                     <string key="name">interviewee_last_name</string>
+                     <boolean key="required">true</boolean>
+                     <boolean key="private">false</boolean>
+                     <string key="id">c91e5d7f-78ca-4d8d-b332-5b35ca4361e2</string>
+                     <string key="value">Oral-history specific - last name Indarto</string>
+                     <boolean key="touched">true</boolean>
+                     <boolean key="valid">true</boolean>
+                  </map>
+                  <map>
+                     <string key="type">check</string>
+                     <string key="name">interviewee_public</string>
+                     <map key="description">
+                        <string key="en">First and last name of interviewee will be publically viewable if checked</string>
+                        <string key="nl">Voor- en achternaam van de geinterviewde zijn publiek als dit is aangevinkt</string>
+                     </map>
+                     <array key="options">
+                        <map>
+                           <string key="value">interviewee_public_data</string>
+                           <map key="label">
+                              <string key="en">First and last name are public data</string>
+                              <string key="nl">Voor- en achternaam zijn publiek</string>
+                           </map>
+                        </map>
+                     </array>
+                     <array key="togglePrivate">
+                        <string>interviewee_first_name</string>
+                        <string>interviewee_last_name</string>
+                     </array>
+                     <boolean key="toggleTitleGeneration">true</boolean>
+                     <boolean key="fullWidth">true</boolean>
+                     <string key="id">40476e32-92b7-420e-b452-b31d9ae2791f</string>
+                     <array key="value">
+                        <string>interviewee_public_data</string>
+                     </array>
+                     <boolean key="touched">true</boolean>
+                     <array key="togglePrivateIds">
+                        <string>517e184f-4654-4825-a430-4f028a0af568</string>
+                        <string>c91e5d7f-78ca-4d8d-b332-5b35ca4361e2</string>
+                     </array>
+                     <boolean key="valid">true</boolean>
+                  </map>
+                  <map>
+                     <string key="type">text</string>
+                     <map key="label">
+                        <string key="en">Preferred name</string>
+                        <string key="nl">Voorkeursnaam</string>
+                     </map>
+                     <string key="name">interviewee_preferred_name</string>
+                     <boolean key="noIndicator">true</boolean>
+                     <boolean key="private">true</boolean>
+                     <string key="id">bc94bb52-084a-44f8-bdd2-d3cc70788f16</string>
+                     <string key="value">Oral-history specific - Prefered name Ekoi</string>
+                     <boolean key="touched">true</boolean>
+                     <boolean key="valid">true</boolean>
+                  </map>
+                  <map>
+                     <string key="type">date</string>
+                     <string key="format">DD-MM-YYYY</string>
+                     <map key="label">
+                        <string key="en">Date of birth</string>
+                        <string key="nl">Geboortedatum</string>
+                     </map>
+                     <string key="name">interviewee_dob</string>
+                     <boolean key="noIndicator">true</boolean>
+                     <boolean key="private">true</boolean>
+                     <string key="id">6b0438ed-450d-42ad-95c2-7dcd2efec094</string>
+                     <string key="value">11-11-2000</string>
+                     <boolean key="touched">true</boolean>
+                     <boolean key="valid">true</boolean>
+                  </map>
+                  <map>
+                     <string key="type">text</string>
+                     <map key="label">
+                        <string key="en">Function</string>
+                        <string key="nl">Functie</string>
+                     </map>
+                     <string key="name">interviewee_function</string>
+                     <boolean key="private">true</boolean>
+                     <string key="id">0bacd88e-c916-4450-9e35-5f1180d69d82</string>
+                     <string key="value">Oral-history specific - Function </string>
+                     <boolean key="touched">true</boolean>
+                     <boolean key="valid">true</boolean>
+                  </map>
+                  <map>
+                     <string key="type">text</string>
+                     <map key="label">
+                        <string key="en">Affiliation</string>
+                        <string key="nl">Affiliatie</string>
+                     </map>
+                     <string key="name">interviewee_affiliation</string>
+                     <boolean key="private">true</boolean>
+                     <string key="id">0f87fc5d-4875-4109-bc7c-b9ba2d25466e</string>
+                     <string key="value">Oral-history specific - Afilliation</string>
+                     <boolean key="touched">true</boolean>
+                     <boolean key="valid">true</boolean>
+                  </map>
+                  <map>
+                     <string key="type">check</string>
+                     <string key="name">interviewee_consent</string>
+                     <map key="description">
+                        <string key="en">Consent given for the processing of personal data (including archiving and, if applicable, making accessible for reuse, for instance through an informed consent form)</string>
+                        <string key="nl">Toestemming gegeven voor de verwerking van persoonsgegevens (inclusief archivering en, indien van toepassing, toegankelijk maken voor hergebruik, bijvoorbeeld via een toestemmingsformulier)</string>
+                     </map>
+                     <boolean key="required">true</boolean>
+                     <boolean key="private">true</boolean>
+                     <array key="options">
+                        <map>
+                           <string key="value">interviewee_consent_signed</string>
+                           <map key="label">
+                              <string key="en">Consent given</string>
+                              <string key="nl">Toestemming gegeven</string>
+                           </map>
+                        </map>
+                     </array>
+                     <string key="id">bca00a4c-7f60-4725-85e6-41509dc56b86</string>
+                     <array key="value">
+                        <string>interviewee_consent_signed</string>
+                     </array>
+                     <boolean key="touched">true</boolean>
+                     <boolean key="valid">true</boolean>
+                  </map>
+               </array>
+               <string key="id">7b854747-9642-4d6c-8562-345b7047d8dd</string>
+            </map>
+            <map>
+               <string key="type">group</string>
+               <map key="label">
+                  <string key="en">Interviewer</string>
+                  <string key="nl">Interviewer</string>
+               </map>
+               <string key="name">interviewer</string>
+               <boolean key="repeatable">true</boolean>
+               <map key="description">
+                  <string key="en">Information about the person(s) taking the interview. This data will not be public.</string>
+                  <string key="nl">Informatie over de persoon het interview afneemt. Deze data wordt niet gepubliceerd.</string>
+               </map>
+               <array key="fields">
+                  <array>
+                     <map>
+                        <string key="type">text</string>
+                        <map key="label">
+                           <string key="en">First name</string>
+                           <string key="nl">Voornaam</string>
+                        </map>
+                        <string key="name">interviewer_first_name</string>
+                        <boolean key="required">true</boolean>
+                        <boolean key="private">true</boolean>
+                        <string key="id">da1fdee9-9210-454a-b44d-d5075d273ccd</string>
+                        <string key="value">Interviewer - First name 1 Amal</string>
+                        <boolean key="touched">true</boolean>
+                        <boolean key="valid">true</boolean>
+                     </map>
+                     <map>
+                        <string key="type">text</string>
+                        <map key="label">
+                           <string key="en">Last name</string>
+                           <string key="nl">Achternaam</string>
+                        </map>
+                        <string key="name">interviewer_last_name</string>
+                        <boolean key="required">true</boolean>
+                        <boolean key="private">true</boolean>
+                        <string key="id">bb01858e-103c-4dea-baf1-fa383bf3d052</string>
+                        <string key="value">Interviewer - Last name 1 Mardhiyyah</string>
+                        <boolean key="touched">true</boolean>
+                        <boolean key="valid">true</boolean>
+                     </map>
+                     <map>
+                        <string key="type">text</string>
+                        <map key="label">
+                           <string key="en">Preferred name</string>
+                           <string key="nl">Voorkeursnaam</string>
+                        </map>
+                        <string key="name">interviewer_preferred_name</string>
+                        <boolean key="noIndicator">true</boolean>
+                        <boolean key="private">true</boolean>
+                        <string key="id">6a1b9bce-50dd-4ee1-b251-9750b0dbfdf3</string>
+                        <string key="value">Interviewer - Preferred name 1 Khairunnisa</string>
+                        <boolean key="touched">true</boolean>
+                        <boolean key="valid">true</boolean>
+                     </map>
+                     <map>
+                        <string key="type">date</string>
+                        <string key="format">DD-MM-YYYY</string>
+                        <map key="label">
+                           <string key="en">Date of birth</string>
+                           <string key="nl">Geboortedatum</string>
+                        </map>
+                        <string key="name">interviewer_dob</string>
+                        <boolean key="noIndicator">true</boolean>
+                        <boolean key="private">true</boolean>
+                        <string key="id">c7dad67b-9d91-477f-8cdc-5b2501974baf</string>
+                        <string key="value">12-11-2000</string>
+                        <boolean key="touched">true</boolean>
+                        <boolean key="valid">true</boolean>
+                     </map>
+                     <map>
+                        <string key="type">text</string>
+                        <map key="label">
+                           <string key="en">Function</string>
+                           <string key="nl">Functie</string>
+                        </map>
+                        <string key="name">interviewer_function</string>
+                        <boolean key="private">true</boolean>
+                        <string key="id">0fd8d2df-31d1-4fc8-bf3d-33b7cce718bd</string>
+                        <string key="value">Interviewer - Function 1</string>
+                        <boolean key="touched">true</boolean>
+                        <boolean key="valid">true</boolean>
+                     </map>
+                     <map>
+                        <string key="type">text</string>
+                        <map key="label">
+                           <string key="en">Affiliation</string>
+                           <string key="nl">Affiliatie</string>
+                        </map>
+                        <string key="name">interviewer_affiliation</string>
+                        <boolean key="private">true</boolean>
+                        <string key="id">6bbf706a-4796-44f1-8c83-fbf13d4926cb</string>
+                        <string key="value">Interviewer - Affiliation 1</string>
+                        <boolean key="touched">true</boolean>
+                        <boolean key="valid">true</boolean>
+                     </map>
+                     <map>
+                        <string key="type">check</string>
+                        <string key="name">interviewer_consent</string>
+                        <map key="description">
+                           <string key="en">Consent given for the processing of personal data (including archiving and, if applicable, making accessible for reuse, for instance through an informed consent form)</string>
+                           <string key="nl">Toestemming gegeven voor de verwerking van persoonsgegevens (inclusief archivering en, indien van toepassing, toegankelijk maken voor hergebruik, bijvoorbeeld via een toestemmingsformulier)</string>
+                        </map>
+                        <boolean key="required">true</boolean>
+                        <boolean key="private">true</boolean>
+                        <array key="options">
+                           <map>
+                              <string key="value">interviewer_consent_signed</string>
+                              <map key="label">
+                                 <string key="en">Consent given</string>
+                                 <string key="nl">Toestemming gegeven</string>
+                              </map>
+                           </map>
+                        </array>
+                        <string key="id">ba641001-a59b-463a-8344-81b135be4c32</string>
+                        <array key="value">
+                           <string>interviewer_consent_signed</string>
+                        </array>
+                        <boolean key="touched">true</boolean>
+                        <boolean key="valid">true</boolean>
+                     </map>
+                  </array>
+                  <array>
+                     <map>
+                        <string key="type">text</string>
+                        <map key="label">
+                           <string key="en">First name</string>
+                           <string key="nl">Voornaam</string>
+                        </map>
+                        <string key="name">interviewer_first_name</string>
+                        <boolean key="required">true</boolean>
+                        <boolean key="private">true</boolean>
+                        <string key="id">0119c6d4-d2e0-447e-8941-a09ce29aefca</string>
+                        <string key="value">Interviewer - First name 2 Ritha</string>
+                        <boolean key="touched">true</boolean>
+                        <boolean key="valid">true</boolean>
+                     </map>
+                     <map>
+                        <string key="type">text</string>
+                        <map key="label">
+                           <string key="en">Last name</string>
+                           <string key="nl">Achternaam</string>
+                        </map>
+                        <string key="name">interviewer_last_name</string>
+                        <boolean key="required">true</boolean>
+                        <boolean key="private">true</boolean>
+                        <string key="id">76aa1d8e-94a6-4ed1-b75c-b4972cf4a68c</string>
+                        <string key="value">Interviewer - Last name 2 Indarto</string>
+                        <boolean key="touched">true</boolean>
+                        <boolean key="valid">true</boolean>
+                     </map>
+                     <map>
+                        <string key="type">text</string>
+                        <map key="label">
+                           <string key="en">Preferred name</string>
+                           <string key="nl">Voorkeursnaam</string>
+                        </map>
+                        <string key="name">interviewer_preferred_name</string>
+                        <boolean key="noIndicator">true</boolean>
+                        <boolean key="private">true</boolean>
+                        <string key="id">203c6c35-477b-47bd-96b7-7910751e516c</string>
+                        <string key="value">Interviewer - Preferred name 2 Herliana</string>
+                        <boolean key="touched">true</boolean>
+                        <boolean key="valid">true</boolean>
+                     </map>
+                     <map>
+                        <string key="type">date</string>
+                        <string key="format">DD-MM-YYYY</string>
+                        <map key="label">
+                           <string key="en">Date of birth</string>
+                           <string key="nl">Geboortedatum</string>
+                        </map>
+                        <string key="name">interviewer_dob</string>
+                        <boolean key="noIndicator">true</boolean>
+                        <boolean key="private">true</boolean>
+                        <string key="id">dd6a5e8a-597a-431c-ba8e-8b13791c8224</string>
+                        <string key="value">13-11-2000</string>
+                        <boolean key="touched">true</boolean>
+                        <boolean key="valid">true</boolean>
+                     </map>
+                     <map>
+                        <string key="type">text</string>
+                        <map key="label">
+                           <string key="en">Function</string>
+                           <string key="nl">Functie</string>
+                        </map>
+                        <string key="name">interviewer_function</string>
+                        <boolean key="private">true</boolean>
+                        <string key="id">4939107d-257a-435d-b4ec-a2962b01cf6d</string>
+                        <string key="value">Interviewer - Function 2</string>
+                        <boolean key="touched">true</boolean>
+                        <boolean key="valid">true</boolean>
+                     </map>
+                     <map>
+                        <string key="type">text</string>
+                        <map key="label">
+                           <string key="en">Affiliation</string>
+                           <string key="nl">Affiliatie</string>
+                        </map>
+                        <string key="name">interviewer_affiliation</string>
+                        <boolean key="private">true</boolean>
+                        <string key="id">9e6c7a61-149a-4be1-aca4-d7252e9e3026</string>
+                        <string key="value">Interviewer - Affiliation 2</string>
+                        <boolean key="touched">true</boolean>
+                        <boolean key="valid">true</boolean>
+                     </map>
+                     <map>
+                        <string key="type">check</string>
+                        <string key="name">interviewer_consent</string>
+                        <map key="description">
+                           <string key="en">Consent given for the processing of personal data (including archiving and, if applicable, making accessible for reuse, for instance through an informed consent form)</string>
+                           <string key="nl">Toestemming gegeven voor de verwerking van persoonsgegevens (inclusief archivering en, indien van toepassing, toegankelijk maken voor hergebruik, bijvoorbeeld via een toestemmingsformulier)</string>
+                        </map>
+                        <boolean key="required">true</boolean>
+                        <boolean key="private">true</boolean>
+                        <array key="options">
+                           <map>
+                              <string key="value">interviewer_consent_signed</string>
+                              <map key="label">
+                                 <string key="en">Consent given</string>
+                                 <string key="nl">Toestemming gegeven</string>
+                              </map>
+                           </map>
+                        </array>
+                        <string key="id">6dac8c66-8fdd-4f7c-b194-8855f8584c63</string>
+                        <array key="value">
+                           <string>interviewer_consent_signed</string>
+                        </array>
+                        <boolean key="touched">true</boolean>
+                        <boolean key="valid">true</boolean>
+                     </map>
+                  </array>
+                  <array>
+                     <map>
+                        <string key="type">text</string>
+                        <map key="label">
+                           <string key="en">First name</string>
+                           <string key="nl">Voornaam</string>
+                        </map>
+                        <string key="name">interviewer_first_name</string>
+                        <boolean key="required">true</boolean>
+                        <boolean key="private">true</boolean>
+                        <string key="id">0d58fdd8-8960-4ef7-bdfc-1ed882efd3d4</string>
+                        <string key="value">Interviewer - First name 3 Dwi</string>
+                        <boolean key="touched">true</boolean>
+                        <boolean key="valid">true</boolean>
+                     </map>
+                     <map>
+                        <string key="type">text</string>
+                        <map key="label">
+                           <string key="en">Last name</string>
+                           <string key="nl">Achternaam</string>
+                        </map>
+                        <string key="name">interviewer_last_name</string>
+                        <boolean key="required">true</boolean>
+                        <boolean key="private">true</boolean>
+                        <string key="id">990c977c-2e11-4b05-bebe-d287c09e5d0e</string>
+                        <string key="value">Interviewer - Last name 3 Erwanto</string>
+                        <boolean key="touched">true</boolean>
+                        <boolean key="valid">true</boolean>
+                     </map>
+                     <map>
+                        <string key="type">text</string>
+                        <map key="label">
+                           <string key="en">Preferred name</string>
+                           <string key="nl">Voorkeursnaam</string>
+                        </map>
+                        <string key="name">interviewer_preferred_name</string>
+                        <boolean key="noIndicator">true</boolean>
+                        <boolean key="private">true</boolean>
+                        <string key="id">91542a5d-933d-4455-9d1d-a5328af562ec</string>
+                        <string key="value"/>
+                        <boolean key="touched">false</boolean>
+                        <string key="valid"/>
+                     </map>
+                     <map>
+                        <string key="type">date</string>
+                        <string key="format">DD-MM-YYYY</string>
+                        <map key="label">
+                           <string key="en">Date of birth</string>
+                           <string key="nl">Geboortedatum</string>
+                        </map>
+                        <string key="name">interviewer_dob</string>
+                        <boolean key="noIndicator">true</boolean>
+                        <boolean key="private">true</boolean>
+                        <string key="id">f674a32f-4551-4fb0-a781-6b5ba38e4a30</string>
+                        <string key="value"/>
+                        <boolean key="touched">false</boolean>
+                        <string key="valid"/>
+                     </map>
+                     <map>
+                        <string key="type">text</string>
+                        <map key="label">
+                           <string key="en">Function</string>
+                           <string key="nl">Functie</string>
+                        </map>
+                        <string key="name">interviewer_function</string>
+                        <boolean key="private">true</boolean>
+                        <string key="id">ba24f38e-c341-43be-9bd7-4ea7363ee824</string>
+                        <string key="value"/>
+                        <boolean key="touched">false</boolean>
+                        <string key="valid"/>
+                     </map>
+                     <map>
+                        <string key="type">text</string>
+                        <map key="label">
+                           <string key="en">Affiliation</string>
+                           <string key="nl">Affiliatie</string>
+                        </map>
+                        <string key="name">interviewer_affiliation</string>
+                        <boolean key="private">true</boolean>
+                        <string key="id">96796343-e653-45f7-a1e9-13840d3730fd</string>
+                        <string key="value"/>
+                        <boolean key="touched">false</boolean>
+                        <string key="valid"/>
+                     </map>
+                     <map>
+                        <string key="type">check</string>
+                        <string key="name">interviewer_consent</string>
+                        <map key="description">
+                           <string key="en">Consent given for the processing of personal data (including archiving and, if applicable, making accessible for reuse, for instance through an informed consent form)</string>
+                           <string key="nl">Toestemming gegeven voor de verwerking van persoonsgegevens (inclusief archivering en, indien van toepassing, toegankelijk maken voor hergebruik, bijvoorbeeld via een toestemmingsformulier)</string>
+                        </map>
+                        <boolean key="required">true</boolean>
+                        <boolean key="private">true</boolean>
+                        <array key="options">
+                           <map>
+                              <string key="value">interviewer_consent_signed</string>
+                              <map key="label">
+                                 <string key="en">Consent given</string>
+                                 <string key="nl">Toestemming gegeven</string>
+                              </map>
+                           </map>
+                        </array>
+                        <string key="id">fecc203f-3be3-45f9-a352-2c7c716ed22a</string>
+                        <array key="value">
+                           <string>interviewer_consent_signed</string>
+                        </array>
+                        <boolean key="touched">true</boolean>
+                        <boolean key="valid">true</boolean>
+                     </map>
+                  </array>
+                  <array>
+                     <map>
+                        <string key="type">text</string>
+                        <map key="label">
+                           <string key="en">First name</string>
+                           <string key="nl">Voornaam</string>
+                        </map>
+                        <string key="name">interviewer_first_name</string>
+                        <boolean key="required">true</boolean>
+                        <boolean key="private">true</boolean>
+                        <string key="id">76c94b82-532d-4eab-9eed-80eae2e2cac5</string>
+                        <string key="value">Interviewer - First name 4 Kusrino</string>
+                        <boolean key="touched">true</boolean>
+                        <boolean key="valid">true</boolean>
+                     </map>
+                     <map>
+                        <string key="type">text</string>
+                        <map key="label">
+                           <string key="en">Last name</string>
+                           <string key="nl">Achternaam</string>
+                        </map>
+                        <string key="name">interviewer_last_name</string>
+                        <boolean key="required">true</boolean>
+                        <boolean key="private">true</boolean>
+                        <string key="id">7da62464-737b-4c14-be73-9ced8c878818</string>
+                        <string key="value">Interviewer - Last name 4 Abbas</string>
+                        <boolean key="touched">true</boolean>
+                        <boolean key="valid">true</boolean>
+                     </map>
+                     <map>
+                        <string key="type">text</string>
+                        <map key="label">
+                           <string key="en">Preferred name</string>
+                           <string key="nl">Voorkeursnaam</string>
+                        </map>
+                        <string key="name">interviewer_preferred_name</string>
+                        <boolean key="noIndicator">true</boolean>
+                        <boolean key="private">true</boolean>
+                        <string key="id">0f8eb6da-a2d6-451e-b8ec-fd869b31540e</string>
+                        <string key="value"/>
+                        <boolean key="touched">false</boolean>
+                        <string key="valid"/>
+                     </map>
+                     <map>
+                        <string key="type">date</string>
+                        <string key="format">DD-MM-YYYY</string>
+                        <map key="label">
+                           <string key="en">Date of birth</string>
+                           <string key="nl">Geboortedatum</string>
+                        </map>
+                        <string key="name">interviewer_dob</string>
+                        <boolean key="noIndicator">true</boolean>
+                        <boolean key="private">true</boolean>
+                        <string key="id">331e8b90-4dd2-40b6-9d88-429c8f13fa87</string>
+                        <string key="value">14-11-2000</string>
+                        <boolean key="touched">true</boolean>
+                        <boolean key="valid">true</boolean>
+                     </map>
+                     <map>
+                        <string key="type">text</string>
+                        <map key="label">
+                           <string key="en">Function</string>
+                           <string key="nl">Functie</string>
+                        </map>
+                        <string key="name">interviewer_function</string>
+                        <boolean key="private">true</boolean>
+                        <string key="id">70aa6ef2-2571-4808-891d-90dfb4627fca</string>
+                        <string key="value"/>
+                        <boolean key="touched">false</boolean>
+                        <string key="valid"/>
+                     </map>
+                     <map>
+                        <string key="type">text</string>
+                        <map key="label">
+                           <string key="en">Affiliation</string>
+                           <string key="nl">Affiliatie</string>
+                        </map>
+                        <string key="name">interviewer_affiliation</string>
+                        <boolean key="private">true</boolean>
+                        <string key="id">087d7c84-c101-43c6-a44c-4b92d703266f</string>
+                        <string key="value">Interviewer - Affiliation 4</string>
+                        <boolean key="touched">true</boolean>
+                        <boolean key="valid">true</boolean>
+                     </map>
+                     <map>
+                        <string key="type">check</string>
+                        <string key="name">interviewer_consent</string>
+                        <map key="description">
+                           <string key="en">Consent given for the processing of personal data (including archiving and, if applicable, making accessible for reuse, for instance through an informed consent form)</string>
+                           <string key="nl">Toestemming gegeven voor de verwerking van persoonsgegevens (inclusief archivering en, indien van toepassing, toegankelijk maken voor hergebruik, bijvoorbeeld via een toestemmingsformulier)</string>
+                        </map>
+                        <boolean key="required">true</boolean>
+                        <boolean key="private">true</boolean>
+                        <array key="options">
+                           <map>
+                              <string key="value">interviewer_consent_signed</string>
+                              <map key="label">
+                                 <string key="en">Consent given</string>
+                                 <string key="nl">Toestemming gegeven</string>
+                              </map>
+                           </map>
+                        </array>
+                        <string key="id">d1687a5c-daba-4169-b572-ccb891e94bdb</string>
+                        <array key="value">
+                           <string>interviewer_consent_signed</string>
+                        </array>
+                        <boolean key="touched">true</boolean>
+                        <boolean key="valid">true</boolean>
+                     </map>
+                  </array>
+                  <array>
+                     <map>
+                        <string key="type">text</string>
+                        <map key="label">
+                           <string key="en">First name</string>
+                           <string key="nl">Voornaam</string>
+                        </map>
+                        <string key="name">interviewer_first_name</string>
+                        <boolean key="required">true</boolean>
+                        <boolean key="private">true</boolean>
+                        <string key="id">c9bf58c1-f264-4705-982b-e099acf05a63</string>
+                        <string key="value">Interviewer - First name 5</string>
+                        <boolean key="touched">true</boolean>
+                        <boolean key="valid">true</boolean>
+                     </map>
+                     <map>
+                        <string key="type">text</string>
+                        <map key="label">
+                           <string key="en">Last name</string>
+                           <string key="nl">Achternaam</string>
+                        </map>
+                        <string key="name">interviewer_last_name</string>
+                        <boolean key="required">true</boolean>
+                        <boolean key="private">true</boolean>
+                        <string key="id">bec764c0-dc17-48e0-a6c9-29794d6e9260</string>
+                        <string key="value">Interviewer - First name 5</string>
+                        <boolean key="touched">true</boolean>
+                        <boolean key="valid">true</boolean>
+                     </map>
+                     <map>
+                        <string key="type">text</string>
+                        <map key="label">
+                           <string key="en">Preferred name</string>
+                           <string key="nl">Voorkeursnaam</string>
+                        </map>
+                        <string key="name">interviewer_preferred_name</string>
+                        <boolean key="noIndicator">true</boolean>
+                        <boolean key="private">true</boolean>
+                        <string key="id">e93a7137-2f31-4a42-91c2-98a49dfd6b9f</string>
+                        <string key="value"/>
+                        <boolean key="touched">false</boolean>
+                        <string key="valid"/>
+                     </map>
+                     <map>
+                        <string key="type">date</string>
+                        <string key="format">DD-MM-YYYY</string>
+                        <map key="label">
+                           <string key="en">Date of birth</string>
+                           <string key="nl">Geboortedatum</string>
+                        </map>
+                        <string key="name">interviewer_dob</string>
+                        <boolean key="noIndicator">true</boolean>
+                        <boolean key="private">true</boolean>
+                        <string key="id">334e1549-7f13-4a16-b684-2ae57d01150e</string>
+                        <string key="value"/>
+                        <boolean key="touched">false</boolean>
+                        <string key="valid"/>
+                     </map>
+                     <map>
+                        <string key="type">text</string>
+                        <map key="label">
+                           <string key="en">Function</string>
+                           <string key="nl">Functie</string>
+                        </map>
+                        <string key="name">interviewer_function</string>
+                        <boolean key="private">true</boolean>
+                        <string key="id">3cc102ca-b59d-4ef2-8dc0-c43c0e4a2e2f</string>
+                        <string key="value">Interviewer - Fuction 5</string>
+                        <boolean key="touched">true</boolean>
+                        <boolean key="valid">true</boolean>
+                     </map>
+                     <map>
+                        <string key="type">text</string>
+                        <map key="label">
+                           <string key="en">Affiliation</string>
+                           <string key="nl">Affiliatie</string>
+                        </map>
+                        <string key="name">interviewer_affiliation</string>
+                        <boolean key="private">true</boolean>
+                        <string key="id">cda56db1-87e1-48d2-a189-af4277e7cb0e</string>
+                        <string key="value"/>
+                        <boolean key="touched">false</boolean>
+                        <string key="valid"/>
+                     </map>
+                     <map>
+                        <string key="type">check</string>
+                        <string key="name">interviewer_consent</string>
+                        <map key="description">
+                           <string key="en">Consent given for the processing of personal data (including archiving and, if applicable, making accessible for reuse, for instance through an informed consent form)</string>
+                           <string key="nl">Toestemming gegeven voor de verwerking van persoonsgegevens (inclusief archivering en, indien van toepassing, toegankelijk maken voor hergebruik, bijvoorbeeld via een toestemmingsformulier)</string>
+                        </map>
+                        <boolean key="required">true</boolean>
+                        <boolean key="private">true</boolean>
+                        <array key="options">
+                           <map>
+                              <string key="value">interviewer_consent_signed</string>
+                              <map key="label">
+                                 <string key="en">Consent given</string>
+                                 <string key="nl">Toestemming gegeven</string>
+                              </map>
+                           </map>
+                        </array>
+                        <string key="id">581245bf-0a8d-4df1-b033-fe502f798369</string>
+                        <array key="value">
+                           <string>interviewer_consent_signed</string>
+                        </array>
+                        <boolean key="touched">true</boolean>
+                        <boolean key="valid">true</boolean>
+                     </map>
+                  </array>
+               </array>
+               <string key="id">122bf630-b87d-4b07-93f3-6046494715a0</string>
+            </map>
+            <map>
+               <string key="type">group</string>
+               <map key="label">
+                  <string key="en">Interpreter</string>
+                  <string key="nl">Vertaler</string>
+               </map>
+               <string key="name">interpreter</string>
+               <boolean key="repeatable">true</boolean>
+               <map key="description">
+                  <string key="en">Information about the person(s) interpreting the interview. This data will not be public.</string>
+                  <string key="nl">Informatie over de persoon het interview heeft vertaald. Deze data wordt niet gepubliceerd.</string>
+               </map>
+               <array key="fields">
+                  <array>
+                     <map>
+                        <string key="type">text</string>
+                        <map key="label">
+                           <string key="en">First name</string>
+                           <string key="nl">Voornaam</string>
+                        </map>
+                        <string key="name">interpreter_first_name</string>
+                        <boolean key="private">true</boolean>
+                        <boolean key="noIndicator">true</boolean>
+                        <array key="toggleRequired">
+                           <string>interpreter_consent</string>
+                           <string>interpreter_last_name</string>
+                        </array>
+                        <string key="id">bb311d1d-af4a-410c-9d51-97370f17d622</string>
+                     </map>
+                     <map>
+                        <string key="type">text</string>
+                        <map key="label">
+                           <string key="en">Last name</string>
+                           <string key="nl">Achternaam</string>
+                        </map>
+                        <string key="name">interpreter_last_name</string>
+                        <boolean key="private">true</boolean>
+                        <boolean key="noIndicator">true</boolean>
+                        <array key="toggleRequired">
+                           <string>interpreter_consent</string>
+                           <string>interpreter_first_name</string>
+                        </array>
+                        <string key="id">9d9c5e24-f346-4763-ab25-0b7ef399af45</string>
+                     </map>
+                     <map>
+                        <string key="type">text</string>
+                        <map key="label">
+                           <string key="en">Function</string>
+                           <string key="nl">Functie</string>
+                        </map>
+                        <string key="name">interpreter_function</string>
+                        <boolean key="private">true</boolean>
+                        <boolean key="noIndicator">true</boolean>
+                        <array key="toggleRequired">
+                           <string>interpreter_consent</string>
+                           <string>interpreter_first_name</string>
+                           <string>interpreter_last_name</string>
+                        </array>
+                        <string key="id">3a6af33d-83db-4237-938d-2ba918170a44</string>
+                     </map>
+                     <map>
+                        <string key="type">text</string>
+                        <map key="label">
+                           <string key="en">Affiliation</string>
+                           <string key="nl">Affiliatie</string>
+                        </map>
+                        <string key="name">interpreter_affiliation</string>
+                        <boolean key="private">true</boolean>
+                        <boolean key="noIndicator">true</boolean>
+                        <array key="toggleRequired">
+                           <string>interpreter_consent</string>
+                           <string>interpreter_first_name</string>
+                           <string>interpreter_last_name</string>
+                        </array>
+                        <string key="id">7966eb80-d2c3-4ffa-b899-0bf5bbbb1bd1</string>
+                     </map>
+                     <map>
+                        <string key="type">check</string>
+                        <string key="name">interpreter_consent</string>
+                        <map key="description">
+                           <string key="en">Consent given for the processing of personal data (including archiving and, if applicable, making accessible for reuse, for instance through an informed consent form)</string>
+                           <string key="nl">Toestemming gegeven voor de verwerking van persoonsgegevens (inclusief archivering en, indien van toepassing, toegankelijk maken voor hergebruik, bijvoorbeeld via een toestemmingsformulier)</string>
+                        </map>
+                        <boolean key="private">true</boolean>
+                        <boolean key="noIndicator">true</boolean>
+                        <array key="options">
+                           <map>
+                              <string key="value">interpreter_consent_signed</string>
+                              <map key="label">
+                                 <string key="en">Consent given</string>
+                                 <string key="nl">Toestemming gegeven</string>
+                              </map>
+                           </map>
+                        </array>
+                        <string key="id">2332b140-d141-4077-a1f7-1512196a35b0</string>
+                     </map>
+                  </array>
+               </array>
+               <string key="id">a589c573-7fc5-4a18-970c-71b6ffc1d03e</string>
+            </map>
+            <map>
+               <string key="type">group</string>
+               <map key="label">
+                  <string key="en">Others present</string>
+                  <string key="nl">Andere aanwezigen</string>
+               </map>
+               <string key="name">others</string>
+               <boolean key="repeatable">true</boolean>
+               <map key="description">
+                  <string key="en">Information about other person(s) being present during the interview. This data will not be public.</string>
+                  <string key="nl">Informatie over andere aanwezigen bij het interview. Deze data wordt niet gepubliceerd.</string>
+               </map>
+               <array key="fields">
+                  <array>
+                     <map>
+                        <string key="type">text</string>
+                        <map key="label">
+                           <string key="en">First name</string>
+                           <string key="nl">Voornaam</string>
+                        </map>
+                        <string key="name">others_first_name</string>
+                        <boolean key="private">true</boolean>
+                        <boolean key="noIndicator">true</boolean>
+                        <array key="toggleRequired">
+                           <string>others_consent</string>
+                           <string>others_last_name</string>
+                        </array>
+                        <string key="id">e3a441ae-3eb7-4aac-a387-593e6f62c1e1</string>
+                     </map>
+                     <map>
+                        <string key="type">text</string>
+                        <map key="label">
+                           <string key="en">Last name</string>
+                           <string key="nl">Achternaam</string>
+                        </map>
+                        <string key="name">others_last_name</string>
+                        <boolean key="private">true</boolean>
+                        <boolean key="noIndicator">true</boolean>
+                        <array key="toggleRequired">
+                           <string>others_consent</string>
+                           <string>others_first_name</string>
+                        </array>
+                        <string key="id">89140e69-f611-40c4-82e7-d32685aa9bf9</string>
+                     </map>
+                     <map>
+                        <string key="type">text</string>
+                        <map key="label">
+                           <string key="en">Function</string>
+                           <string key="nl">Functie</string>
+                        </map>
+                        <string key="name">others_function</string>
+                        <boolean key="private">true</boolean>
+                        <boolean key="noIndicator">true</boolean>
+                        <array key="toggleRequired">
+                           <string>others_consent</string>
+                           <string>others_first_name</string>
+                           <string>others_last_name</string>
+                        </array>
+                        <string key="id">6e10d4df-9a68-4fcd-9be3-21b29c40943a</string>
+                     </map>
+                     <map>
+                        <string key="type">text</string>
+                        <map key="label">
+                           <string key="en">Affiliation</string>
+                           <string key="nl">Affiliatie</string>
+                        </map>
+                        <string key="name">others_affiliation</string>
+                        <boolean key="private">true</boolean>
+                        <boolean key="noIndicator">true</boolean>
+                        <array key="toggleRequired">
+                           <string>others_consent</string>
+                           <string>others_first_name</string>
+                           <string>others_last_name</string>
+                        </array>
+                        <string key="id">fa47077f-8949-46d4-9347-977d8ef74f2a</string>
+                     </map>
+                     <map>
+                        <string key="type">check</string>
+                        <string key="name">others_consent</string>
+                        <map key="description">
+                           <string key="en">Consent given for the processing of personal data (including archiving and, if applicable, making accessible for reuse, for instance through an informed consent form)</string>
+                           <string key="nl">Toestemming gegeven voor de verwerking van persoonsgegevens (inclusief archivering en, indien van toepassing, toegankelijk maken voor hergebruik, bijvoorbeeld via een toestemmingsformulier)</string>
+                        </map>
+                        <boolean key="private">true</boolean>
+                        <boolean key="noIndicator">true</boolean>
+                        <array key="options">
+                           <map>
+                              <string key="value">others_consent_signed</string>
+                              <map key="label">
+                                 <string key="en">Consent given</string>
+                                 <string key="nl">Toestemming gegeven</string>
+                              </map>
+                           </map>
+                        </array>
+                        <string key="id">45600182-82eb-40db-8d1a-c827b6c4616b</string>
+                     </map>
+                  </array>
+               </array>
+               <string key="id">017cdae2-ea76-4d41-b0d5-530fa4ef5e7e</string>
+            </map>
+            <map>
+               <string key="type">autocomplete</string>
+               <map key="label">
+                  <string key="en">Location of interview</string>
+                  <string key="nl">Locatie van interview</string>
+               </map>
+               <string key="name">interview_location</string>
+               <boolean key="required">true</boolean>
+               <boolean key="multiselect">true</boolean>
+               <boolean key="allowFreeText">true</boolean>
+               <map key="description">
+                  <string key="en">Location where interview was conducted</string>
+                  <string key="nl">Plek waar het interview is afgenomen</string>
+               </map>
+               <string key="options">geonames</string>
+               <string key="id">c8e44329-aa12-4d09-b566-c90db4e7b531</string>
+               <boolean key="touched">true</boolean>
+               <array key="value">
+                  <map>
+                     <string key="label">Jakarta, Indonesia</string>
+                     <string key="value">https://www.geonames.org/1642911</string>
+                     <array key="coordinates">
+                        <string>-6.21462</string>
+                        <string>106.84513</string>
+                     </array>
+                  </map>
+               </array>
+               <boolean key="valid">true</boolean>
+            </map>
+            <map>
+               <string key="type">group</string>
+               <map key="label">
+                  <string key="en">Date and time</string>
+                  <string key="nl">Datum en tijd</string>
+               </map>
+               <string key="name">interview_date_time</string>
+               <boolean key="repeatable">true</boolean>
+               <map key="description">
+                  <string key="en">Date and time of interview</string>
+                  <string key="nl">Datum en tijd waarop het interview is afgenomen</string>
+               </map>
+               <array key="fields">
+                  <array>
+                     <map>
+                        <string key="type">date</string>
+                        <string key="format">DD-MM-YYYY</string>
+                        <array key="formatOptions">
+                           <string>DD-MM-YYYY</string>
+                           <string>DD-MM-YYYY HH:mm</string>
+                        </array>
+                        <map key="label">
+                           <string key="en">Start time and date</string>
+                           <string key="nl">Starttijd en -datum</string>
+                        </map>
+                        <string key="name">interview_date_time_start</string>
+                        <boolean key="required">true</boolean>
+                        <string key="minDateField">interview_date_time_end</string>
+                        <string key="id">e75b5482-3c20-46e5-adbf-c02eb2bd9583</string>
+                        <string key="value">01-01-2001</string>
+                        <boolean key="touched">true</boolean>
+                        <boolean key="valid">true</boolean>
+                     </map>
+                     <map>
+                        <string key="type">date</string>
+                        <string key="format">DD-MM-YYYY</string>
+                        <array key="formatOptions">
+                           <string>DD-MM-YYYY</string>
+                           <string>DD-MM-YYYY HH:mm</string>
+                        </array>
+                        <map key="label">
+                           <string key="en">End time and date</string>
+                           <string key="nl">Eindtijd en -datum</string>
+                        </map>
+                        <string key="name">interview_date_time_end</string>
+                        <boolean key="noIndicator">true</boolean>
+                        <string key="id">77d7afc0-6cfd-4bdb-bc66-b2477fda2ee6</string>
+                        <string key="minDate">01-01-2001</string>
+                     </map>
+                  </array>
+                  <array>
+                     <map>
+                        <string key="type">date</string>
+                        <string key="format">DD-MM-YYYY</string>
+                        <array key="formatOptions">
+                           <string>DD-MM-YYYY</string>
+                           <string>DD-MM-YYYY HH:mm</string>
+                        </array>
+                        <map key="label">
+                           <string key="en">Start time and date</string>
+                           <string key="nl">Starttijd en -datum</string>
+                        </map>
+                        <string key="name">interview_date_time_start</string>
+                        <boolean key="required">true</boolean>
+                        <string key="minDateField">interview_date_time_end</string>
+                        <string key="id">090e892d-3bb7-4b39-8b89-696ad3d558e0</string>
+                        <string key="value">02-02-2002</string>
+                        <boolean key="touched">true</boolean>
+                        <boolean key="valid">true</boolean>
+                     </map>
+                     <map>
+                        <string key="type">date</string>
+                        <string key="format">DD-MM-YYYY</string>
+                        <array key="formatOptions">
+                           <string>DD-MM-YYYY</string>
+                           <string>DD-MM-YYYY HH:mm</string>
+                        </array>
+                        <map key="label">
+                           <string key="en">End time and date</string>
+                           <string key="nl">Eindtijd en -datum</string>
+                        </map>
+                        <string key="name">interview_date_time_end</string>
+                        <boolean key="noIndicator">true</boolean>
+                        <string key="id">dfbfb974-487c-4310-94c5-022e5ddc8100</string>
+                        <string key="minDate">02-02-2002</string>
+                        <string key="value">03-02-2002</string>
+                        <boolean key="valid">true</boolean>
+                        <boolean key="touched">true</boolean>
+                     </map>
+                  </array>
+                  <array>
+                     <map>
+                        <string key="type">date</string>
+                        <string key="format">DD-MM-YYYY</string>
+                        <array key="formatOptions">
+                           <string>DD-MM-YYYY</string>
+                           <string>DD-MM-YYYY HH:mm</string>
+                        </array>
+                        <map key="label">
+                           <string key="en">Start time and date</string>
+                           <string key="nl">Starttijd en -datum</string>
+                        </map>
+                        <string key="name">interview_date_time_start</string>
+                        <boolean key="required">true</boolean>
+                        <string key="minDateField">interview_date_time_end</string>
+                        <string key="id">1d025da5-ef00-4fcd-bccf-41c3a0fe602b</string>
+                        <string key="value">01-01-2000</string>
+                        <boolean key="touched">true</boolean>
+                        <boolean key="valid">true</boolean>
+                     </map>
+                     <map>
+                        <string key="type">date</string>
+                        <string key="format">DD-MM-YYYY</string>
+                        <array key="formatOptions">
+                           <string>DD-MM-YYYY</string>
+                           <string>DD-MM-YYYY HH:mm</string>
+                        </array>
+                        <map key="label">
+                           <string key="en">End time and date</string>
+                           <string key="nl">Eindtijd en -datum</string>
+                        </map>
+                        <string key="name">interview_date_time_end</string>
+                        <boolean key="noIndicator">true</boolean>
+                        <string key="id">ac1c0e34-26e6-4ab2-ac97-b0f838d1efa3</string>
+                        <string key="minDate">01-01-2000</string>
+                        <string key="value"/>
+                        <string key="valid"/>
+                        <boolean key="touched">false</boolean>
+                     </map>
+                  </array>
+               </array>
+               <string key="id">2f32fb55-e77f-48ce-a18e-1f810314debb</string>
+            </map>
+            <map>
+               <string key="type">group</string>
+               <map key="label">
+                  <string key="en">Recording by</string>
+                  <string key="nl">Opgenomen door</string>
+               </map>
+               <string key="name">recorded_by</string>
+               <boolean key="repeatable">true</boolean>
+               <map key="description">
+                  <string key="en">Information about the person assisting with recording</string>
+                  <string key="nl">Informatie over de persoon die het interview heeft opgenomen</string>
+               </map>
+               <array key="fields">
+                  <array>
+                     <map>
+                        <string key="type">text</string>
+                        <map key="label">
+                           <string key="en">First name</string>
+                           <string key="nl">Voornaam</string>
+                        </map>
+                        <string key="name">recorded_by_first_name</string>
+                        <boolean key="noIndicator">true</boolean>
+                        <string key="id">7f34d3b1-6642-4361-a977-a70d95c296ee</string>
+                     </map>
+                     <map>
+                        <string key="type">text</string>
+                        <map key="label">
+                           <string key="en">Last name</string>
+                           <string key="nl">Achternaam</string>
+                        </map>
+                        <string key="name">recorded_by_last_name</string>
+                        <boolean key="noIndicator">true</boolean>
+                        <string key="id">82b68e80-56ec-4145-9688-ac4497d14b29</string>
+                     </map>
+                     <map>
+                        <string key="type">text</string>
+                        <map key="label">
+                           <string key="en">Affiliation</string>
+                           <string key="nl">Affiliatie</string>
+                        </map>
+                        <string key="name">recorded_by_affiliation</string>
+                        <boolean key="noIndicator">true</boolean>
+                        <string key="id">67363311-45b2-4f81-b5b2-892323a35143</string>
+                     </map>
+                  </array>
+               </array>
+               <string key="id">24511310-eaaf-473a-b59b-0ab022e2e7be</string>
+            </map>
+            <map>
+               <string key="type">autocomplete</string>
+               <map key="label">
+                  <string key="en">Recording format</string>
+                  <string key="nl">Opnameformaat</string>
+               </map>
+               <string key="name">recording_format</string>
+               <boolean key="multiselect">true</boolean>
+               <map key="description">
+                  <string key="en">MIME type and other type information</string>
+                  <string key="nl">MIME type en andere type-informatie</string>
+               </map>
+               <string key="options">dansFormats</string>
+               <boolean key="noIndicator">true</boolean>
+               <string key="id">4edfbc5b-5197-40d5-aa8e-c55f616c15d5</string>
+               <boolean key="touched">false</boolean>
+            </map>
+            <map>
+               <string key="type">text</string>
+               <map key="label">
+                  <string key="en">Recording equipment</string>
+                  <string key="nl">Opnameapparatuur</string>
+               </map>
+               <string key="name">recording_equipment</string>
+               <boolean key="noIndicator">true</boolean>
+               <map key="description">
+                  <string key="en">Equipment, method, or platform used for recording</string>
+                  <string key="nl">Apparatuur/methode gebruikt voor de opname</string>
+               </map>
+               <string key="id">f61aef9a-0d04-4d25-ab18-9ae0b7ec179d</string>
+               <boolean key="touched">false</boolean>
+            </map>
+            <map>
+               <string key="type">group</string>
+               <map key="label">
+                  <string key="en">Transcriber</string>
+                  <string key="nl">Transcribent</string>
+               </map>
+               <string key="name">transcript_human</string>
+               <boolean key="repeatable">true</boolean>
+               <map key="description">
+                  <string key="en">In case of transcript by human. This data will not be public.</string>
+                  <string key="nl">Wanneer de transcriptie door een persoon is gedaan. Deze data wordt niet gepubliceerd.</string>
+               </map>
+               <array key="fields">
+                  <array>
+                     <map>
+                        <string key="type">text</string>
+                        <map key="label">
+                           <string key="en">First name</string>
+                           <string key="nl">Voornaam</string>
+                        </map>
+                        <string key="name">transcript_human_first_name</string>
+                        <boolean key="private">true</boolean>
+                        <boolean key="noIndicator">true</boolean>
+                        <string key="id">97488f0b-b35e-4e66-a540-503f0ed1cdcf</string>
+                     </map>
+                     <map>
+                        <string key="type">text</string>
+                        <map key="label">
+                           <string key="en">Last name</string>
+                           <string key="nl">Achternaam</string>
+                        </map>
+                        <string key="name">transcript_human_last_name</string>
+                        <boolean key="private">true</boolean>
+                        <boolean key="noIndicator">true</boolean>
+                        <string key="id">dfc5e60d-4963-42e5-8ad2-aa3a66d014b5</string>
+                     </map>
+                     <map>
+                        <string key="type">text</string>
+                        <map key="label">
+                           <string key="en">Function</string>
+                           <string key="nl">Functie</string>
+                        </map>
+                        <string key="name">transcript_human_function</string>
+                        <boolean key="private">true</boolean>
+                        <boolean key="noIndicator">true</boolean>
+                        <string key="id">aab711a6-45df-44b4-8e16-1df69837ce8c</string>
+                     </map>
+                     <map>
+                        <string key="type">text</string>
+                        <map key="label">
+                           <string key="en">Affiliation</string>
+                           <string key="nl">Affiliatie</string>
+                        </map>
+                        <string key="name">transcript_human_affiliation</string>
+                        <boolean key="private">true</boolean>
+                        <boolean key="noIndicator">true</boolean>
+                        <string key="id">08f9e13f-ab5f-4bd8-a43e-605a3e99beae</string>
+                     </map>
+                     <map>
+                        <string key="type">check</string>
+                        <string key="name">transcript_human_consent</string>
+                        <map key="description">
+                           <string key="en">Consent given for the processing of personal data (including archiving and, if applicable, making accessible for reuse, for instance through an informed consent form)</string>
+                           <string key="nl">Toestemming gegeven voor de verwerking van persoonsgegevens (inclusief archivering en, indien van toepassing, toegankelijk maken voor hergebruik, bijvoorbeeld via een toestemmingsformulier)</string>
+                        </map>
+                        <boolean key="private">true</boolean>
+                        <boolean key="noIndicator">true</boolean>
+                        <array key="options">
+                           <map>
+                              <string key="value">transcript_human_consent_signed</string>
+                              <map key="label">
+                                 <string key="en">Consent given</string>
+                                 <string key="nl">Toestemming gegeven</string>
+                              </map>
+                           </map>
+                        </array>
+                        <string key="id">8fd01b82-c94c-40fd-8f5b-70a5d052e6f1</string>
+                     </map>
+                  </array>
+               </array>
+               <string key="id">48aab266-5ea7-4076-b277-9c04024e4d67</string>
+            </map>
+            <map>
+               <string key="type">text</string>
+               <map key="label">
+                  <string key="en">Transcript by machine</string>
+                  <string key="nl">Machinetranscriptie</string>
+               </map>
+               <string key="name">transcript_machine</string>
+               <boolean key="noIndicator">true</boolean>
+               <string key="id">66c9a4e9-cf83-420f-89cf-6beb0cfd5d51</string>
+               <boolean key="touched">false</boolean>
+            </map>
+         </array>
+         <string key="status">warning</string>
+      </map>
+      <map>
+         <string key="id">citation</string>
+         <map key="title">
+            <string key="en">Citation</string>
+            <string key="nl">Citaten</string>
+         </map>
+         <array key="fields">
+            <map>
+               <string key="type">text</string>
+               <map key="label">
+                  <string key="en">Title</string>
+                  <string key="nl">Titel</string>
+               </map>
+               <string key="name">title</string>
+               <boolean key="required">true</boolean>
+               <map key="description">
+                  <string key="en">A descriptive title for the work, to be used in citations</string>
+                  <string key="nl">Een beschrijvende titel voor deze data, wordt gebruikt in referenties.</string>
+               </map>
+               <boolean key="autoGenerateTitle">true</boolean>
+               <string key="id">03a06656-171a-4fe3-af9d-d291d0dd3f97</string>
+               <boolean key="touched">true</boolean>
+               <string key="value">Interview with Oral-history specific - First name Oral-history specific - last name in Jakarta, Indonesia on 01-01-2001</string>
+               <boolean key="valid">true</boolean>
+            </map>
+            <map>
+               <string key="id">5f554139-fb56-4815-845b-306eb7f597f5</string>
+               <string key="type">repeatSingleField</string>
+               <string key="name">subtitle</string>
+               <array key="fields">
+                  <map>
+                     <string key="type">text</string>
+                     <map key="label">
+                        <string key="en">Subtitle</string>
+                        <string key="nl">Ondertitel</string>
+                     </map>
+                     <string key="name">subtitle</string>
+                     <boolean key="repeatable">true</boolean>
+                     <boolean key="noIndicator">true</boolean>
+                     <map key="description">
+                        <string key="en">You can provide a subtitle if you wish</string>
+                        <string key="nl">Je kunt een optionele ondertitel opgeven als je wilt</string>
+                     </map>
+                     <string key="id">531144cb-793c-4d5b-98c6-a5b9113c6b10</string>
+                     <boolean key="touched">false</boolean>
+                  </map>
+               </array>
+            </map>
+            <map>
+               <string key="type">text</string>
+               <map key="label">
+                  <string key="en">Description</string>
+                  <string key="nl">Beschrijving</string>
+               </map>
+               <string key="name">description</string>
+               <boolean key="multiline">true</boolean>
+               <boolean key="required">true</boolean>
+               <map key="description">
+                  <string key="en">Some context on the interview. What is the role and relevance of the interviewee in the project? What led to the interview being conducted? Summary of what was discussed in the interview, with time breakdown, and describe important events in the interview. Improves discoverability and reusability of the interview data. Briefly describe the setting and atmosphere of the interview to indicate what does not emerge when only the text is read. Basic HTML tags are allowed.</string>
+                  <string key="nl">Wat context bij het interview. Wat is de rol en relevantie van de geinterviewde bij dit project? Waarom is dit interview afgenomen? Samenvatting van wat er besproken is in het interview, met een tijdindicatie. Beschrijf belangrijke gebeurtenissen in hter interview. Verbetert zichtbaarheid en herbruikbaarheid van de data. Beschrijf kort de setting en sfeer van het interview om meer dan alleen de tekst die gelezen wordt duidelijk te maken. Simpele HTML tags zijn toegestaan.</string>
+               </map>
+               <string key="id">b0b4a30d-8c43-4186-8d7f-b3f5f7b8cb9d</string>
+               <boolean key="touched">true</boolean>
+               <string key="value">The relentless stress students experience could be the cause of concentration lapse as their focus is constantly imposed to stay on the academic work. The unacademic subjects on the syllabus such as cookery could be a pressure relief and reduce students’ focus as it teaches the importance of nutrition and health. Social works could help students’ who follow certain majors that involve communication. It also benefits people’s health, subjects such as physical education is essential to maintain their health during tough studies. Changing the centralization of a focus stimulates students to increase their study quality. </string>
+               <boolean key="valid">true</boolean>
+            </map>
+            <map>
+               <string key="type">autocomplete</string>
+               <map key="label">
+                  <string key="en">Publisher</string>
+                  <string key="nl">Uitgever</string>
+               </map>
+               <string key="name">publisher</string>
+               <boolean key="required">true</boolean>
+               <map key="description">
+                  <string key="en">Institution - often the rights holder</string>
+                  <string key="nl">Instituut - vaak de rechthebbende</string>
+               </map>
+               <string key="options">ror</string>
+               <boolean key="allowFreeText">true</boolean>
+               <string key="id">bd253282-f5e6-43f5-8e1a-6ea31122f40f</string>
+               <boolean key="touched">true</boolean>
+               <map key="value">
+                  <string key="value">KNAW</string>
+                  <string key="label">KNAW</string>
+                  <boolean key="freetext">true</boolean>
+                  <string key="extraLabel">Not found in RoR</string>
+                  <string key="extraContent">Add "KNAW" as custom value</string>
+               </map>
+               <boolean key="valid">true</boolean>
+            </map>
+            <map>
+               <string key="type">group</string>
+               <map key="label">
+                  <string key="en">Author</string>
+                  <string key="nl">Auteur</string>
+               </map>
+               <string key="name">author</string>
+               <boolean key="repeatable">true</boolean>
+               <map key="description">
+                  <string key="en">Add one or more authors.</string>
+                  <string key="nl">Voeg een of meerdere auteurs toe</string>
+               </map>
+               <array key="fields">
+                  <array>
+                     <map>
+                        <string key="type">autocomplete</string>
+                        <map key="label">
+                           <string key="en">Name</string>
+                           <string key="nl">Naam</string>
+                        </map>
+                        <string key="name">name</string>
+                        <boolean key="required">true</boolean>
+                        <map key="description">
+                           <string key="en">First and last name</string>
+                           <string key="nl">Voor en achternaam</string>
+                        </map>
+                        <string key="options">orcid</string>
+                        <boolean key="allowFreeText">true</boolean>
+                        <string key="id">4b34ca63-b3cd-4b9a-a2a8-689e83e14d47</string>
+                        <map key="value">
+                           <string key="label">Eko Indarto</string>
+                           <string key="value">https://orcid.org/0000-0002-3870-0446</string>
+                           <string key="extraLabel">institutions</string>
+                           <string key="extraContent"/>
+                           <string key="idLabel">ORCID ID</string>
+                           <string key="id">0000-0002-3870-0446</string>
+                        </map>
+                        <boolean key="touched">true</boolean>
+                        <boolean key="valid">true</boolean>
+                     </map>
+                     <map>
+                        <string key="type">text</string>
+                        <map key="label">
+                           <string key="en">Affiliation</string>
+                           <string key="nl">Affiliatie</string>
+                        </map>
+                        <string key="name">affiliation</string>
+                        <boolean key="required">true</boolean>
+                        <map key="description">
+                           <string key="en"/>
+                           <string key="nl"/>
+                        </map>
+                        <string key="id">1f882cce-b9b8-44dd-bc3a-6f63ae0d3a36</string>
+                        <string key="value">DANS</string>
+                        <boolean key="touched">true</boolean>
+                        <boolean key="valid">true</boolean>
+                     </map>
+                  </array>
+               </array>
+               <string key="id">3d79f935-0c2f-4e24-8a43-0c2d708eef14</string>
+            </map>
+            <map>
+               <string key="type">group</string>
+               <map key="label">
+                  <string key="en">Grant information</string>
+                  <string key="nl">Beursinformatie</string>
+               </map>
+               <string key="name">grant</string>
+               <boolean key="repeatable">true</boolean>
+               <map key="description">
+                  <string key="en">Optional information if a grant was involved in financing the project</string>
+                  <string key="nl">Optionele informatie als het project met behulp van subsidie tot stand is gekomen</string>
+               </map>
+               <array key="fields">
+                  <array>
+                     <map>
+                        <string key="type">text</string>
+                        <map key="label">
+                           <string key="en">Grant agency</string>
+                           <string key="nl">Subsidieverstrekker</string>
+                        </map>
+                        <string key="name">grant_agency</string>
+                        <boolean key="noIndicator">true</boolean>
+                        <map key="description">
+                           <string key="en">Information about the agency providing a grant</string>
+                           <string key="nl">Informatie over de verstrekker van de beurs of subsidie</string>
+                        </map>
+                        <string key="id">0716e665-ff18-426c-9466-c8687b139505</string>
+                        <string key="value">GrantAgency-1</string>
+                        <boolean key="touched">true</boolean>
+                        <boolean key="valid">true</boolean>
+                     </map>
+                     <map>
+                        <string key="type">text</string>
+                        <map key="label">
+                           <string key="en">Grant number/identifier</string>
+                           <string key="nl">Dossiernummer van de verstrekte subsidie</string>
+                        </map>
+                        <string key="name">grant_number</string>
+                        <boolean key="noIndicator">true</boolean>
+                        <map key="description">
+                           <string key="en">Information about the grant number or identifier</string>
+                           <string key="nl">Informatie over het dossiernummer van de beurs of subsidie</string>
+                        </map>
+                        <string key="id">eb7fb6d3-1764-47a9-8e77-9b102fdce288</string>
+                        <string key="value">GrantNumber1/Identifier1</string>
+                        <boolean key="touched">true</boolean>
+                        <boolean key="valid">true</boolean>
+                     </map>
+                  </array>
+                  <array>
+                     <map>
+                        <string key="type">text</string>
+                        <map key="label">
+                           <string key="en">Grant agency</string>
+                           <string key="nl">Subsidieverstrekker</string>
+                        </map>
+                        <string key="name">grant_agency</string>
+                        <boolean key="noIndicator">true</boolean>
+                        <map key="description">
+                           <string key="en">Information about the agency providing a grant</string>
+                           <string key="nl">Informatie over de verstrekker van de beurs of subsidie</string>
+                        </map>
+                        <string key="id">397f9fff-9a41-4dd9-a532-c1e17e22a7e0</string>
+                        <string key="value">GrantAgency-2</string>
+                        <boolean key="touched">true</boolean>
+                        <boolean key="valid">true</boolean>
+                     </map>
+                     <map>
+                        <string key="type">text</string>
+                        <map key="label">
+                           <string key="en">Grant number/identifier</string>
+                           <string key="nl">Dossiernummer van de verstrekte subsidie</string>
+                        </map>
+                        <string key="name">grant_number</string>
+                        <boolean key="noIndicator">true</boolean>
+                        <map key="description">
+                           <string key="en">Information about the grant number or identifier</string>
+                           <string key="nl">Informatie over het dossiernummer van de beurs of subsidie</string>
+                        </map>
+                        <string key="id">e9205fdf-6904-42a0-8222-2fd54b5e6dad</string>
+                        <string key="value">GrantNumber2/Identifier2</string>
+                        <boolean key="touched">true</boolean>
+                        <boolean key="valid">true</boolean>
+                     </map>
+                  </array>
+                  <array>
+                     <map>
+                        <string key="type">text</string>
+                        <map key="label">
+                           <string key="en">Grant agency</string>
+                           <string key="nl">Subsidieverstrekker</string>
+                        </map>
+                        <string key="name">grant_agency</string>
+                        <boolean key="noIndicator">true</boolean>
+                        <map key="description">
+                           <string key="en">Information about the agency providing a grant</string>
+                           <string key="nl">Informatie over de verstrekker van de beurs of subsidie</string>
+                        </map>
+                        <string key="id">1f1f810f-a45e-401a-8146-88096c28b9a8</string>
+                        <string key="value">GrantAgency-3</string>
+                        <boolean key="touched">true</boolean>
+                        <boolean key="valid">true</boolean>
+                     </map>
+                     <map>
+                        <string key="type">text</string>
+                        <map key="label">
+                           <string key="en">Grant number/identifier</string>
+                           <string key="nl">Dossiernummer van de verstrekte subsidie</string>
+                        </map>
+                        <string key="name">grant_number</string>
+                        <boolean key="noIndicator">true</boolean>
+                        <map key="description">
+                           <string key="en">Information about the grant number or identifier</string>
+                           <string key="nl">Informatie over het dossiernummer van de beurs of subsidie</string>
+                        </map>
+                        <string key="id">8fc5700c-4ea6-4450-9867-4a162fdaea24</string>
+                        <string key="value"/>
+                        <boolean key="touched">false</boolean>
+                        <string key="valid"/>
+                     </map>
+                  </array>
+                  <array>
+                     <map>
+                        <string key="type">text</string>
+                        <map key="label">
+                           <string key="en">Grant agency</string>
+                           <string key="nl">Subsidieverstrekker</string>
+                        </map>
+                        <string key="name">grant_agency</string>
+                        <boolean key="noIndicator">true</boolean>
+                        <map key="description">
+                           <string key="en">Information about the agency providing a grant</string>
+                           <string key="nl">Informatie over de verstrekker van de beurs of subsidie</string>
+                        </map>
+                        <string key="id">4facca83-b8f0-4ba7-a1c6-6aec6efa45cc</string>
+                        <string key="value"/>
+                        <boolean key="touched">false</boolean>
+                        <string key="valid"/>
+                     </map>
+                     <map>
+                        <string key="type">text</string>
+                        <map key="label">
+                           <string key="en">Grant number/identifier</string>
+                           <string key="nl">Dossiernummer van de verstrekte subsidie</string>
+                        </map>
+                        <string key="name">grant_number</string>
+                        <boolean key="noIndicator">true</boolean>
+                        <map key="description">
+                           <string key="en">Information about the grant number or identifier</string>
+                           <string key="nl">Informatie over het dossiernummer van de beurs of subsidie</string>
+                        </map>
+                        <string key="id">9f0aab03-d558-4d26-93f0-6dac7cd1183c</string>
+                        <string key="value">GrantNumber4/Identifier4</string>
+                        <boolean key="touched">true</boolean>
+                        <boolean key="valid">true</boolean>
+                     </map>
+                  </array>
+               </array>
+               <string key="id">a9f8eeff-8a2a-440b-a836-dc309cb47383</string>
+            </map>
+         </array>
+         <string key="status">success</string>
+      </map>
+      <map>
+         <string key="id">coverage</string>
+         <map key="title">
+            <string key="en">Coverage</string>
+            <string key="nl">Dekking</string>
+         </map>
+         <array key="fields">
+            <map>
+               <string key="type">autocomplete</string>
+               <map key="label">
+                  <string key="en">Subject keywords</string>
+                  <string key="nl">Trefwoorden bij onderwerp</string>
+               </map>
+               <string key="name">subject_keywords</string>
+               <boolean key="required">true</boolean>
+               <boolean key="multiselect">true</boolean>
+               <map key="description">
+                  <string key="en">Enter keywords that describe the content of your dataset in terms of artistic or architectural subject matter. Keywords may either be selected from the Getty Art &amp; Architecture Thesaurus (AAT), or entered as free text. These keywords have a different scope from the 'Humanities' domain-specific keywords (below), which should be selected from the European Languages Social Sciences Thesaurus (ELSST), and which describe the content of your dataset in terms of social relations, interactions or phenomena, or ways to study them.</string>
+                  <string key="nl">Voer trefwoorden in die de inhoud van de dataset beschrijven op het gebied van artistieke of architectonische onderwerpen. Trefwoorden kunnen worden geselecteerd uit de Getty Art &amp; Architecture Thesaurus (AAT) of worden ingevoerd als vrije tekst. Deze trefwoorden hebben een andere reikwijdte dan de 'Geesteswetenschappen' domeinspecifieke trefwoorden (hieronder), die moeten worden geselecteerd uit de European Languages Social Sciences Thesaurus (ELSST) en die de inhoud van uw dataset beschrijven in termen van sociale relaties, interacties of verschijnselen, of manieren om ze te bestuderen.</string>
+               </map>
+               <string key="options">getty</string>
+               <boolean key="allowFreeText">true</boolean>
+               <array key="value">
+                  <map>
+                     <string key="label">oral history (discipline)</string>
+                     <string key="value">http://vocab.getty.edu/page/aat/300054402</string>
+                     <boolean key="mandatory">true</boolean>
+                  </map>
+                  <map>
+                     <string key="label">Engelmann spruce (wood)</string>
+                     <string key="value">http://vocab.getty.edu/page/aat/300012764</string>
+                  </map>
+               </array>
+               <string key="id">424f5032-03dd-4e18-88c2-5b79f60d37cd</string>
+               <boolean key="touched">true</boolean>
+               <boolean key="valid">true</boolean>
+            </map>
+            <map>
+               <string key="type">autocomplete</string>
+               <map key="label">
+                  <string key="en">Location(s) covered in the interview</string>
+                  <string key="nl">Locatie(s) besproken in het interview</string>
+               </map>
+               <string key="name">subject_location</string>
+               <boolean key="multiselect">true</boolean>
+               <map key="description">
+                  <string key="en">The location(s) that the interview material deals with</string>
+                  <string key="nl">De locatie(s) waar het interview over gaat</string>
+               </map>
+               <string key="options">geonames</string>
+               <string key="id">fd86db0b-0d83-41a2-adaa-63832fb37c1c</string>
+               <boolean key="touched">true</boolean>
+               <array key="value">
+                  <map>
+                     <string key="label">The Hague, The Netherlands</string>
+                     <string key="value">https://www.geonames.org/2747373</string>
+                     <array key="coordinates">
+                        <string>52.07667</string>
+                        <string>4.29861</string>
+                     </array>
+                  </map>
+               </array>
+               <boolean key="valid">true</boolean>
+            </map>
+            <map>
+               <string key="type">group</string>
+               <map key="label">
+                  <string key="en">Period covered in the interview</string>
+                  <string key="nl">Periode besproken in het interview</string>
+               </map>
+               <string key="name">subject_date_time</string>
+               <boolean key="repeatable">true</boolean>
+               <map key="description">
+                  <string key="en">The dates and times the interview material deals with</string>
+                  <string key="nl">De data en tijden waarover het interview gaat</string>
+               </map>
+               <array key="fields">
+                  <array>
+                     <map>
+                        <string key="type">date</string>
+                        <string key="format">YYYY</string>
+                        <array key="formatOptions">
+                           <string>YYYY</string>
+                           <string>MM-YYYY</string>
+                           <string>DD-MM-YYYY</string>
+                           <string>DD-MM-YYYY HH:mm</string>
+                        </array>
+                        <map key="label">
+                           <string key="en">Start of period</string>
+                           <string key="nl">Begin van periode</string>
+                        </map>
+                        <string key="name">subject_date_time_start</string>
+                        <boolean key="required">true</boolean>
+                        <map key="description">
+                           <string key="en">The start of a period the interview covers</string>
+                           <string key="nl">Start van een periode waar het interview over gaat</string>
+                        </map>
+                        <string key="minDateField">subject_date_time_end</string>
+                        <string key="id">24674c4a-f01b-42f8-8ffb-4da85c4cee13</string>
+                        <string key="value">2000</string>
+                        <boolean key="touched">true</boolean>
+                        <boolean key="valid">true</boolean>
+                     </map>
+                     <map>
+                        <string key="type">date</string>
+                        <string key="format">MM-YYYY</string>
+                        <array key="formatOptions">
+                           <string>YYYY</string>
+                           <string>MM-YYYY</string>
+                           <string>DD-MM-YYYY</string>
+                           <string>DD-MM-YYYY HH:mm</string>
+                        </array>
+                        <map key="label">
+                           <string key="en">End of period</string>
+                           <string key="nl">Eind van periode</string>
+                        </map>
+                        <string key="name">subject_date_time_end</string>
+                        <map key="description">
+                           <string key="en">The end of a period the interview covers</string>
+                           <string key="nl">Eind van een periode waar het interview over gaat</string>
+                        </map>
+                        <string key="id">f6f2adf5-0e29-4993-87e1-2da97cf38f97</string>
+                        <string key="minDate">2000</string>
+                        <string key="value">11-2000</string>
+                        <boolean key="touched">true</boolean>
+                        <boolean key="valid">true</boolean>
+                     </map>
+                  </array>
+                  <array>
+                     <map>
+                        <string key="type">date</string>
+                        <string key="format">DD-MM-YYYY HH:mm</string>
+                        <array key="formatOptions">
+                           <string>YYYY</string>
+                           <string>MM-YYYY</string>
+                           <string>DD-MM-YYYY</string>
+                           <string>DD-MM-YYYY HH:mm</string>
+                        </array>
+                        <map key="label">
+                           <string key="en">Start of period</string>
+                           <string key="nl">Begin van periode</string>
+                        </map>
+                        <string key="name">subject_date_time_start</string>
+                        <boolean key="required">true</boolean>
+                        <map key="description">
+                           <string key="en">The start of a period the interview covers</string>
+                           <string key="nl">Start van een periode waar het interview over gaat</string>
+                        </map>
+                        <string key="minDateField">subject_date_time_end</string>
+                        <string key="id">cc805e72-84e8-4320-bfd7-70e46343cdc6</string>
+                        <string key="value">11-11-1888 11:11</string>
+                        <boolean key="touched">true</boolean>
+                        <boolean key="valid">true</boolean>
+                     </map>
+                     <map>
+                        <string key="type">date</string>
+                        <string key="format">DD-MM-YYYY</string>
+                        <array key="formatOptions">
+                           <string>YYYY</string>
+                           <string>MM-YYYY</string>
+                           <string>DD-MM-YYYY</string>
+                           <string>DD-MM-YYYY HH:mm</string>
+                        </array>
+                        <map key="label">
+                           <string key="en">End of period</string>
+                           <string key="nl">Eind van periode</string>
+                        </map>
+                        <string key="name">subject_date_time_end</string>
+                        <map key="description">
+                           <string key="en">The end of a period the interview covers</string>
+                           <string key="nl">Eind van een periode waar het interview over gaat</string>
+                        </map>
+                        <string key="id">d3244f81-bec1-4dfc-8185-3b42e0067568</string>
+                        <string key="minDate">11-11-1888 11:11</string>
+                        <string key="value"/>
+                        <boolean key="touched">true</boolean>
+                        <boolean key="valid">false</boolean>
+                     </map>
+                  </array>
+                  <array>
+                     <map>
+                        <string key="type">date</string>
+                        <string key="format">MM-YYYY</string>
+                        <array key="formatOptions">
+                           <string>YYYY</string>
+                           <string>MM-YYYY</string>
+                           <string>DD-MM-YYYY</string>
+                           <string>DD-MM-YYYY HH:mm</string>
+                        </array>
+                        <map key="label">
+                           <string key="en">Start of period</string>
+                           <string key="nl">Begin van periode</string>
+                        </map>
+                        <string key="name">subject_date_time_start</string>
+                        <boolean key="required">true</boolean>
+                        <map key="description">
+                           <string key="en">The start of a period the interview covers</string>
+                           <string key="nl">Start van een periode waar het interview over gaat</string>
+                        </map>
+                        <string key="minDateField">subject_date_time_end</string>
+                        <string key="id">d49d2623-e9c5-4bed-b4ac-55a061c21982</string>
+                        <string key="value">12-1999</string>
+                        <boolean key="touched">true</boolean>
+                        <boolean key="valid">true</boolean>
+                     </map>
+                     <map>
+                        <string key="type">date</string>
+                        <string key="format">DD-MM-YYYY HH:mm</string>
+                        <array key="formatOptions">
+                           <string>YYYY</string>
+                           <string>MM-YYYY</string>
+                           <string>DD-MM-YYYY</string>
+                           <string>DD-MM-YYYY HH:mm</string>
+                        </array>
+                        <map key="label">
+                           <string key="en">End of period</string>
+                           <string key="nl">Eind van periode</string>
+                        </map>
+                        <string key="name">subject_date_time_end</string>
+                        <map key="description">
+                           <string key="en">The end of a period the interview covers</string>
+                           <string key="nl">Eind van een periode waar het interview over gaat</string>
+                        </map>
+                        <string key="id">32986541-b500-4d2e-b0a4-3933d3960927</string>
+                        <string key="minDate">12-1999</string>
+                        <string key="value">13-03-2000 03:33</string>
+                        <boolean key="touched">true</boolean>
+                        <boolean key="valid">true</boolean>
+                     </map>
+                  </array>
+               </array>
+               <string key="id">d016fd2c-6d83-4f93-bd9a-d98bb2437c3d</string>
+            </map>
+         </array>
+         <string key="status">warning</string>
+      </map>
+      <map>
+         <string key="id">relations</string>
+         <map key="title">
+            <string key="en">Relations</string>
+            <string key="nl">Relaties</string>
+         </map>
+         <array key="fields">
+            <map>
+               <string key="type">autocomplete</string>
+               <map key="label">
+                  <string key="en">Audience</string>
+                  <string key="nl">Publiek</string>
+               </map>
+               <string key="name">audience</string>
+               <boolean key="multiselect">true</boolean>
+               <boolean key="required">true</boolean>
+               <map key="description">
+                  <string key="en">Specifies which research disciplines which may be interested in this dataset. Examples may be Humanities; Arts and Culture; History of Arts and Architecture</string>
+                  <string key="nl">Geeft aan welke onderzoeksdisciplines mogelijk geïnteresseerd zijn in deze dataset. Voorbeelden kunnen zijn: Geesteswetenschappen; Kunst en Cultuur; Geschiedenis van Kunst en Architectuur.</string>
+               </map>
+               <string key="options">narcis</string>
+               <string key="id">bcc8dc50-92d3-4bd9-832c-eeaeaf5128ac</string>
+               <boolean key="touched">true</boolean>
+               <array key="value">
+                  <map>
+                     <string key="label">Engineering geology</string>
+                     <string key="value">https://www.narcis.nl/classification/D14620</string>
+                     <string key="id">D14620</string>
+                  </map>
+                  <map>
+                     <string key="label">Chemistry</string>
+                     <string key="value">https://www.narcis.nl/classification/D13000</string>
+                     <string key="id">D13000</string>
+                  </map>
+                  <map>
+                     <string key="label">Biology</string>
+                     <string key="value">https://www.narcis.nl/classification/D22000</string>
+                     <string key="id">D22000</string>
+                  </map>
+               </array>
+               <boolean key="valid">true</boolean>
+            </map>
+            <map>
+               <string key="type">autocomplete</string>
+               <map key="label">
+                  <string key="en">Collections</string>
+                  <string key="nl">Collecties</string>
+               </map>
+               <string key="name">collections</string>
+               <boolean key="multiselect">true</boolean>
+               <boolean key="required">true</boolean>
+               <map key="description">
+                  <string key="en">Something here</string>
+                  <string key="nl">Iets hier</string>
+               </map>
+               <string key="options">dansCollections</string>
+               <array key="value">
+                  <map>
+                     <boolean key="mandatory">true</boolean>
+                     <string key="label">Oral History</string>
+                     <string key="value">https://vocabularies.dans.knaw.nl/collections/ssh/cfa04ed6-4cd0-4651-80cb-ed4ca8fa14f3</string>
+                     <string key="id">ssh/cfa04ed6-4cd0-4651-80cb-ed4ca8fa14f3</string>
+                  </map>
+                  <map>
+                     <string key="label">Akkers van Margraten</string>
+                     <string key="value">https://vocabularies.dans.knaw.nl/collections/ssh/af9b0d58-a09a-4cc8-9dd3-1d9297d667fe</string>
+                     <string key="id">ssh/af9b0d58-a09a-4cc8-9dd3-1d9297d667fe</string>
+                  </map>
+               </array>
+               <string key="id">e2f17408-4601-454f-bda6-cede9eb85d6e</string>
+               <boolean key="touched">true</boolean>
+               <boolean key="valid">true</boolean>
+            </map>
+            <map>
+               <string key="type">group</string>
+               <map key="label">
+                  <string key="en">Related to</string>
+                  <string key="nl">Gerelateerd aan</string>
+               </map>
+               <string key="name">relation</string>
+               <boolean key="repeatable">true</boolean>
+               <map key="description">
+                  <string key="en">Other interviews, publications, projects</string>
+                  <string key="nl">Andere interviews, publicaties, projecten</string>
+               </map>
+               <array key="fields">
+                  <array>
+                     <map>
+                        <string key="type">autocomplete</string>
+                        <map key="label">
+                           <string key="en">Type of relation</string>
+                           <string key="nl">Type relatie</string>
+                        </map>
+                        <string key="name">relation_type</string>
+                        <map key="description">
+                           <string key="en">The type of relation to this external item</string>
+                           <string key="nl">Type relatie met dit externe item</string>
+                        </map>
+                        <boolean key="noIndicator">true</boolean>
+                        <array key="options">
+                           <map>
+                              <string key="label">Conforms to</string>
+                              <string key="value">Conforms to</string>
+                           </map>
+                           <map>
+                              <string key="label">Has Format</string>
+                              <string key="value">Has Format</string>
+                           </map>
+                           <map>
+                              <string key="label">Has part</string>
+                              <string key="value">Has part</string>
+                           </map>
+                           <map>
+                              <string key="label">References</string>
+                              <string key="value">References</string>
+                           </map>
+                           <map>
+                              <string key="label">Replaces</string>
+                              <string key="value">Replaces</string>
+                           </map>
+                           <map>
+                              <string key="label">Requires</string>
+                              <string key="value">Requires</string>
+                           </map>
+                           <map>
+                              <string key="label">Has version</string>
+                              <string key="value">Has version</string>
+                           </map>
+                           <map>
+                              <string key="label">Is format of</string>
+                              <string key="value">Is format of</string>
+                           </map>
+                           <map>
+                              <string key="label">Is part of</string>
+                              <string key="value">Is part of</string>
+                           </map>
+                           <map>
+                              <string key="label">Is referenced by</string>
+                              <string key="value">Is referenced by</string>
+                           </map>
+                           <map>
+                              <string key="label">Is replaced by</string>
+                              <string key="value">Is replaced by</string>
+                           </map>
+                           <map>
+                              <string key="label">Is required by</string>
+                              <string key="value">Is required by</string>
+                           </map>
+                           <map>
+                              <string key="label">Is version of</string>
+                              <string key="value">Is version of</string>
+                           </map>
+                        </array>
+                        <array key="toggleRequired">
+                           <string>relation_item</string>
+                           <string>relation_reference</string>
+                        </array>
+                        <string key="id">9c6383cf-be4d-4e48-b10e-eb8c4c3a66e9</string>
+                     </map>
+                     <map>
+                        <string key="type">text</string>
+                        <map key="label">
+                           <string key="en">Related item</string>
+                           <string key="nl">Gerelateerd item</string>
+                        </map>
+                        <string key="name">relation_item</string>
+                        <boolean key="noIndicator">true</boolean>
+                        <map key="description">
+                           <string key="en">Other interviews, publications, projects, or initiatives can be linked here by providing a description, a URL, and selecting a relation type.</string>
+                           <string key="nl">Andere interviews, publicaties, projecten of initiatieven kunnen hier worden gelinkt door een beschrijving, een URL en een relatietype te verstrekken.</string>
+                        </map>
+                        <string key="id">be3f42b3-4878-4011-9098-29d32029808e</string>
+                     </map>
+                     <map>
+                        <string key="type">text</string>
+                        <map key="label">
+                           <string key="en">Item reference</string>
+                           <string key="nl">Item referentie</string>
+                        </map>
+                        <string key="name">relation_reference</string>
+                        <boolean key="noIndicator">true</boolean>
+                        <string key="placeholder">https://...</string>
+                        <string key="validation">uri</string>
+                        <map key="description">
+                           <string key="en">A web link or PID reference for this external item</string>
+                           <string key="nl">Een weblink of PID referentie naar dit externe item</string>
+                        </map>
+                        <string key="id">a8dd8573-5d9c-49fb-b512-a8467542e0a2</string>
+                     </map>
+                  </array>
+                  <array>
+                     <map>
+                        <string key="type">autocomplete</string>
+                        <map key="label">
+                           <string key="en">Type of relation</string>
+                           <string key="nl">Type relatie</string>
+                        </map>
+                        <string key="name">relation_type</string>
+                        <map key="description">
+                           <string key="en">The type of relation to this external item</string>
+                           <string key="nl">Type relatie met dit externe item</string>
+                        </map>
+                        <boolean key="noIndicator">true</boolean>
+                        <array key="options">
+                           <map>
+                              <string key="label">Conforms to</string>
+                              <string key="value">Conforms to</string>
+                           </map>
+                           <map>
+                              <string key="label">Has Format</string>
+                              <string key="value">Has Format</string>
+                           </map>
+                           <map>
+                              <string key="label">Has part</string>
+                              <string key="value">Has part</string>
+                           </map>
+                           <map>
+                              <string key="label">References</string>
+                              <string key="value">References</string>
+                           </map>
+                           <map>
+                              <string key="label">Replaces</string>
+                              <string key="value">Replaces</string>
+                           </map>
+                           <map>
+                              <string key="label">Requires</string>
+                              <string key="value">Requires</string>
+                           </map>
+                           <map>
+                              <string key="label">Has version</string>
+                              <string key="value">Has version</string>
+                           </map>
+                           <map>
+                              <string key="label">Is format of</string>
+                              <string key="value">Is format of</string>
+                           </map>
+                           <map>
+                              <string key="label">Is part of</string>
+                              <string key="value">Is part of</string>
+                           </map>
+                           <map>
+                              <string key="label">Is referenced by</string>
+                              <string key="value">Is referenced by</string>
+                           </map>
+                           <map>
+                              <string key="label">Is replaced by</string>
+                              <string key="value">Is replaced by</string>
+                           </map>
+                           <map>
+                              <string key="label">Is required by</string>
+                              <string key="value">Is required by</string>
+                           </map>
+                           <map>
+                              <string key="label">Is version of</string>
+                              <string key="value">Is version of</string>
+                           </map>
+                        </array>
+                        <array key="toggleRequired">
+                           <string>relation_item</string>
+                           <string>relation_reference</string>
+                        </array>
+                        <string key="id">b5b3cab7-a0d5-4d50-9362-0d204ec70897</string>
+                        <map key="value">
+                           <string key="label">Is format of</string>
+                           <string key="value">Is format of</string>
+                        </map>
+                        <boolean key="valid">true</boolean>
+                        <boolean key="touched">true</boolean>
+                        <array key="toggleRequiredIds">
+                           <string>d5dab8ed-01ce-417c-9bbd-0aca5b533400</string>
+                           <string>fcfb0dfa-967f-4da7-9f20-0512eee1aa0c</string>
+                        </array>
+                     </map>
+                     <map>
+                        <string key="type">text</string>
+                        <map key="label">
+                           <string key="en">Related item</string>
+                           <string key="nl">Gerelateerd item</string>
+                        </map>
+                        <string key="name">relation_item</string>
+                        <boolean key="noIndicator">true</boolean>
+                        <map key="description">
+                           <string key="en">Other interviews, publications, projects, or initiatives can be linked here by providing a description, a URL, and selecting a relation type.</string>
+                           <string key="nl">Andere interviews, publicaties, projecten of initiatieven kunnen hier worden gelinkt door een beschrijving, een URL en een relatietype te verstrekken.</string>
+                        </map>
+                        <string key="id">d5dab8ed-01ce-417c-9bbd-0aca5b533400</string>
+                        <string key="value">Format To</string>
+                        <boolean key="valid">true</boolean>
+                        <boolean key="touched">true</boolean>
+                        <boolean key="required">true</boolean>
+                     </map>
+                     <map>
+                        <string key="type">text</string>
+                        <map key="label">
+                           <string key="en">Item reference</string>
+                           <string key="nl">Item referentie</string>
+                        </map>
+                        <string key="name">relation_reference</string>
+                        <boolean key="noIndicator">true</boolean>
+                        <string key="placeholder">https://...</string>
+                        <string key="validation">uri</string>
+                        <map key="description">
+                           <string key="en">A web link or PID reference for this external item</string>
+                           <string key="nl">Een weblink of PID referentie naar dit externe item</string>
+                        </map>
+                        <string key="id">fcfb0dfa-967f-4da7-9f20-0512eee1aa0c</string>
+                        <string key="value">https://google.com/format-of</string>
+                        <boolean key="valid">true</boolean>
+                        <boolean key="touched">true</boolean>
+                        <boolean key="required">true</boolean>
+                     </map>
+                  </array>
+                  <array>
+                     <map>
+                        <string key="type">autocomplete</string>
+                        <map key="label">
+                           <string key="en">Type of relation</string>
+                           <string key="nl">Type relatie</string>
+                        </map>
+                        <string key="name">relation_type</string>
+                        <map key="description">
+                           <string key="en">The type of relation to this external item</string>
+                           <string key="nl">Type relatie met dit externe item</string>
+                        </map>
+                        <boolean key="noIndicator">true</boolean>
+                        <array key="options">
+                           <map>
+                              <string key="label">Conforms to</string>
+                              <string key="value">Conforms to</string>
+                           </map>
+                           <map>
+                              <string key="label">Has Format</string>
+                              <string key="value">Has Format</string>
+                           </map>
+                           <map>
+                              <string key="label">Has part</string>
+                              <string key="value">Has part</string>
+                           </map>
+                           <map>
+                              <string key="label">References</string>
+                              <string key="value">References</string>
+                           </map>
+                           <map>
+                              <string key="label">Replaces</string>
+                              <string key="value">Replaces</string>
+                           </map>
+                           <map>
+                              <string key="label">Requires</string>
+                              <string key="value">Requires</string>
+                           </map>
+                           <map>
+                              <string key="label">Has version</string>
+                              <string key="value">Has version</string>
+                           </map>
+                           <map>
+                              <string key="label">Is format of</string>
+                              <string key="value">Is format of</string>
+                           </map>
+                           <map>
+                              <string key="label">Is part of</string>
+                              <string key="value">Is part of</string>
+                           </map>
+                           <map>
+                              <string key="label">Is referenced by</string>
+                              <string key="value">Is referenced by</string>
+                           </map>
+                           <map>
+                              <string key="label">Is replaced by</string>
+                              <string key="value">Is replaced by</string>
+                           </map>
+                           <map>
+                              <string key="label">Is required by</string>
+                              <string key="value">Is required by</string>
+                           </map>
+                           <map>
+                              <string key="label">Is version of</string>
+                              <string key="value">Is version of</string>
+                           </map>
+                        </array>
+                        <array key="toggleRequired">
+                           <string>relation_item</string>
+                           <string>relation_reference</string>
+                        </array>
+                        <string key="id">00dd2d00-8261-46d9-adac-b6d08b7d3b65</string>
+                        <map key="value">
+                           <string key="label">Conforms to</string>
+                           <string key="value">Conforms to</string>
+                        </map>
+                        <boolean key="valid">true</boolean>
+                        <boolean key="touched">true</boolean>
+                        <array key="toggleRequiredIds">
+                           <string>22e99e58-2159-4c6e-89f2-d7a2c3e25653</string>
+                           <string>82e84202-1f33-4c23-a8f2-a36a0bbf0d14</string>
+                        </array>
+                     </map>
+                     <map>
+                        <string key="type">text</string>
+                        <map key="label">
+                           <string key="en">Related item</string>
+                           <string key="nl">Gerelateerd item</string>
+                        </map>
+                        <string key="name">relation_item</string>
+                        <boolean key="noIndicator">true</boolean>
+                        <map key="description">
+                           <string key="en">Other interviews, publications, projects, or initiatives can be linked here by providing a description, a URL, and selecting a relation type.</string>
+                           <string key="nl">Andere interviews, publicaties, projecten of initiatieven kunnen hier worden gelinkt door een beschrijving, een URL en een relatietype te verstrekken.</string>
+                        </map>
+                        <string key="id">22e99e58-2159-4c6e-89f2-d7a2c3e25653</string>
+                        <string key="value">CONFORM-TO</string>
+                        <boolean key="valid">true</boolean>
+                        <boolean key="touched">true</boolean>
+                        <boolean key="required">true</boolean>
+                     </map>
+                     <map>
+                        <string key="type">text</string>
+                        <map key="label">
+                           <string key="en">Item reference</string>
+                           <string key="nl">Item referentie</string>
+                        </map>
+                        <string key="name">relation_reference</string>
+                        <boolean key="noIndicator">true</boolean>
+                        <string key="placeholder">https://...</string>
+                        <string key="validation">uri</string>
+                        <map key="description">
+                           <string key="en">A web link or PID reference for this external item</string>
+                           <string key="nl">Een weblink of PID referentie naar dit externe item</string>
+                        </map>
+                        <string key="id">82e84202-1f33-4c23-a8f2-a36a0bbf0d14</string>
+                        <string key="value">https://dans.knaw.nl/conforms-to</string>
+                        <boolean key="valid">true</boolean>
+                        <boolean key="touched">true</boolean>
+                        <boolean key="required">true</boolean>
+                     </map>
+                  </array>
+               </array>
+               <string key="id">c7bbc125-17d6-4d5e-889b-cdcc59a7f300</string>
+            </map>
+         </array>
+         <string key="status">success</string>
+      </map>
+      <map>
+         <string key="id">administrative</string>
+         <map key="title">
+            <string key="en">Administrative</string>
+            <string key="nl">Administratief</string>
+         </map>
+         <array key="fields">
+            <map>
+               <string key="type">autocomplete</string>
+               <map key="label">
+                  <string key="en">Language</string>
+                  <string key="nl">Taal</string>
+               </map>
+               <string key="name">language</string>
+               <boolean key="required">true</boolean>
+               <map key="description">
+                  <string key="en">Language of interview</string>
+                  <string key="nl">Taal van het interview</string>
+               </map>
+               <array key="options">
+                  <map>
+                     <map key="label">
+                        <string key="en">Afar</string>
+                        <string key="nl">Afar</string>
+                     </map>
+                     <string key="value">aa</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Abkhazian</string>
+                        <string key="nl">Abchazisch</string>
+                     </map>
+                     <string key="value">ab</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Avestan</string>
+                        <string key="nl">Avestaans</string>
+                     </map>
+                     <string key="value">ae</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Afrikaans</string>
+                        <string key="nl">Afrikaans</string>
+                     </map>
+                     <string key="value">af</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Akan</string>
+                        <string key="nl">Akan</string>
+                     </map>
+                     <string key="value">ak</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Amharic</string>
+                        <string key="nl">Amhaars</string>
+                     </map>
+                     <string key="value">am</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Aragonese</string>
+                        <string key="nl">Aragonees</string>
+                     </map>
+                     <string key="value">an</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Arabic</string>
+                        <string key="nl">Arabisch</string>
+                     </map>
+                     <string key="value">ar</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Assamese</string>
+                        <string key="nl">Assamees</string>
+                     </map>
+                     <string key="value">as</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Avaric</string>
+                        <string key="nl">Avarisch</string>
+                     </map>
+                     <string key="value">av</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Aymara</string>
+                        <string key="nl">Aymara</string>
+                     </map>
+                     <string key="value">ay</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Azerbaijani</string>
+                        <string key="nl">Azerbeidzjaans</string>
+                     </map>
+                     <string key="value">az</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Bashkir</string>
+                        <string key="nl">Basjkiers</string>
+                     </map>
+                     <string key="value">ba</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Belarusian</string>
+                        <string key="nl">Wit-Russisch</string>
+                     </map>
+                     <string key="value">be</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Bulgarian</string>
+                        <string key="nl">Bulgaars</string>
+                     </map>
+                     <string key="value">bg</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Bihari languages</string>
+                        <string key="nl">Bihari-talen</string>
+                     </map>
+                     <string key="value">bh</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Bislama</string>
+                        <string key="nl">Bislama</string>
+                     </map>
+                     <string key="value">bi</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Bambara</string>
+                        <string key="nl">Bambara</string>
+                     </map>
+                     <string key="value">bm</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Bengali</string>
+                        <string key="nl">Bengaals</string>
+                     </map>
+                     <string key="value">bn</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Tibetan</string>
+                        <string key="nl">Tibetaans</string>
+                     </map>
+                     <string key="value">bo</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Breton</string>
+                        <string key="nl">Bretons</string>
+                     </map>
+                     <string key="value">br</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Bosnian</string>
+                        <string key="nl">Bosnisch</string>
+                     </map>
+                     <string key="value">bs</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Catalan</string>
+                        <string key="nl">Catalaans</string>
+                     </map>
+                     <string key="value">ca</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Chechen</string>
+                        <string key="nl">Tsjetsjeens</string>
+                     </map>
+                     <string key="value">ce</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Chamorro</string>
+                        <string key="nl">Chamorro</string>
+                     </map>
+                     <string key="value">ch</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Corsican</string>
+                        <string key="nl">Corsicaans</string>
+                     </map>
+                     <string key="value">co</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Cree</string>
+                        <string key="nl">Cree</string>
+                     </map>
+                     <string key="value">cr</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Czech</string>
+                        <string key="nl">Tsjechisch</string>
+                     </map>
+                     <string key="value">cs</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Church Slavic</string>
+                        <string key="nl">Kerkslavisch</string>
+                     </map>
+                     <string key="value">cu</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Chuvash</string>
+                        <string key="nl">Tsjoevasjisch</string>
+                     </map>
+                     <string key="value">cv</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Welsh</string>
+                        <string key="nl">Welsh</string>
+                     </map>
+                     <string key="value">cy</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Danish</string>
+                        <string key="nl">Deens</string>
+                     </map>
+                     <string key="value">da</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">German</string>
+                        <string key="nl">Duits</string>
+                     </map>
+                     <string key="value">de</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Dhivehi</string>
+                        <string key="nl">Maldivisch</string>
+                     </map>
+                     <string key="value">dv</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Dzongkha</string>
+                        <string key="nl">Dzongkha</string>
+                     </map>
+                     <string key="value">dz</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Ewe</string>
+                        <string key="nl">Ewe</string>
+                     </map>
+                     <string key="value">ee</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Greek, Modern (1453-)</string>
+                        <string key="nl">Grieks, Modern (1453-)</string>
+                     </map>
+                     <string key="value">el</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">English</string>
+                        <string key="nl">Engels</string>
+                     </map>
+                     <string key="value">en</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Esperanto</string>
+                        <string key="nl">Esperanto</string>
+                     </map>
+                     <string key="value">eo</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Castilian</string>
+                        <string key="nl">Castiliaans</string>
+                     </map>
+                     <string key="value">es</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Estonian</string>
+                        <string key="nl">Ests</string>
+                     </map>
+                     <string key="value">et</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Basque</string>
+                        <string key="nl">Baskisch</string>
+                     </map>
+                     <string key="value">eu</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Persian</string>
+                        <string key="nl">Perzisch</string>
+                     </map>
+                     <string key="value">fa</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Fulah</string>
+                        <string key="nl">Fulah</string>
+                     </map>
+                     <string key="value">ff</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Finnish</string>
+                        <string key="nl">Fins</string>
+                     </map>
+                     <string key="value">fi</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Fijian</string>
+                        <string key="nl">Fijisch</string>
+                     </map>
+                     <string key="value">fj</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Faroese</string>
+                        <string key="nl">Faeröers</string>
+                     </map>
+                     <string key="value">fo</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">French</string>
+                        <string key="nl">Frans</string>
+                     </map>
+                     <string key="value">fr</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Western Frisian</string>
+                        <string key="nl">Fries</string>
+                     </map>
+                     <string key="value">fy</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Irish</string>
+                        <string key="nl">Iers</string>
+                     </map>
+                     <string key="value">ga</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Scottish Gaelic</string>
+                        <string key="nl">Schots-Gaelisch</string>
+                     </map>
+                     <string key="value">gd</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Galician</string>
+                        <string key="nl">Galicisch</string>
+                     </map>
+                     <string key="value">gl</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Guarani</string>
+                        <string key="nl">Guaraní</string>
+                     </map>
+                     <string key="value">gn</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Gujarati</string>
+                        <string key="nl">Gujarati</string>
+                     </map>
+                     <string key="value">gu</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Manx</string>
+                        <string key="nl">Manx</string>
+                     </map>
+                     <string key="value">gv</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Hausa</string>
+                        <string key="nl">Hausa</string>
+                     </map>
+                     <string key="value">ha</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Hebrew</string>
+                        <string key="nl">Hebreeuws</string>
+                     </map>
+                     <string key="value">he</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Hindi</string>
+                        <string key="nl">Hindi</string>
+                     </map>
+                     <string key="value">hi</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Hiri Motu</string>
+                        <string key="nl">Hiri Motu</string>
+                     </map>
+                     <string key="value">ho</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Croatian</string>
+                        <string key="nl">Kroatisch</string>
+                     </map>
+                     <string key="value">hr</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Haitian</string>
+                        <string key="nl">Haïtiaans</string>
+                     </map>
+                     <string key="value">ht</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Hungarian</string>
+                        <string key="nl">Hongaars</string>
+                     </map>
+                     <string key="value">hu</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Armenian</string>
+                        <string key="nl">Armeens</string>
+                     </map>
+                     <string key="value">hy</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Interlingua (International Auxiliary Language Association)</string>
+                        <string key="nl">Interlingua (IAV)</string>
+                     </map>
+                     <string key="value">ia</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Indonesian</string>
+                        <string key="nl">Indonesisch</string>
+                     </map>
+                     <string key="value">id</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Interlingue</string>
+                        <string key="nl">Interlingue</string>
+                     </map>
+                     <string key="value">ie</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Igbo</string>
+                        <string key="nl">Igbo</string>
+                     </map>
+                     <string key="value">ig</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Nuosu</string>
+                        <string key="nl">Nuosu</string>
+                     </map>
+                     <string key="value">ii</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Inupiaq</string>
+                        <string key="nl">Inupiaq</string>
+                     </map>
+                     <string key="value">ik</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Ido</string>
+                        <string key="nl">Ido</string>
+                     </map>
+                     <string key="value">io</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Icelandic</string>
+                        <string key="nl">IJslands</string>
+                     </map>
+                     <string key="value">is</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Italian</string>
+                        <string key="nl">Italiaans</string>
+                     </map>
+                     <string key="value">it</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Inuktitut</string>
+                        <string key="nl">Inuktitut</string>
+                     </map>
+                     <string key="value">iu</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Japanese</string>
+                        <string key="nl">Japans</string>
+                     </map>
+                     <string key="value">ja</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Javanese</string>
+                        <string key="nl">Javaans</string>
+                     </map>
+                     <string key="value">jv</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Georgian</string>
+                        <string key="nl">Georgisch</string>
+                     </map>
+                     <string key="value">ka</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Kongo</string>
+                        <string key="nl">Kongo</string>
+                     </map>
+                     <string key="value">kg</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Gikuyu</string>
+                        <string key="nl">Gikuyu</string>
+                     </map>
+                     <string key="value">ki</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Kazakh</string>
+                        <string key="nl">Kazachs</string>
+                     </map>
+                     <string key="value">kk</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Greenlandic</string>
+                        <string key="nl">Groenlands</string>
+                     </map>
+                     <string key="value">kl</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Central Khmer</string>
+                        <string key="nl">Centraal Khmer</string>
+                     </map>
+                     <string key="value">km</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Kannada</string>
+                        <string key="nl">Kannada</string>
+                     </map>
+                     <string key="value">kn</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Korean</string>
+                        <string key="nl">Koreaans</string>
+                     </map>
+                     <string key="value">ko</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Kanuri</string>
+                        <string key="nl">Kanuri</string>
+                     </map>
+                     <string key="value">kr</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Kashmiri</string>
+                        <string key="nl">Kashmiri</string>
+                     </map>
+                     <string key="value">ks</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Kurdish</string>
+                        <string key="nl">Koerdisch</string>
+                     </map>
+                     <string key="value">ku</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Komi</string>
+                        <string key="nl">Komi</string>
+                     </map>
+                     <string key="value">kv</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Cornish</string>
+                        <string key="nl">Cornisch</string>
+                     </map>
+                     <string key="value">kw</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Kirghiz</string>
+                        <string key="nl">Kirgizisch</string>
+                     </map>
+                     <string key="value">ky</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Latin</string>
+                        <string key="nl">Latijn</string>
+                     </map>
+                     <string key="value">la</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Letzeburgesch</string>
+                        <string key="nl">Luxemburgs</string>
+                     </map>
+                     <string key="value">lb</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Ganda</string>
+                        <string key="nl">Ganda</string>
+                     </map>
+                     <string key="value">lg</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Limburgan</string>
+                        <string key="nl">Limburgs</string>
+                     </map>
+                     <string key="value">li</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Lingala</string>
+                        <string key="nl">Lingala</string>
+                     </map>
+                     <string key="value">ln</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Lao</string>
+                        <string key="nl">Laotiaans</string>
+                     </map>
+                     <string key="value">lo</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Lithuanian</string>
+                        <string key="nl">Litouws</string>
+                     </map>
+                     <string key="value">lt</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Luba-Katanga</string>
+                        <string key="nl">Luba-Katanga</string>
+                     </map>
+                     <string key="value">lu</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Latvian</string>
+                        <string key="nl">Lets</string>
+                     </map>
+                     <string key="value">lv</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Malagasy</string>
+                        <string key="nl">Malagasi</string>
+                     </map>
+                     <string key="value">mg</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Marshallese</string>
+                        <string key="nl">Marshallees</string>
+                     </map>
+                     <string key="value">mh</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Maori</string>
+                        <string key="nl">Maori</string>
+                     </map>
+                     <string key="value">mi</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Macedonian</string>
+                        <string key="nl">Macedonisch</string>
+                     </map>
+                     <string key="value">mk</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Malayalam</string>
+                        <string key="nl">Malayalam</string>
+                     </map>
+                     <string key="value">ml</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Mongolian</string>
+                        <string key="nl">Mongools</string>
+                     </map>
+                     <string key="value">mn</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Marathi</string>
+                        <string key="nl">Marathi</string>
+                     </map>
+                     <string key="value">mr</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Malay</string>
+                        <string key="nl">Maleis</string>
+                     </map>
+                     <string key="value">ms</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Maltese</string>
+                        <string key="nl">Maltees</string>
+                     </map>
+                     <string key="value">mt</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Burmese</string>
+                        <string key="nl">Birmaans</string>
+                     </map>
+                     <string key="value">my</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Nauru</string>
+                        <string key="nl">Nauruaans</string>
+                     </map>
+                     <string key="value">na</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Bokmål, Norwegian</string>
+                        <string key="nl">Bokmål, Noors</string>
+                     </map>
+                     <string key="value">nb</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Nepali</string>
+                        <string key="nl">Nepalees</string>
+                     </map>
+                     <string key="value">ne</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Ndonga</string>
+                        <string key="nl">Ndonga</string>
+                     </map>
+                     <string key="value">ng</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Dutch</string>
+                        <string key="nl">Nederlands</string>
+                     </map>
+                     <string key="value">nl</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Norwegian Nynorsk</string>
+                        <string key="nl">Nynorsk, Noors</string>
+                     </map>
+                     <string key="value">nn</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Norwegian</string>
+                        <string key="nl">Noors</string>
+                     </map>
+                     <string key="value">no</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Ndebele, South</string>
+                        <string key="nl">Zuid-Ndbele</string>
+                     </map>
+                     <string key="value">nr</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Navajo</string>
+                        <string key="nl">Navajo</string>
+                     </map>
+                     <string key="value">nv</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Chichewa</string>
+                        <string key="nl">Chichewa</string>
+                     </map>
+                     <string key="value">ny</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Occitan (post 1500)</string>
+                        <string key="nl">Occitaans (na 1500)</string>
+                     </map>
+                     <string key="value">oc</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Ojibwa</string>
+                        <string key="nl">Ojibwa</string>
+                     </map>
+                     <string key="value">oj</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Oromo</string>
+                        <string key="nl">Oromo</string>
+                     </map>
+                     <string key="value">om</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Oriya</string>
+                        <string key="nl">Odia</string>
+                     </map>
+                     <string key="value">or</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Ossetian</string>
+                        <string key="nl">Ossetisch</string>
+                     </map>
+                     <string key="value">os</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Panjabi</string>
+                        <string key="nl">Punjabi</string>
+                     </map>
+                     <string key="value">pa</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Pali</string>
+                        <string key="nl">Pali</string>
+                     </map>
+                     <string key="value">pi</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Polish</string>
+                        <string key="nl">Pools</string>
+                     </map>
+                     <string key="value">pl</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Pushto</string>
+                        <string key="nl">Pashto</string>
+                     </map>
+                     <string key="value">ps</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Portuguese</string>
+                        <string key="nl">Portugees</string>
+                     </map>
+                     <string key="value">pt</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Quechua</string>
+                        <string key="nl">Quechua</string>
+                     </map>
+                     <string key="value">qu</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Romansh</string>
+                        <string key="nl">Reto-Romaans</string>
+                     </map>
+                     <string key="value">rm</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Rundi</string>
+                        <string key="nl">Kirundi</string>
+                     </map>
+                     <string key="value">rn</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Romanian</string>
+                        <string key="nl">Roemeens</string>
+                     </map>
+                     <string key="value">ro</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Russian</string>
+                        <string key="nl">Russisch</string>
+                     </map>
+                     <string key="value">ru</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Kinyarwanda</string>
+                        <string key="nl">Kinyarwanda</string>
+                     </map>
+                     <string key="value">rw</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Sanskrit</string>
+                        <string key="nl">Sanskriet</string>
+                     </map>
+                     <string key="value">sa</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Sardinian</string>
+                        <string key="nl">Sardijns</string>
+                     </map>
+                     <string key="value">sc</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Sindhi</string>
+                        <string key="nl">Sindhi</string>
+                     </map>
+                     <string key="value">sd</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Northern Sami</string>
+                        <string key="nl">Noord-Samisch</string>
+                     </map>
+                     <string key="value">se</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Sango</string>
+                        <string key="nl">Sango</string>
+                     </map>
+                     <string key="value">sg</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Sinhala</string>
+                        <string key="nl">Singalees</string>
+                     </map>
+                     <string key="value">si</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Slovak</string>
+                        <string key="nl">Slowaaks</string>
+                     </map>
+                     <string key="value">sk</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Slovenian</string>
+                        <string key="nl">Sloveens</string>
+                     </map>
+                     <string key="value">sl</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Samoan</string>
+                        <string key="nl">Samoaans</string>
+                     </map>
+                     <string key="value">sm</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Shona</string>
+                        <string key="nl">Shona</string>
+                     </map>
+                     <string key="value">sn</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Somali</string>
+                        <string key="nl">Somalisch</string>
+                     </map>
+                     <string key="value">so</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Albanian</string>
+                        <string key="nl">Albanees</string>
+                     </map>
+                     <string key="value">sq</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Serbian</string>
+                        <string key="nl">Servisch</string>
+                     </map>
+                     <string key="value">sr</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Swati</string>
+                        <string key="nl">Swati</string>
+                     </map>
+                     <string key="value">ss</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Southern Sotho</string>
+                        <string key="nl">Zuid-Sotho</string>
+                     </map>
+                     <string key="value">st</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Sundanese</string>
+                        <string key="nl">Soendanees</string>
+                     </map>
+                     <string key="value">su</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Swedish</string>
+                        <string key="nl">Zweeds</string>
+                     </map>
+                     <string key="value">sv</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Swahili</string>
+                        <string key="nl">Swahili</string>
+                     </map>
+                     <string key="value">sw</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Tamil</string>
+                        <string key="nl">Tamil</string>
+                     </map>
+                     <string key="value">ta</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Telugu</string>
+                        <string key="nl">Telugu</string>
+                     </map>
+                     <string key="value">te</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Tajik</string>
+                        <string key="nl">Tadzjieks</string>
+                     </map>
+                     <string key="value">tg</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Thai</string>
+                        <string key="nl">Thais</string>
+                     </map>
+                     <string key="value">th</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Tigrinya</string>
+                        <string key="nl">Tigrinya</string>
+                     </map>
+                     <string key="value">ti</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Turkmen</string>
+                        <string key="nl">Turkmeens</string>
+                     </map>
+                     <string key="value">tk</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Tagalog</string>
+                        <string key="nl">Tagalog</string>
+                     </map>
+                     <string key="value">tl</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Tswana</string>
+                        <string key="nl">Tswana</string>
+                     </map>
+                     <string key="value">tn</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Tonga (Tonga Islands)</string>
+                        <string key="nl">Tonga (Tonga-eilanden)</string>
+                     </map>
+                     <string key="value">to</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Turkish</string>
+                        <string key="nl">Turks</string>
+                     </map>
+                     <string key="value">tr</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Tsonga</string>
+                        <string key="nl">Tsonga</string>
+                     </map>
+                     <string key="value">ts</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Tatar</string>
+                        <string key="nl">Tataars</string>
+                     </map>
+                     <string key="value">tt</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Twi</string>
+                        <string key="nl">Twi</string>
+                     </map>
+                     <string key="value">tw</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Tahitian</string>
+                        <string key="nl">Tahitiaans</string>
+                     </map>
+                     <string key="value">ty</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Uighur</string>
+                        <string key="nl">Oeigoers</string>
+                     </map>
+                     <string key="value">ug</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Ukrainian</string>
+                        <string key="nl">Oekraïens</string>
+                     </map>
+                     <string key="value">uk</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Urdu</string>
+                        <string key="nl">Urdu</string>
+                     </map>
+                     <string key="value">ur</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Uzbek</string>
+                        <string key="nl">Oezbeeks</string>
+                     </map>
+                     <string key="value">uz</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Venda</string>
+                        <string key="nl">Venda</string>
+                     </map>
+                     <string key="value">ve</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Vietnamese</string>
+                        <string key="nl">Vietnamees</string>
+                     </map>
+                     <string key="value">vi</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Volapük</string>
+                        <string key="nl">Volapük</string>
+                     </map>
+                     <string key="value">vo</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Walloon</string>
+                        <string key="nl">Waals</string>
+                     </map>
+                     <string key="value">wa</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Wolof</string>
+                        <string key="nl">Wolof</string>
+                     </map>
+                     <string key="value">wo</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Xhosa</string>
+                        <string key="nl">Xhosa</string>
+                     </map>
+                     <string key="value">xh</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Yiddish</string>
+                        <string key="nl">Jiddisch</string>
+                     </map>
+                     <string key="value">yi</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Yoruba</string>
+                        <string key="nl">Yoruba</string>
+                     </map>
+                     <string key="value">yo</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Zhuang</string>
+                        <string key="nl">Zhuang</string>
+                     </map>
+                     <string key="value">za</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Chinese</string>
+                        <string key="nl">Chinees</string>
+                     </map>
+                     <string key="value">zh</string>
+                  </map>
+                  <map>
+                     <map key="label">
+                        <string key="en">Zulu</string>
+                        <string key="nl">Zoeloe</string>
+                     </map>
+                     <string key="value">zu</string>
+                  </map>
+               </array>
+               <string key="id">4bcd9e83-fe75-4536-8413-c8af3491d47b</string>
+               <boolean key="touched">true</boolean>
+               <map key="value">
+                  <string key="label">Afar</string>
+                  <string key="value">aa</string>
+               </map>
+               <boolean key="valid">true</boolean>
+            </map>
+            <map>
+               <string key="type">date</string>
+               <string key="format">DD-MM-YYYY</string>
+               <map key="label">
+                  <string key="en">Embargo date</string>
+                  <string key="nl">Datum embargo</string>
+               </map>
+               <string key="name">date_available</string>
+               <boolean key="noIndicator">true</boolean>
+               <map key="description">
+                  <postring key="en">In case of an embargo, you should provide a future date for this field.</postring>
+                  <string key="nl">In het geval van een embargo kun je hier een toekomstige datum invullen.</string>
+               </map>
+               <string key="id">dcbfdc6b-1886-468e-8758-c04f4c771f35</string>
+               <boolean key="touched">true</boolean>
+               <string key="value">11-02-1666</string>
+               <boolean key="valid">true</boolean>
+            </map>
+         </array>
+         <string key="status">success</string>
+      </map>
+      <map>
+         <string key="id">rights</string>
+         <map key="title">
+            <string key="en">Rights, licencing and re-use</string>
+            <string key="nl">Rechten, licenties en hergebruik</string>
+         </map>
+         <array key="fields">
+            <map>
+               <string key="type">autocomplete</string>
+               <boolean key="allowFreeText">true</boolean>
+               <map key="label">
+                  <string key="en">Rights holder</string>
+                  <string key="nl">Rechthebbende</string>
+               </map>
+               <string key="name">rightsholder</string>
+               <boolean key="required">true</boolean>
+               <map key="description">
+                  <string key="en">State the organisation or individual that is holder of the intellectual property rights. For datasets, these rights are usually vested in the organisation thet employs the data creator(s). Note that the depositor (account used to deposit the data and metadata will be contacted for access requests, and must have the consent of the rights holder to publish the data.</string>
+                  <string key="nl">Vermeld de organisatie of individu die de intellectuele eigendomsrechten bezit. Voor datasets liggen deze rechten meestal bij de organisatie die de maker(s) van de data in dienst heeft. Let op: de deposant (het account dat wordt gebruikt om de data en metadata te deponeren) wordt gecontacteerd voor toegangsverzoeken en moet de toestemming van de rechthebbende hebben om de data te publiceren.</string>
+               </map>
+               <string key="multiApiValue">ror</string>
+               <array key="options">
+                  <string>ror</string>
+                  <string>orcid</string>
+               </array>
+               <string key="id">c5abc2c8-2319-4a11-bf72-6d24b3dd709c</string>
+               <boolean key="touched">true</boolean>
+               <map key="value">
+                  <string key="label">Dansk Sygehus Institut</string>
+                  <string key="value">https://ror.org/03ehse820</string>
+                  <string key="extraLabel">country</string>
+                  <string key="extraContent">Denmark</string>
+               </map>
+               <boolean key="valid">true</boolean>
+            </map>
+            <map>
+               <string key="type">autocomplete</string>
+               <map key="label">
+                  <string key="en">Licence</string>
+                  <string key="nl">Licentie</string>
+               </map>
+               <string key="name">licence_type</string>
+               <boolean key="required">true</boolean>
+               <map key="description">
+                  <string key="en">One of a number of specific licences</string>
+                  <string key="nl">Eén van de volgende specifieke licenties</string>
+               </map>
+               <string key="options">sshLicences</string>
+               <map key="value">
+                  <string key="label">CERN-OHL-1.1</string>
+                  <string key="value">https://ohwr.org/project/cernohl/wikis/Documents/CERN-OHL-version-1.1</string>
+               </map>
+               <string key="id">56443289-7bc8-4a27-8488-3c95dd7e7b72</string>
+               <boolean key="touched">true</boolean>
+               <boolean key="valid">true</boolean>
+            </map>
+            <map>
+               <string key="type">radio</string>
+               <map key="label">
+                  <string key="en">Does this submission contain personal data?</string>
+                  <string key="nl">Bevat deze dataset persoonlijke gegevens?</string>
+               </map>
+               <string key="name">personal_data</string>
+               <boolean key="required">true</boolean>
+               <string key="layout">row</string>
+               <string key="value">personal_data_true</string>
+               <array key="options">
+                  <map>
+                     <string key="value">personal_data_true</string>
+                     <map key="label">
+                        <string key="en">Yes</string>
+                        <string key="nl">Ja</string>
+                     </map>
+                  </map>
+                  <map>
+                     <string key="value">personal_data_false</string>
+                     <map key="label">
+                        <string key="en">No</string>
+                        <string key="nl">Nee</string>
+                     </map>
+                  </map>
+                  <map>
+                     <string key="value">personal_data_unknown</string>
+                     <map key="label">
+                        <string key="en">Unknown</string>
+                        <string key="nl">Onbekend</string>
+                     </map>
+                  </map>
+               </array>
+               <string key="id">02fa1580-b1e2-402b-a5f3-13e27d81e48e</string>
+               <boolean key="touched">true</boolean>
+               <boolean key="valid">true</boolean>
+            </map>
+         </array>
+         <string key="status">success</string>
+      </map>
+   </array>
+   <array key="file-metadata">
+      <map>
+         <string key="id">fb10e86b-0627-4de5-ae87-3ab4003478cf</string>
+         <string key="name">2024-05-31 at 06.20.21.jpeg</string>
+         <number key="lastModified">1717129427895</number>
+         <boolean key="private">false</boolean>
+         <map key="role">
+            <string key="value">image_file</string>
+            <string key="label">Image file</string>
+         </map>
+         <array key="process">
+            <map>
+               <string key="value">create_thumbnail</string>
+               <string key="label">Create thumbnail</string>
+               <array key="for">
+                  <string>video</string>
+                  <string>images</string>
+               </array>
+            </map>
+         </array>
+      </map>
+      <map>
+         <string key="id">0e9a0553-d67f-4a24-a4e2-62fdcd173307</string>
+         <string key="name">How to connect Lefant App Lefant Robot Vacuum M1.mp4</string>
+         <number key="lastModified">1717265785428</number>
+         <boolean key="private">true</boolean>
+      </map>
+   </array>
+   <string key="title">Interview with Oral-history specific - First name Oral-history specific - last name in Jakarta, Indonesia on 01-01-2001</string>
+</map>

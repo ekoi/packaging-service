@@ -33,7 +33,7 @@ from fastapi_events.dispatcher import dispatch
 from fastapi_events.middleware import EventHandlerASGIMiddleware
 from fastapi_events.handlers.local import local_handler
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 import emoji
 import uvicorn
@@ -101,7 +101,7 @@ app.add_middleware(
 )
 
 app.add_middleware(EventHandlerASGIMiddleware,
-                   handlers=[local_handler])   # registering handler(s)
+                   handlers=[local_handler])  # registering handler(s)
 
 # Todo: This is encrypted in the .secrets.toml
 api_keys = [settings.DANS_PACKAGING_SERVICE_API_KEY]
@@ -133,6 +133,7 @@ def auth_header(request: Request, api_key: str = Depends(oauth2_scheme)):
         None: No return value if authentication is successful.
 
     """
+
     if api_key not in api_keys:
         keycloak_env_name = f"keycloak_{request.headers['auth-env-name']}"
         keycloak_env = settings.get(keycloak_env_name)
@@ -161,9 +162,9 @@ def auth_header(request: Request, api_key: str = Depends(oauth2_scheme)):
 app.include_router(public.router, tags=["Public"], prefix="")
 app.include_router(protected.router, tags=["Protected"], prefix="", dependencies=[Depends(auth_header)])
 
-if settings.DEPLOYMENT != "production":
+if settings.DEPLOYMENT in ['demo', 'local']:
     app.include_router(upload_files, prefix="/files", dependencies=[Depends(auth_header)])
-app.include_router(tus_files.router, prefix="")
+    app.include_router(tus_files.router, prefix="")
 
 app.add_middleware(
     CORSMiddleware,
@@ -173,10 +174,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# @app.get("/eko")
-# def eko():
-#
-#     return ""
 @app.get('/')
 def info():
     """
@@ -228,6 +225,7 @@ def run():
         "bind": "0.0.0.0:10124",
         "workers": (multiprocessing.cpu_count() * 2) + 1,
         "worker_class": "uvicorn.workers.UvicornWorker",
+        "--preload": True
     }
     PackagingServiceApplication("src.main:app", options).run()
 
@@ -237,9 +235,11 @@ def handle_all_cat_events(event: Event):
     event_name, payload = event
     print(f'event_name: {event_name}, payload: {payload}')
 
+
 if __name__ == "__main__":
-    send_mail(f'{settings.DEPLOYMENT}: Starting the packaging service',
-              f'Started at {datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S.%f")}')
+    if settings.SENDMAIL_ENABLE:
+        send_mail(f'Starting the packaging service',
+                  f'Started at {datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S.%f")}')
     setup_logger()
     logger('START Packaging Service', 'debug', 'ps')
 
@@ -248,7 +248,7 @@ if __name__ == "__main__":
     print(f'Python version: {platform.python_version()}')
     logger(f'Python version: {platform.python_version()}', 'debug', 'ps')
 
-    if os.environ.get('run-local'):
+    if os.environ.get('run-local', False):
         logger('SINGLE WORKER', 'debug', 'ps')
         uvicorn.run("src.main:app", host="0.0.0.0", port=10124, reload=False, workers=1)
 

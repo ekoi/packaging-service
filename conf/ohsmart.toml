@@ -17,7 +17,7 @@ interval_check_sword = 30
     client_id="ohsmart-auth"
 
 [default.keycloak_ohsmart_prod]
-    url="keycloak.dans.knaw.nl"
+    url="https://keycloak.dans.knaw.nl"
     realms="ohsmart"
     client_id="ohsmart-auth"
 

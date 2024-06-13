@@ -277,3 +277,14 @@ def send_mail(subject: str, text: str):
 
     else:
         logger(f"{settings.get('send_mail', False)} - Sending email is disabled.", 'debug', 'ps')
+
+
+def dmz_dataverse_headers(username, password) -> {}:
+    headers = {}
+    if settings.exists("dmz_x_authorization_value", fresh=False):
+        headers.update({'X-Authorization': settings.dmz_x_authorization_value})
+
+    if username == 'API_KEY':
+        headers.update({"X-Dataverse-key": password})
+
+    return headers

@@ -33,6 +33,7 @@ router = APIRouter()
 # Endpoint to register a bridge module
 @router.post("/register-bridge-module/{name}/{overwrite}")
 async def register_module(name: str, bridge_file: Request, overwrite: bool | None = False) -> {}:
+    logger(f'Registering {name}', 'debug', 'ps')
     if not overwrite and name in data["bridge-modules"]:
         raise HTTPException(status_code=400,
                             detail=f'The {name} is already exist. Consider /register-bridge-module/{name}/true')
@@ -45,8 +46,8 @@ async def register_module(name: str, bridge_file: Request, overwrite: bool | Non
     with open(bridge_path, mode="w+") as file:
         file.write(str(m_file))
     # check real mimetype
-    if mimetypes.guess_type(bridge_path)[0] != 'text/x-python':
-        db_manager.add(name)
+    if mimetypes.guess_type(bridge_path)[0] == 'text/x-python':
+        pass
     else:
         os.remove(bridge_path)
         raise HTTPException(status_code=400, detail=f'{name} is not supported file type')
@@ -58,20 +59,21 @@ async def register_module(name: str, bridge_file: Request, overwrite: bool | Non
 @handle_ps_exceptions
 async def get_inbox_dataset_dc(request: Request, release_version: ReleaseVersion) -> (
         Callable)[[Request, ReleaseVersion], Awaitable[InboxDatasetDataModel]]:
-    metadata = await request.json()
-    logger(f'METADATA: \n{metadata}', 'debug', 'ps')
+    req_body = await request.json()
+    logger(f'METADATA: \n{req_body}', 'debug', 'ps')
+    title = jmespath.search('title', req_body)
     return InboxDatasetDataModel(assistant_name=request.headers.get('assistant-config-name'),
                                  release_version=release_version, owner_id=request.headers.get('user-id'),
-                                 title=request.headers.get('title', default=''),
-                                 target_creds=request.headers.get('targets-credentials'), metadata=metadata)
+                                 title=title,
+                                 target_creds=request.headers.get('targets-credentials'), metadata=req_body)
 
 
 # Endpoint to process inbox dataset metadata
 @router.post("/inbox/dataset/{release_version}")
 async def process_inbox_dataset_metadata(request: Request, release_version: ReleaseVersion) -> {}:
     idh = await get_inbox_dataset_dc(request, release_version)
-    logger(f'Start inbox - release version: {release_version}   - assistant name: {idh.assistant_name}', 'debug', 'ps')
     datasetId = jmespath.search("id", idh.metadata)
+    logger(f'Start inbox for metadata id: {datasetId}- release version: {release_version}   - assistant name: {idh.assistant_name}', 'debug', 'ps')
     if db_manager.is_dataset_published(datasetId):
         raise HTTPException(status_code=400, detail='Dataset is already published.')
     repo_config = retrieve_targets_configuration(idh.assistant_name)
@@ -107,6 +109,28 @@ async def process_inbox_dataset_metadata(request: Request, release_version: Rele
     return rdm.model_dump(by_alias=True)
 
 
+@router.delete("/inbox/dataset/{metadata_id}")
+def delete_dataset_metadata(request: Request, metadata_id: str):
+    user_id = request.headers.get('user-id')
+    if user_id is None:
+        raise HTTPException(status_code=401, detail='No user id provided')
+
+    if metadata_id not in db_manager.find_dataset_ids_by_owner(user_id):
+        raise HTTPException(status_code=404, detail='No Dataset found')
+
+    target_repos = db_manager.find_target_repos_by_dataset_id(metadata_id)
+    if target_repos is None:
+        raise HTTPException(status_code=404, detail='No target found')
+
+    #TThe delete mechanism will be executed when an error is occurred in the first target.
+    logger(f'Deposit Status: {target_repos[0].deposit_status}', 'debug', 'ps')
+    if target_repos[0].deposit_status not in (DepositStatus.ACCEPTED, DepositStatus.DEPOSITED, DepositStatus.FINISH):
+        db_manager.delete_by_dataset_id(dataset_id=metadata_id)
+        return {"status": "ok", "metadata-id": metadata_id}
+
+    raise HTTPException(status_code=404, detail=f'Delete of {metadata_id} is not allowed.')
+
+
 @handle_ps_exceptions
 def process_db_records(datasetId, db_record_metadata, db_recs_target_repo, registered_files) -> type(None):
     if not db_manager.is_dataset_exist(datasetId):
@@ -131,6 +155,8 @@ def process_metadata_record(datasetId, idh, repo_assistant, tmp_dir):
 
     for f_name_to_be_deleted in files_name_to_be_deleted:
         f = os.path.join(str(tmp_dir), f_name_to_be_deleted)
+        # if os.path.exists(f):
+        #     os.remove(f)
         os.remove(f)
         logger(f'{f} ---- {f} is deleted', 'debug', 'ps')
         db_manager.delete_datafile(datasetId, f_name_to_be_deleted)
@@ -242,15 +268,54 @@ def bridge_task(datasetId: str, msg: str) -> type(None):
     logger(f">> Thread execution for {datasetId} is completed. {msg}", 'debug', 'ps')
 
 
+# def follow_bridge(datasetId) -> type(None):
+#     logger("Follow bridge", 'debug', 'ps')
+#     logger(f"-------------- EXECUTE follow_bridge for datasetId: {datasetId}", 'debug', 'ps')
+#     db_manager.submitted_now(datasetId)
+#     target_repo_recs = db_manager.find_target_repos_by_ds_id(datasetId)
+#     result = []
+#     rsp = {"dataset-id": datasetId, "targets-result": result}
+#
+#     for target_repo_rec in target_repo_recs:
+#         target_repo_id = target_repo_rec.id
+#         target_repo_json = json.loads(target_repo_rec.config)
+#         tg = Target(**target_repo_json)
+#         bridge_class = data[tg.bridge_module_class]
+#
+#         logger(f'EXECUTING {bridge_class} for target_repo_id: {target_repo_id}', 'debug', 'ps')
+#         start = time.perf_counter()
+#         a = get_class(bridge_class)
+#         k = a(dataset_id=datasetId, target=tg)
+#         m = k.deposit()  # deposit return type: s BridgeOutputModel
+#         finish = time.perf_counter()
+#         m.response.duration = round(finish - start, 2)
+#         logger(f'Result from Deposit: {m.model_dump_json()}', 'debug', 'ps')
+#         k.save_state(m)
+#         if m.deposit_status in [DepositStatus.FINISH, DepositStatus.ACCEPTED, DepositStatus.SUCCESS]:
+#             logger(f'Finish deposit for {bridge_class} to target_repo_id: {target_repo_id}. Result: {m}', 'debug', 'ps')
+#             result.append(m)
+#         else:
+#             logger(f'Executing {bridge_class} is FAILED. Resp: {m.model_dump_json()}', 'debug', 'ps')
+#             send_mail(f'Executing {bridge_class} is FAILED.', f'Resp:\n {m.model_dump_json()}')
+#             break
+#
+#     logger(f"----------- END follow_bridge for datasetId: {datasetId}", 'debug', 'ps')
+#     logger(f'>>>>Executed: {len(result)} of {len(target_repo_recs)}', 'debug', 'ps')
+
 def follow_bridge(datasetId) -> type(None):
-    print("Follow bridge")
+    logger("Follow bridge", 'debug', 'ps')
     logger(f"-------------- EXECUTE follow_bridge for datasetId: {datasetId}", 'debug', 'ps')
     db_manager.submitted_now(datasetId)
-    target_repo_recs = db_manager.find_target_repos_by_ds_id(datasetId)
+    target_repo_recs = db_manager.find_target_repos_by_dataset_id(datasetId)
+    execute_bridges(datasetId, target_repo_recs)
+
+
+def execute_bridges(datasetId, targets) -> type(None):
+    logger("execute_bridges", 'debug', 'ps')
+    logger(f"-------------- EXECUTE execute_bridges for datasetId: {datasetId}", 'debug', 'ps')
     result = []
     rsp = {"dataset-id": datasetId, "targets-result": result}
-
-    for target_repo_rec in target_repo_recs:
+    for target_repo_rec in targets:
         target_repo_id = target_repo_rec.id
         target_repo_json = json.loads(target_repo_rec.config)
         tg = Target(**target_repo_json)
@@ -274,7 +339,7 @@ def follow_bridge(datasetId) -> type(None):
             break
 
     logger(f"----------- END follow_bridge for datasetId: {datasetId}", 'debug', 'ps')
-    logger(f'>>>>Executed: {len(result)} of {len(target_repo_recs)}', 'debug', 'ps')
+    logger(f'>>>>Executed: {len(result)} of {len(targets)}', 'debug', 'ps')
 
 
 @handle_ps_exceptions
@@ -292,6 +357,23 @@ def retrieve_targets_configuration(assistant_config_name: str) -> str:
     return repo_config
 
 
+@router.post("/inbox/resubmit/{datasetId}")
+async def resubmit(datasetId: str):
+    logger(f'Resubmit {datasetId}', 'debug', 'ps')
+    targets = db_manager.find_unfinished_target_repo(datasetId)
+    if not targets:
+        return 'No targets'
+
+    logger(f'Resubmitting {len(targets)}', 'debug', 'ps')
+    try:
+        execute_bridges_task = threading.Thread(target=execute_bridges, args=(datasetId, targets, ))
+        execute_bridges_task.start()
+        print(f'follow_bridge_task: {execute_bridges_task}')
+    except Exception as e:
+        logger(f"ERROR: Follow bridge: {targets}. For datasetId: {datasetId}. Exception: "
+               f"{e.with_traceback(e.__traceback__)}", 'error', 'ps')
+
+
 #
 @router.delete("/inbox/{datasetId}", include_in_schema=False)
 def delete_inbox(datasetId: str):
@@ -306,24 +388,27 @@ async def get_settings():
 
 
 @router.get('/logs/{app_name}', include_in_schema=False)
-async def get_log(app_name: str):
+def get_log(app_name: str):
+    logger('logs', 'debug', 'ps')
     return FileResponse(path=f"{os.environ['BASE_DIR']}/logs/{app_name}.log", filename=f"{app_name}.log",
                         media_type='text/plain')
 
 
 @router.get("/logs-list", include_in_schema=False)
-async def get_log_list():
+def get_log_list():
+    logger('logs-list', 'debug', 'ps')
     return os.listdir(path=f"{os.environ['BASE_DIR']}/logs")
 
 
 @router.get("/db-download", include_in_schema=False)
-async def get_db():
+def get_db():
+    logger('db-download', 'debug', 'ps')
     return FileResponse(path=settings.DB_URL, filename="dans_packaging.db",
                         media_type='application/octet-stream')
 
 
 @router.delete("/db-delete-all", include_in_schema=False)
-async def delete_all_db():
+def delete_all_recs():
     logger('Deleting all', 'debug', 'ps')
     return db_manager.delete_all()
 

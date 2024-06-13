@@ -159,9 +159,9 @@ class DatabaseManager:
                 session.commit()
                 session.refresh(file_record)
 
-    def delete_datafile(self, ds_id: str, filename: str) -> type(None):
+    def delete_datafile(self, dataset_id: str, filename: str) -> type(None):
         with Session(self.engine) as session:
-            statement = select(DataFile).where(DataFile.ds_id == ds_id, DataFile.name == filename)
+            statement = select(DataFile).where(DataFile.ds_id == dataset_id, DataFile.name == filename)
             results = session.exec(statement)
             file_record = results.one_or_none()
             if file_record:
@@ -177,6 +177,32 @@ class DatabaseManager:
                 session.commit()
                 tabs.update({str(_.__qualname__): result.rowcount})
             return tabs
+
+    def delete_by_dataset_id(self, dataset_id) -> type(None):
+        with Session(self.engine) as session:
+            # Delete DataFiles
+            statement = select(DataFile).where(DataFile.ds_id == dataset_id)
+            results = session.exec(statement)
+            file_records = results.all()
+            for file_record in file_records:
+                session.delete(file_record)
+                session.commit()
+
+            # Delete TargetRepos
+            statement = select(TargetRepo).where(TargetRepo.ds_id == dataset_id)
+            results = session.exec(statement)
+            target_records = results.all()
+            for target_record in target_records:
+                session.delete(target_record)
+                session.commit()
+
+            # Delete Dataset
+            statement = select(Dataset).where(Dataset.id == dataset_id)
+            results = session.exec(statement)
+            dataset_record = results.one_or_none()
+            if dataset_record:
+                session.delete(dataset_record)
+                session.commit()
 
     def is_dataset_exist(self, dataset_id: str) -> bool:
         with Session(self.engine) as session:
@@ -200,32 +226,31 @@ class DatabaseManager:
             result = results.one_or_none()
         return result
 
-    def find_target_repo(self, ds_id: str, target_name: str) -> TargetRepo:
-        print(ds_id)
+    def find_target_repo(self, dataset_id: str, target_name: str) -> TargetRepo:
         with Session(self.engine) as session:
-            statement = select(TargetRepo).where(TargetRepo.ds_id == ds_id, TargetRepo.name == target_name)
+            statement = select(TargetRepo).where(TargetRepo.ds_id == dataset_id, TargetRepo.name == target_name)
             results = session.exec(statement)
             result = results.one_or_none()
         return result
 
-    def find_unfinished_target_repo(self, ds_id: str) -> Sequence[TargetRepo]:
-        print(ds_id)
+    def find_unfinished_target_repo(self, dataset_id: str) -> Sequence[TargetRepo]:
         with Session(self.engine) as session:
-            statement = select(TargetRepo).where(TargetRepo.ds_id == ds_id,
-                                                 TargetRepo.deposit_status != DepositStatus.FINISH).order_by(TargetRepo.id)
+            statement = select(TargetRepo).where(TargetRepo.ds_id == dataset_id,
+                                                 TargetRepo.deposit_status != DepositStatus.FINISH).order_by(
+                TargetRepo.id)
             results = session.exec(statement)
             result = results.all()
         return result
 
     def find_all_datasets(self) -> Sequence[Dataset]:
         with Session(self.engine) as session:
-            results = session.exec( select(Dataset))
+            results = session.exec(select(Dataset))
             result = results.all()
         return result
 
-    def find_dataset_and_targets(self, ds_id: str) -> Asset:
+    def find_dataset_and_targets(self, dataset_id: str) -> Asset:
         with Session(self.engine) as session:
-            dataset = session.exec(select(Dataset).where(Dataset.id == ds_id)).one_or_none()
+            dataset = session.exec(select(Dataset).where(Dataset.id == dataset_id)).one_or_none()
             if dataset:
                 asset = Asset()
                 asset.dataset_id = dataset.id
@@ -251,24 +276,32 @@ class DatabaseManager:
                 return asset
             return Asset()
 
-    def find_target_repos_by_ds_id(self, ds_id: str) -> [TargetRepo]:
+    def find_dataset_ids_by_owner(self, owner_id: str) -> [TargetRepo]:
         with Session(self.engine) as session:
-            statement = select(TargetRepo).where(TargetRepo.ds_id == ds_id).order_by(TargetRepo.id)
+            statement = select(Dataset.id).where(Dataset.owner_id == owner_id)
             results = session.exec(statement)
             result = results.all()
         # or the compact version: session.exec(select(TargetRepo)).all()
         return result
 
-    def find_files(self, ds_id: str) -> [DataFile]:
+    def find_target_repos_by_dataset_id(self, dataset_id: str) -> [TargetRepo]:
         with Session(self.engine) as session:
-            statement = select(DataFile).where(DataFile.ds_id == ds_id)
+            statement = select(TargetRepo).where(TargetRepo.ds_id == dataset_id).order_by(TargetRepo.id)
+            results = session.exec(statement)
+            result = results.all()
+        # or the compact version: session.exec(select(TargetRepo)).all()
+        return result
+
+    def find_files(self, dataset_id: str) -> [DataFile]:
+        with Session(self.engine) as session:
+            statement = select(DataFile).where(DataFile.ds_id == dataset_id)
             results = session.exec(statement)
             result = results.all()
         return result
 
-    def find_non_generated_files(self, ds_id: str) -> [DataFile]:
+    def find_non_generated_files(self, dataset_id: str) -> [DataFile]:
         with Session(self.engine) as session:
-            statement = select(DataFile).where(DataFile.ds_id == ds_id, DataFile.state != DataFileWorkState.GENERATED)
+            statement = select(DataFile).where(DataFile.ds_id == dataset_id, DataFile.state != DataFileWorkState.GENERATED)
             results = session.exec(statement)
             result = results.all()
         return result
@@ -282,13 +315,13 @@ class DatabaseManager:
                 rst.append(json.loads(result[0]))
         return rst
 
-    def find_file_by_dataset_id_and_name(self, ds_id: str, file_name: str) -> DataFile:
-        with Session(self.engine) as session:
-            statement = select(DataFile).where(DataFile.ds_id == ds_id,
-                                               DataFile.name == file_name)
-            results = session.exec(statement)
-            result = results.one()
-        return result
+    # def find_file_by_dataset_id_and_name(self, ds_id: str, file_name: str) -> DataFile:
+    #     with Session(self.engine) as session:
+    #         statement = select(DataFile).where(DataFile.ds_id == ds_id,
+    #                                            DataFile.name == file_name)
+    #         results = session.exec(statement)
+    #         result = results.one()
+    #     return result
 
     def find_owner_assets(self, owner_id: str) -> OwnerAssetsModel | None:
         with Session(self.engine) as session:
@@ -306,7 +339,8 @@ class DatabaseManager:
                     asset.submitted_date = dataset.submitted_date
                     asset.release_version = dataset.release_version
                     asset.version = dataset.version
-                    targets_repo = session.exec(select(TargetRepo).where(TargetRepo.ds_id == dataset.id).order_by(TargetRepo.id)).all()
+                    targets_repo = session.exec(
+                        select(TargetRepo).where(TargetRepo.ds_id == dataset.id).order_by(TargetRepo.id)).all()
                     for target_repo in targets_repo:
                         target = Target()
                         target.repo_name = target_repo.name
@@ -334,12 +368,12 @@ class DatabaseManager:
             return (results[0])[0]
 
     # TODO: REFACTOR - Using sqlmodel
-    def find_file_upload_status_by_dataset_id_and_filename(self, ds_id, filename):
+    def find_file_upload_status_by_dataset_id_and_filename(self, dataset_id, filename):
         with closing(sqlite3.connect(self.conn_url)) as connection:
             with connection:
                 cursor = connection.cursor()
                 cursor.execute('SELECT json(date_added) FROM data_file WHERE ds_id = ? and name=?',
-                               (ds_id, filename,))
+                               (dataset_id, filename,))
                 results = cursor.fetchall()
             if len(results) != 1:
                 return None
@@ -439,16 +473,16 @@ class DatabaseManager:
                 session.commit()
                 session.refresh(f_record)
 
-    def replace_targets_record(self, ds_id: str, target_repo_records: [TargetRepo]) -> type(None):
+    def replace_targets_record(self, dataset_id: str, target_repo_records: [TargetRepo]) -> type(None):
         with Session(self.engine) as session:
-            statement = select(TargetRepo).where(TargetRepo.ds_id == ds_id)
+            statement = select(TargetRepo).where(TargetRepo.ds_id == dataset_id)
             results = session.exec(statement)
             trs = results.fetchall()
             for tr in trs:
                 session.delete(tr)
             session.commit()
             for tr in target_repo_records:
-                tr.ds_id = ds_id
+                tr.ds_id = dataset_id
                 session.add(tr)
             session.commit()
 
@@ -459,9 +493,9 @@ class DatabaseManager:
                                          (Dataset.release_version == ReleaseVersion.PUBLISH))).one_or_none()
             return dataset_id_rec is not None
 
-    def are_files_uploaded(self, ds_id: str) -> bool:
+    def are_files_uploaded(self, dataset_id: str) -> bool:
         with Session(self.engine) as session:
-            results = session.exec(select(DataFile).where(DataFile.ds_id == ds_id,
+            results = session.exec(select(DataFile).where(DataFile.ds_id == dataset_id,
                                                           DataFile.state == DataFileWorkState.REGISTERED)).all()
 
         return len(results) == 0
@@ -494,5 +528,3 @@ class ProgressModel(BaseModel):
     saved_date: str = Field(..., alias='saved-date')
     release_version: str = Field(..., alias='release-version')
     targets: List[ProgressTarget]
-
-

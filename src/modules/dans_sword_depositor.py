@@ -13,20 +13,9 @@ from simple_file_checksum import get_checksum
 from sword2 import Connection
 
 from src.bridge import Bridge, BridgeOutputDataModel
-from src.commons import (settings, transform, logger, db_manager, handle_deposit_exceptions)
+from src.commons import (settings, transform, logger, db_manager, handle_deposit_exceptions, dmz_dataverse_headers)
 from src.dbz import DataFile, DepositStatus, FilePermissions
 from src.models.bridge_output_model import TargetResponse, ResponseContentType, IdentifierProtocol, IdentifierItem
-
-
-def dmz_headers(username, password) -> {}:
-    headers = {}
-    if settings.exists("dmz_x_authorization_value", fresh=False):
-        headers.update({'X-Authorization': settings.dmz_x_authorization_value})
-
-    if username == 'API_KEY':
-        headers.update({"X-Dataverse-key": password})
-
-    return headers
 
 
 class DansSwordDepositor(Bridge):
@@ -43,7 +32,7 @@ class DansSwordDepositor(Bridge):
         # Update the file-metadata: added some attributes
         md_json.update({"file-metadata": files_metadata})
         # updating mimetype of user's uploaded files since no mimetype in the form-metadata submission
-        for _ in db_manager.find_non_generated_files(ds_id=self.dataset_id):
+        for _ in db_manager.find_non_generated_files(dataset_id=self.dataset_id):
             f_json = jmespath.search(f'[?name == \'{_.name}\']', files_metadata)
             logger(f'{self.__class__.__name__} f_json: {f_json}', 'debug', self.app_name)
             f_json[0].update({"mimetype": _.mime_type})
@@ -63,8 +52,8 @@ class DansSwordDepositor(Bridge):
         return output_response
 
     def __ingest(self, bagit_path: str) -> BridgeOutputDataModel:
-        sword_conn = Connection(self.target.target_url, headers=dmz_headers('API_KEY',
-                                                                            self.target.password))
+        sword_conn = Connection(self.target.target_url, headers=dmz_dataverse_headers('API_KEY',
+                                                                                      self.target.password))
         logger(f'SENDING SWORD for {bagit_path} filename: {bagit_path}', 'debug', self.app_name)
         error_occured = False
         with open(bagit_path, "rb") as pkg:
@@ -87,7 +76,7 @@ class DansSwordDepositor(Bridge):
                 if retries:
                     logger(
                         f"I'm going to sleep for {settings.interval_check_sword} seconds. "
-                        f"Please wait for me! deposti_state: {deposit_state}", 'debug', self.app_name)
+                        f"Please wait for me! deposit_state: {deposit_state}", 'debug', self.app_name)
                     sleep(settings.interval_check_sword)
                 else:
                     break
@@ -172,7 +161,7 @@ class DansSwordDepositor(Bridge):
         identifier_items = []
         deposit_state = DepositStatus.SUCCESS
         message = ''
-        sword_resp = requests.get(resp_link, headers=dmz_headers('API_KEY', self.target.password), verify=False)
+        sword_resp = requests.get(resp_link, headers=dmz_dataverse_headers('API_KEY', self.target.password), verify=False)
         logger(f'sword_resp.status_code: {sword_resp.status_code}', 'debug', self.app_name)
         if sword_resp.status_code == 200:
             logger(f'dans_sword_response_xml: {sword_resp.text}', 'debug', self.app_name)

@@ -3,3 +3,13 @@ curl http://localhost:2005/inbox/files -F formId=metadata-form-name-unique-1234-
 curl -X POST  -H "Authorization: Bearer API_KEY" http://localhost:2005/inbox/metadata --data @/packaging-service/resources/misc/metadata.json
 
 curl -X POST  -H "Authorization: Bearer API_KEY" http://localhost:2005/inbox/files -F metadataId=metadata-form-name-unique-1234-1234 -F file=@/$BASE_DIR/packaging-service/resources/files-example/1.txt
+
+
+curl -X PUT -d 24 http://localhost:8080/api/admin/settings/:MaxEmbargoDurationInMonths
+
+curl -H "X-Dataverse-key:API_KEY" "https://demo.ssh.datastations.nl/api/datasets/:persistentId/versions/:latest?persistentId=doi:10.80727/SSS/0GNST2" > dataset-update-metadata.json
+
+curl -H "X-Dataverse-key:API_KEY" -X POST -F "file=@/Users/akmi/Pictures/Scan.jpeg" -F 'jsonData={"description":"My description.","directoryLabel":"","categories":[], "restrict":"true", "tabIngest":"false"}' "http://localhost:8080/api/datasets/:persistentId/add?persistentId=doi:10.5072/FK2/BQGN1N"
+curl -H "X-Dataverse-key:API_KEY" -H "Content-Type:application/json"  "https://demo.ssh.datastations.nl/api/datasets/:persistentId/files/actions/:set-embargo?persistentId=doi:10.80727/SSS/P3PZ6V"   -d   '{"dateAvailable": "2024-06-27", "fileIds": [9470]}'
+curl -H "X-Dataverse-key:API_KEY" -H "Content-Type:application/json" "https://demo.ssh.datastations.nl/api/datasets/:persistentId/files/actions/:set-embargo?persistentId=doi:10.80727/SSS/RJONEL" -d '{"dateAvailable":"2024-06-05", "reason":"Standard project embargo", "fileIds":[9423]}'
+
