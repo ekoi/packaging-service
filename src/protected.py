@@ -1,5 +1,6 @@
 # Import necessary modules and packages
 # Import necessary libraries and modules
+import shutil
 import time
 from datetime import datetime
 import hashlib
@@ -7,7 +8,7 @@ import json
 import mimetypes
 import os
 import threading
-from typing import Callable, Awaitable, Any
+from typing import Callable, Awaitable
 
 import jmespath
 import requests
@@ -81,13 +82,14 @@ async def process_inbox_dataset_metadata(request: Request, release_version: Rele
         repo_assistant = RepoAssistantDataModel.model_validate_json(
             repo_config)  # TODO: Check the given transformer exist.
         # Create temp folder
-        tmp_dir = os.path.join(settings.DATA_TMP_BASE_DIR, repo_assistant.app_name, datasetId)
-        if not os.path.exists(tmp_dir):
-            os.makedirs(tmp_dir)
+        dataset_folder = os.path.join(settings.DATA_TMP_BASE_DIR, repo_assistant.app_name, datasetId)
+        logger(f'Creating dataset folder: {dataset_folder} if it not exist', 'debug', 'ps')
+        if not os.path.exists(dataset_folder):
+            os.makedirs(dataset_folder)
 
         db_recs_target_repo = process_target_repos(repo_assistant, idh.target_creds)
 
-        db_record_metadata, registered_files = process_metadata_record(datasetId, idh, repo_assistant, tmp_dir)
+        db_record_metadata, registered_files = process_metadata_record(datasetId, idh, repo_assistant, dataset_folder)
         process_db_records(datasetId, db_record_metadata, db_recs_target_repo, registered_files)
 
     except HTTPException as ex:
@@ -99,10 +101,6 @@ async def process_inbox_dataset_metadata(request: Request, release_version: Rele
     start_process = db_manager.is_dataset_ready(datasetId)
     if start_process and db_manager.are_files_uploaded(datasetId):
         bridge_task(datasetId, f"/inbox/dataset/{idh.release_version}")
-        # logger(f"------------- START THREADING from inbox/dataset  {datasetId}-------------------", 'debug', 'ps')
-        #
-        # t1 = threading.Thread(target=follow_bridge, args=(datasetId,))
-        # t1.start()
     rdm = ResponseDataModel(status="OK")
     rdm.dataset_id = datasetId
     rdm.start_process = start_process
@@ -205,7 +203,7 @@ async def process_inbox_dataset_file(datasetId: str = Form(), fileName: str = Fo
     submitted_filename = fileName
     logger(f"submitted_filename: {submitted_filename} from metadataid: {datasetId}", 'debug', 'ps')
     db_record_metadata = db_manager.find_dataset(datasetId)
-    tmp_dir = os.path.join(settings.DATA_TMP_BASE_DIR, db_record_metadata.app_name, datasetId)
+    dataset_folder = os.path.join(settings.DATA_TMP_BASE_DIR, db_record_metadata.app_name, datasetId)
 
     db_records_uploaded_file = db_manager.find_files(datasetId)
     # Process the files
@@ -215,7 +213,7 @@ async def process_inbox_dataset_file(datasetId: str = Form(), fileName: str = Fo
         if submitted_filename == db_rec_uploaded_f.name:
             file_contents = await file.read()
             md5_hash = hashlib.md5(file_contents).hexdigest()
-            file_path = os.path.join(str(tmp_dir), submitted_filename)
+            file_path = os.path.join(str(dataset_folder), submitted_filename)
             with open(file_path, "wb") as f:
                 f.write(file_contents)
 
@@ -268,40 +266,6 @@ def bridge_task(datasetId: str, msg: str) -> type(None):
     logger(f">> Thread execution for {datasetId} is completed. {msg}", 'debug', 'ps')
 
 
-# def follow_bridge(datasetId) -> type(None):
-#     logger("Follow bridge", 'debug', 'ps')
-#     logger(f"-------------- EXECUTE follow_bridge for datasetId: {datasetId}", 'debug', 'ps')
-#     db_manager.submitted_now(datasetId)
-#     target_repo_recs = db_manager.find_target_repos_by_ds_id(datasetId)
-#     result = []
-#     rsp = {"dataset-id": datasetId, "targets-result": result}
-#
-#     for target_repo_rec in target_repo_recs:
-#         target_repo_id = target_repo_rec.id
-#         target_repo_json = json.loads(target_repo_rec.config)
-#         tg = Target(**target_repo_json)
-#         bridge_class = data[tg.bridge_module_class]
-#
-#         logger(f'EXECUTING {bridge_class} for target_repo_id: {target_repo_id}', 'debug', 'ps')
-#         start = time.perf_counter()
-#         a = get_class(bridge_class)
-#         k = a(dataset_id=datasetId, target=tg)
-#         m = k.deposit()  # deposit return type: s BridgeOutputModel
-#         finish = time.perf_counter()
-#         m.response.duration = round(finish - start, 2)
-#         logger(f'Result from Deposit: {m.model_dump_json()}', 'debug', 'ps')
-#         k.save_state(m)
-#         if m.deposit_status in [DepositStatus.FINISH, DepositStatus.ACCEPTED, DepositStatus.SUCCESS]:
-#             logger(f'Finish deposit for {bridge_class} to target_repo_id: {target_repo_id}. Result: {m}', 'debug', 'ps')
-#             result.append(m)
-#         else:
-#             logger(f'Executing {bridge_class} is FAILED. Resp: {m.model_dump_json()}', 'debug', 'ps')
-#             send_mail(f'Executing {bridge_class} is FAILED.', f'Resp:\n {m.model_dump_json()}')
-#             break
-#
-#     logger(f"----------- END follow_bridge for datasetId: {datasetId}", 'debug', 'ps')
-#     logger(f'>>>>Executed: {len(result)} of {len(target_repo_recs)}', 'debug', 'ps')
-
 def follow_bridge(datasetId) -> type(None):
     logger("Follow bridge", 'debug', 'ps')
     logger(f"-------------- EXECUTE follow_bridge for datasetId: {datasetId}", 'debug', 'ps')
@@ -340,6 +304,14 @@ def execute_bridges(datasetId, targets) -> type(None):
 
     logger(f"----------- END follow_bridge for datasetId: {datasetId}", 'debug', 'ps')
     logger(f'>>>>Executed: {len(result)} of {len(targets)}', 'debug', 'ps')
+
+    if len(result) == len(targets):
+        # Delete dataset directory
+        dataset = db_manager.find_dataset(ds_id=datasetId)
+        app_name = dataset.app_name
+        dataset_folder = os.path.join(settings.DATA_TMP_BASE_DIR, app_name, datasetId)
+        logger(f'Ingest successful, DELETE {dataset_folder}', 'debug', 'ps')
+        shutil.rmtree(dataset_folder)
 
 
 @handle_ps_exceptions

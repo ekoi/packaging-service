@@ -1,15 +1,17 @@
 from __future__ import annotations
 
+from datetime import datetime
 from typing import List
 
 from pydantic import BaseModel
 import json
 
 import requests
+from starlette import status
 
 from src.bridge import Bridge
 from src.models.bridge_output_model import BridgeOutputDataModel, TargetResponse, ResponseContentType, IdentifierItem
-from src.commons import transform, logger, handle_deposit_exceptions
+from src.commons import transform, logger, handle_deposit_exceptions, db_manager
 from src.dbz import DepositStatus
 
 
@@ -24,17 +26,25 @@ class ZenodoApiDepositor(Bridge):
         url = f'{self.target.target_url}/{zenodo_id}?{self.target.username}={self.target.password}'
         logger(f"Send to {url}", 'debug', self.app_name)
         zen_resp = requests.put(url, data=str_zenodo_dataset_metadata, headers={"Content-Type": "application/json"})
+        logger(f'Zenodo response status code: {zen_resp.status_code}. Zenodo response: {zen_resp.text}', 'debug', self.app_name)
         bridge_output_model = BridgeOutputDataModel()
-        if zen_resp.status_code == 200:
-            zm = ZenodoModel(**zen_resp.json())
-            bridge_output_model.deposit_status = DepositStatus.SUCCESS
-            bridge_output_model.message = "This is a success"
-            target_resp = TargetResponse(url=f'{self.target.target_url}/{zenodo_id}', status=DepositStatus.SUCCESS,
-                                         content=json.dumps(zen_resp.json()), message="")
-            target_resp.status_code = zen_resp.status_code
-            target_resp.identifiers = [IdentifierItem(value=zm.metadata.prereserve_doi.doi, url=zm.links.html)]
-            target_resp.content_type = ResponseContentType.JSON
-            bridge_output_model.response = target_resp
+        if zen_resp.status_code != status.HTTP_200_OK:
+            bridge_output_model.message = "Error occurs: status code: " + str(zen_resp.status_code)
+            bridge_output_model.response = zen_resp.text
+            bridge_output_model = BridgeOutputDataModel(message=zen_resp.text, response=zen_resp)
+            bridge_output_model.deposit_time = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S.%f")
+            bridge_output_model.deposit_status = DepositStatus.ERROR
+            return bridge_output_model
+        zm = ZenodoModel(**zen_resp.json())
+        self.__ingest_files(zm.links.bucket)
+        bridge_output_model.deposit_status = DepositStatus.SUCCESS
+        bridge_output_model.notes = "Successfully deposited to Zenodo."
+        target_resp = TargetResponse(url=f'{self.target.target_url}/{zenodo_id}', status=DepositStatus.SUCCESS,
+                                     content=json.dumps(zen_resp.json()), message="")
+        target_resp.status_code = zen_resp.status_code
+        target_resp.identifiers = [IdentifierItem(value=zm.metadata.prereserve_doi.doi, url=zm.links.html)]
+        target_resp.content_type = ResponseContentType.JSON
+        bridge_output_model.response = target_resp
         return bridge_output_model
 
     @handle_deposit_exceptions
@@ -48,6 +58,21 @@ class ZenodoApiDepositor(Bridge):
             r_json = r.json()
             return r_json
         return json.loads('{"":""}')
+
+    def __ingest_files(self, bucket_url: str) -> {}:
+        logger(f'Ingesting files to {bucket_url}', "debug", self.app_name)
+        params = {'access_token': self.target.password, 'access_right': 'restricted'}
+        for _ in db_manager.find_non_generated_files(dataset_id=self.dataset_id):
+            logger(f'Ingesting file {_.path}/{_.name}', "debug", self.app_name)
+            with open(_.path, "rb") as fp:
+                r = requests.put(
+                    "%s/%s" % (bucket_url, _.name),
+                    data=fp,
+                    params=params,
+                )
+            logger(f"Response status code: {r.status_code} and message: {r.text}", 'debug', self.app_name)
+
+        return {"status": status.HTTP_200_OK}
 
 
 class PrereserveDoi(BaseModel):

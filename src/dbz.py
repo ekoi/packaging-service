@@ -301,7 +301,7 @@ class DatabaseManager:
 
     def find_non_generated_files(self, dataset_id: str) -> [DataFile]:
         with Session(self.engine) as session:
-            statement = select(DataFile).where(DataFile.ds_id == dataset_id, DataFile.state != DataFileWorkState.GENERATED)
+            statement = select(DataFile).where(DataFile.ds_id == dataset_id, DataFile.state != DataFileWorkState.REGISTERED)
             results = session.exec(statement)
             result = results.all()
         return result

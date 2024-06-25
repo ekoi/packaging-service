@@ -47,12 +47,19 @@ from starlette import status
 from starlette.middleware.cors import CORSMiddleware
 
 from src import public, protected, tus_files
-from src.commons import settings, setup_logger, data, InspectBridgeModule, db_manager, logger, send_mail
+from src.commons import settings, setup_logger, data, db_manager, logger, send_mail, inspect_bridge_module
 
 from src.tus_files import upload_files
 
 from fastapi_events.handlers.local import local_handler
 from fastapi_events.typing import Event
+
+from opentelemetry import trace
+from opentelemetry.exporter.jaeger.thrift import JaegerExporter
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from opentelemetry.sdk.resources import SERVICE_NAME, Resource
 
 
 @asynccontextmanager
@@ -84,34 +91,9 @@ async def lifespan(application: FastAPI):
     yield
 
 
-app = FastAPI(
-    title=settings.FASTAPI_TITLE,
-    description=settings.FASTAPI_DESCRIPTION,
-    version=__version__,
-    lifespan=lifespan
-)
-
-# Enable CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-app.add_middleware(EventHandlerASGIMiddleware,
-                   handlers=[local_handler])  # registering handler(s)
-
-# Todo: This is encrypted in the .secrets.toml
 api_keys = [settings.DANS_PACKAGING_SERVICE_API_KEY]
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")  # use token authentication
-
-
-# oauth2_scheme = OAuth2AuthorizationCodeBearer(
-#     tokenUrl="http://localhost:9090/realms/ekoi/protocol/openid-connect/token",
-#     authorizationUrl="http://localhost:9090/auth/realms/ekoi/protocol/openid-connect/auth")
 
 
 def auth_header(request: Request, api_key: str = Depends(oauth2_scheme)):
@@ -159,20 +141,64 @@ def auth_header(request: Request, api_key: str = Depends(oauth2_scheme)):
         )
 
 
-app.include_router(public.router, tags=["Public"], prefix="")
-app.include_router(protected.router, tags=["Protected"], prefix="", dependencies=[Depends(auth_header)])
+def pre_startup_routine(app: FastAPI) -> None:
+    setup_logger()
+    logger(f'MELT_ENABLE = {settings.get("MELT_ENABLE")}', 'debug', 'ps')
+    # add middlewares
+    if settings.get("MELT_ENABLE", False):
+        melt_agent_host_name = settings.get("MELT_AGENT_HOST_NAME", "localhost")
+        # Set up the tracer provider
+        trace.set_tracer_provider(
+            TracerProvider(resource=Resource.create({SERVICE_NAME: "Packaging Service"}))
+        )
+        tracer_provider = trace.get_tracer_provider()
 
-if settings.DEPLOYMENT in ['demo', 'local']:
-    app.include_router(upload_files, prefix="/files", dependencies=[Depends(auth_header)])
-    app.include_router(tus_files.router, prefix="")
+        # Configure Jaeger exporter
+        jaeger_exporter = JaegerExporter(
+            agent_host_name=melt_agent_host_name,
+            agent_port=6831,
+        )
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+        # Add the Jaeger exporter to the tracer provider
+        tracer_provider.add_span_processor(BatchSpanProcessor(jaeger_exporter))
+        FastAPIInstrumentor.instrument_app(app)
+
+    # Enable CORS
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+    app.add_middleware(EventHandlerASGIMiddleware,
+                       handlers=[local_handler])  # registering handler(s)
+
+    # register routers
+    app.include_router(public.router, tags=["Public"], prefix="")
+    app.include_router(protected.router, tags=["Protected"], prefix="", dependencies=[Depends(auth_header)])
+
+    if settings.DEPLOYMENT in ['demo', 'local']:
+        app.include_router(upload_files, prefix="/files", dependencies=[Depends(auth_header)])
+        app.include_router(tus_files.router, prefix="")
+
+
+# create FastAPI app instance
+app = FastAPI(
+    title=settings.FASTAPI_TITLE,
+    description=settings.FASTAPI_DESCRIPTION,
+    version=__version__,
+    lifespan=lifespan
 )
+
+pre_startup_routine(app)
+
+
+# oauth2_scheme = OAuth2AuthorizationCodeBearer(
+#     tokenUrl="http://localhost:9090/realms/ekoi/protocol/openid-connect/token",
+#     authorizationUrl="http://localhost:9090/auth/realms/ekoi/protocol/openid-connect/auth")
+
 
 @app.get('/')
 def info():
@@ -198,8 +224,7 @@ def iterate_saved_bridge_module_dir():
     for filename in os.listdir(settings.MODULES_DIR):
         if filename.endswith(".py") and not filename.startswith('__'):
             module_path = os.path.join(settings.MODULES_DIR, filename)
-            cls_name = InspectBridgeModule.get_bridge_sub_class(path=module_path)
-            if cls_name:
+            for cls_name in inspect_bridge_module(module_path):
                 data.update(cls_name)
 
 
@@ -237,10 +262,10 @@ def handle_all_cat_events(event: Event):
 
 
 if __name__ == "__main__":
-    if settings.SENDMAIL_ENABLE:
+
+    if settings.get("SENDMAIL_ENABLE"):
         send_mail(f'Starting the packaging service',
                   f'Started at {datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S.%f")}')
-    setup_logger()
     logger('START Packaging Service', 'debug', 'ps')
 
     import platform

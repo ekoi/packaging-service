@@ -1,3 +1,4 @@
+import ast
 import logging
 import os
 import platform
@@ -16,11 +17,14 @@ from dynaconf import Dynaconf
 from fastapi import HTTPException
 from fastapi_mail import ConnectionConfig, MessageSchema
 from pydantic import EmailStr, BaseModel
+import os
 
 from src.dbz import DatabaseManager, DepositStatus
 from src.models.bridge_output_model import BridgeOutputDataModel, TargetResponse
 
-settings = Dynaconf(root_path=f'{os.getenv("BASE_DIR")}/conf', settings_files=["*.toml"],
+conf_path = os.getenv("BASE_DIR") if os.getenv("BASE_DIR") is not None else os.getcwd()
+
+settings = Dynaconf(root_path=f'{os.getenv("BASE_DIR", os.getcwd())}/conf', settings_files=["*.toml"],
                     environments=True)
 
 data = {}
@@ -216,29 +220,30 @@ def handle_ps_exceptions(func) -> Any:
     return wrapper
 
 
-class InspectBridgeModule:
+def inspect_bridge_module(py_file_path: str):
+    with open(py_file_path, 'r') as f:
+        bridge_mdl = ast.parse(f.read())
+    results = []
+    if isinstance(bridge_mdl, ast.Module):
+        for node in bridge_mdl.body:
+            if isinstance(node, ast.ClassDef):
+                class_name = node.name
+                super_class = ""
+                if len(node.bases):
+                    for base in node.bases:
+                        root = base
+                        max_depth = 100
+                        while not isinstance(root, ast.Name) and max_depth:
+                            if "value" in root.__dir__():
+                                super_class = f".{root.attr}" + super_class
+                                root = root.value
+                        if root.id != 'Bridge':
+                            continue
+                        module_name = py_file_path.replace(f'{os.getenv("BASE_DIR", os.getcwd())}/', '').replace('/', '.')
+                        name_of_bridge_subclass = module_name[:-len('.py')] + '.' + class_name
+                        results.append({class_name: name_of_bridge_subclass})
 
-    @staticmethod
-    def get_bridge_sub_class(path: str) -> Any:
-        pattern = re.compile(r'class\s+(.*?)\(Bridge\):', re.DOTALL)
-        if os.path.isfile(path):
-            with open(path) as f:
-                for line in f:
-                    match = pattern.search(line)
-                    if match:
-                        words_between = match.group(1).split()
-                        module_name = path.replace(f'{os.getenv("BASE_DIR")}/', '').replace('/', '.')
-                        subclass_name = words_between[0] if len(words_between) == 1 else None
-                        if subclass_name:
-                            bridge_subclass = module_name[:-len('.py')] + '.' + subclass_name
-                            from src.bridge import Bridge
-                            cls = get_class(bridge_subclass)
-                            if cls and issubclass(cls, Bridge):
-                                # deposit_func = getattr(cls, 'deposit', None)
-                                # print(f'k: {callable(deposit_func)}')
-                                return {subclass_name: bridge_subclass}
-
-        return None
+    return results
 
 
 # class PackagingServiceException(Exception):
