@@ -1,17 +1,13 @@
 import json
 import sqlite3
 from contextlib import closing
-from enum import StrEnum, auto
-
-from jinja2 import Environment, BaseLoader
-from sqlalchemy import text, delete, inspect, UniqueConstraint
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.exc import NoResultFound
-from sqlmodel import SQLModel, Field, create_engine, Session, select
 from datetime import datetime
-
+from enum import StrEnum, auto
 from typing import List, Optional, Sequence, Any
+
 from pydantic import BaseModel
+from sqlalchemy import text, delete, inspect, UniqueConstraint
+from sqlmodel import SQLModel, Field, create_engine, Session, select
 
 from src.models.app_model import OwnerAssetsModel, Asset, Target
 
@@ -23,6 +19,8 @@ logger.setLevel(logging.DEBUG)
 # run sqlmodel code after this
 '''
 
+LOG_NAME_PS = 'ps'
+LOG_LEVEL_DEBUG = 'debug'
 
 class ReleaseVersion(StrEnum):
     DRAFT = 'DRAFT'
@@ -141,7 +139,7 @@ class DatabaseManager:
             SQLModel.metadata.create_all(self.engine, checkfirst=True)
         else:
             from src.commons import logger
-            logger('TABLES ALREADY CREATED', 'debug', 'ps')
+            logger('TABLES ALREADY CREATED', LOG_LEVEL_DEBUG, LOG_NAME_PS)
 
     def insert_dataset_and_target_repo(self, ds_record: Dataset, repo_records: [TargetRepo]) -> type(None):
         with Session(self.engine) as session:

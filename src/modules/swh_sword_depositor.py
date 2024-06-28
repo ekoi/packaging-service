@@ -2,15 +2,15 @@ from __future__ import annotations
 
 import json
 from datetime import datetime
+from time import sleep
 
 import requests
+import sword2.deposit_receipt as dr
 from requests.auth import HTTPBasicAuth
 
 from src.bridge import Bridge
+from src.commons import settings, DepositStatus, transform, logger, db_manager, LOG_LEVEL_DEBUG
 from src.models.bridge_output_model import BridgeOutputDataModel, TargetResponse
-from src.commons import settings, DepositStatus, transform, logger, db_manager
-from time import sleep
-import sword2.deposit_receipt as dr
 
 
 class SwhSwordDepositor(Bridge):
@@ -23,7 +23,8 @@ class SwhSwordDepositor(Bridge):
         dv_target = db_manager.find_target_repo(self.dataset_id, self.target.input.from_target_name)
         if dv_target:
             swh_form_md.update({"doi": json.loads(dv_target.target_output)['response']['identifiers'][0]['value']})
-        logger(f"SwhSwordDepositor- swh_form_md - after update (doi): {json.dumps(swh_form_md)}", 'debug', self.app_name)
+        logger(f"SwhSwordDepositor- swh_form_md - after update (doi): {json.dumps(swh_form_md)}",
+               LOG_LEVEL_DEBUG, self.app_name)
         str_sword_payload = transform(
             transformer_url=self.target.metadata.transformed_metadata[0].transformer_url,
             str_tobe_transformed=json.dumps(swh_form_md)
@@ -37,10 +38,10 @@ class SwhSwordDepositor(Bridge):
         logger(f'status_code: {response.status_code}. Response: {response.text}', "debug", self.app_name)
         if response.status_code == 200 or response.status_code == 201:  # TODO: remove 200, use only 201
             rt = response.text
-            logger(f'sword response: {rt}', 'debug', self.app_name)
+            logger(f'sword response: {rt}', LOG_LEVEL_DEBUG, self.app_name)
             deposit_response = dr.Deposit_Receipt(xml_deposit_receipt=rt)
             status_url = deposit_response.alternate
-            logger(f'Status request send to {status_url}', 'debug', self.app_name)
+            logger(f'Status request send to {status_url}', LOG_LEVEL_DEBUG, self.app_name)
             counter = 0
             while True and (counter < settings.swh_api_max_retries):
                 counter += 1
@@ -48,7 +49,7 @@ class SwhSwordDepositor(Bridge):
                 rsp = requests.get(status_url, headers=headers, auth=auth)
                 if rsp.status_code == 200:
                     rsp_text = rsp.text
-                    logger(f'response from {status_url} is {rsp_text}', 'debug', self.app_name)
+                    logger(f'response from {status_url} is {rsp_text}', LOG_LEVEL_DEBUG, self.app_name)
                     rsp_dep = dr.Deposit_Receipt(xml_deposit_receipt=rsp_text)
                     print(rsp_dep.metadata)
                     swh_metadata = rsp_dep.metadata
@@ -65,13 +66,9 @@ class SwhSwordDepositor(Bridge):
                         return bridge_output_model
 
                 else:
-                    raise ValueError(
-                        f'Error request to {status_url} with rsp.status_code: {rsp.status_code} and rsp.text: {rsp.text}')
+                    raise ValueError(f'Error request to {status_url} with rsp.status_code: {rsp.status_code} and '
+                                     f'rsp.text: {rsp.text}')
         else:
             bridge_output_model.deposit_status = DepositStatus.ERROR
             bridge_output_model.notes = response.text
         return bridge_output_model
-
-
-
-

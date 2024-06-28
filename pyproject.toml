@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "packaging-service"
-version = "0.4.10"
+version = "0.4.14"
 description = ""
 authors = ["Eko Indarto <eko.indarto@dans.knaw.nl>"]
 readme = "README.md"
@@ -12,7 +12,7 @@ include = ["resources/*"]
 python = "^3.11"
 dynaconf = "^3.2.2"
 requests = "^2.30.0"
-python-multipart = "^0.0.6"
+python-multipart = "^0.0.7"
 public = "^2020.12.3"
 jsonpatch = "^1.32"
 bagit = "^1.8.1"

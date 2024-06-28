@@ -5,7 +5,6 @@ from typing import List
 from pydantic import BaseModel
 
 
-
 class Metadata(BaseModel):
     relativePath: str
     name: str

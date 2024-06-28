@@ -1,11 +1,12 @@
 import json
-# import logging
 
 from fastapi import APIRouter
-from starlette.responses import JSONResponse, Response
+from starlette.responses import Response
 
 # from src import db
-from src.commons import logger, settings, data, db_manager
+from src.commons import logger, data, db_manager, LOG_LEVEL_DEBUG, LOG_NAME_PS
+
+# import logging
 
 router = APIRouter()
 
@@ -26,7 +27,7 @@ async def progress_state(owner_id: str):
 @router.get("/dataset/{datasetId}")
 async def find_dataset(datasetId: str):
     # logging.debug(f'find_metadata_by_metadata_id - metadata_id: {metadata_id}')
-    logger(f'find_metadata_by_metadata_id - metadata_id: {datasetId}', 'debug', 'ps')
+    logger(f'find_metadata_by_metadata_id - metadata_id: {datasetId}', LOG_LEVEL_DEBUG, LOG_NAME_PS)
     dataset = db_manager.find_dataset_and_targets(datasetId)
     # metadata_json = json.loads(db_manager.find_dataset_by_id(datasetId))
     # files_metadata = metadata_json.get("file-metadata")
@@ -38,7 +39,7 @@ async def find_dataset(datasetId: str):
     #             file_metadata.update({"uploaded": True})
     #         else:
     #             # logging.error(f"No file for metadata_id: {metadata_id} and filename: {filename}")
-    #             logger(f'input: {input}', 'error', 'ps')
+    #             logger(f'input: {input}', 'error', LOG_NAME_PS)
     #
 
     # y =

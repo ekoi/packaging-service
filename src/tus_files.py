@@ -1,7 +1,7 @@
 import os
 import shutil
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 from fastapi.responses import HTMLResponse
 from fastapi_tusd import TusRouter
 

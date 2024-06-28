@@ -1,37 +1,40 @@
 from __future__ import annotations
 
+import json
 from datetime import datetime
 from typing import List
 
-from pydantic import BaseModel
-import json
-
 import requests
+from pydantic import BaseModel
 from starlette import status
 
 from src.bridge import Bridge
-from src.models.bridge_output_model import BridgeOutputDataModel, TargetResponse, ResponseContentType, IdentifierItem
-from src.commons import transform, logger, handle_deposit_exceptions, db_manager
+from src.commons import transform, logger, handle_deposit_exceptions, db_manager, LOG_LEVEL_DEBUG
 from src.dbz import DepositStatus
+from src.models.bridge_output_model import BridgeOutputDataModel, TargetResponse, ResponseContentType, IdentifierItem
 
 
 class ZenodoApiDepositor(Bridge):
     @handle_deposit_exceptions
     def deposit(self) -> BridgeOutputDataModel:
-        zenodo_resp = self.__create_initial_dataset()  # TODO if zenodo_resp return {}
+        zenodo_resp = self.__create_initial_dataset()
+        if zenodo_resp is None:
+            return BridgeOutputDataModel(notes="Error occurs: status code: 500", deposit_status=DepositStatus.ERROR)
         zenodo_id = zenodo_resp.get("id")
         str_zenodo_dataset_metadata = transform(self.target.metadata.transformed_metadata[0].transformer_url,
                                                 self.metadata_rec.md)
 
         url = f'{self.target.target_url}/{zenodo_id}?{self.target.username}={self.target.password}'
-        logger(f"Send to {url}", 'debug', self.app_name)
+        logger(f"Send to {url}", LOG_LEVEL_DEBUG, self.app_name)
         zen_resp = requests.put(url, data=str_zenodo_dataset_metadata, headers={"Content-Type": "application/json"})
-        logger(f'Zenodo response status code: {zen_resp.status_code}. Zenodo response: {zen_resp.text}', 'debug', self.app_name)
+        logger(f'Zenodo response status code: {zen_resp.status_code}. Zenodo response: {zen_resp.text}',
+               LOG_LEVEL_DEBUG, self.app_name)
         bridge_output_model = BridgeOutputDataModel()
         if zen_resp.status_code != status.HTTP_200_OK:
-            bridge_output_model.message = "Error occurs: status code: " + str(zen_resp.status_code)
+            logger(f'Error occurs: status code: {zen_resp.status_code}', 'error', self.app_name)
+            bridge_output_model.notes = "Error occurs: status code: " + str(zen_resp.status_code)
             bridge_output_model.response = zen_resp.text
-            bridge_output_model = BridgeOutputDataModel(message=zen_resp.text, response=zen_resp)
+            bridge_output_model = BridgeOutputDataModel(notes=zen_resp.text, response=zen_resp)
             bridge_output_model.deposit_time = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S.%f")
             bridge_output_model.deposit_status = DepositStatus.ERROR
             return bridge_output_model
@@ -39,25 +42,27 @@ class ZenodoApiDepositor(Bridge):
         self.__ingest_files(zm.links.bucket)
         bridge_output_model.deposit_status = DepositStatus.SUCCESS
         bridge_output_model.notes = "Successfully deposited to Zenodo."
+        bridge_output_model.deposit_time = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S.%f")
         target_resp = TargetResponse(url=f'{self.target.target_url}/{zenodo_id}', status=DepositStatus.SUCCESS,
-                                     content=json.dumps(zen_resp.json()), message="")
+                                     content=json.dumps(zen_resp.json()), message="Successfully deposited to Zenodo")
         target_resp.status_code = zen_resp.status_code
         target_resp.identifiers = [IdentifierItem(value=zm.metadata.prereserve_doi.doi, url=zm.links.html)]
         target_resp.content_type = ResponseContentType.JSON
         bridge_output_model.response = target_resp
+        logger(f"Successfully deposited to Zenodo. Zenodo response: {zen_resp.text}", LOG_LEVEL_DEBUG, self.app_name)
         return bridge_output_model
 
     @handle_deposit_exceptions
-    def __create_initial_dataset(self) -> json:
-        logger('Create an initial zenodo dataset', 'debug', self.app_name)
+    def __create_initial_dataset(self) -> json or None:
+        logger('Create an initial zenodo dataset', LOG_LEVEL_DEBUG, self.app_name)
         url = f"{self.target.target_url}?{self.target.username}={self.target.password}"
-        logger(f"Send to {url}", 'debug', self.app_name)
+        logger(f"Send to {url}", LOG_LEVEL_DEBUG, self.app_name)
         r = requests.post(url, data="{}", headers={"Content-Type": "application/json"})
-        logger(f"Response status code: {r.status_code}", 'debug', self.app_name)
+        logger(f"Response status code: {r.status_code}", LOG_LEVEL_DEBUG, self.app_name)
         if r.status_code == 201:
             r_json = r.json()
             return r_json
-        return json.loads('{"":""}')
+        return None
 
     def __ingest_files(self, bucket_url: str) -> {}:
         logger(f'Ingesting files to {bucket_url}', "debug", self.app_name)
@@ -70,7 +75,7 @@ class ZenodoApiDepositor(Bridge):
                     data=fp,
                     params=params,
                 )
-            logger(f"Response status code: {r.status_code} and message: {r.text}", 'debug', self.app_name)
+            logger(f"Response status code: {r.status_code} and message: {r.text}", LOG_LEVEL_DEBUG, self.app_name)
 
         return {"status": status.HTTP_200_OK}
 

@@ -1,0 +1,11 @@
+[default]
+dynaconf_merge = true
+loggers = [{"name"="4tu", "log_file"="@format {env[BASE_DIR]}/logs/ohsmart.log", "log_level"=10, "log_format" = "%(asctime)s %(levelname)s %(name)s %(threadName)s : %(message)s" }]
+
+
+
+[default.keycloak_4tu_dev]
+    url="https://keycloak.dansdemo.nl"
+    realms="4tu"
+    client_id="4tu-auth"
+

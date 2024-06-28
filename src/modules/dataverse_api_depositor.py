@@ -1,21 +1,20 @@
 import json
-import os
 import mimetypes
-
-import jmespath
-from simple_file_checksum import get_checksum
+import os
 from datetime import datetime
 
+import jmespath
 import requests
+from simple_file_checksum import get_checksum
 from starlette import status
 
+from src.bridge import Bridge, BridgeOutputDataModel
 from src.commons import (
     db_manager,
     transform,
     logger,
-    handle_deposit_exceptions, dmz_dataverse_headers,
+    handle_deposit_exceptions, dmz_dataverse_headers, LOG_LEVEL_DEBUG,
 )
-from src.bridge import Bridge, BridgeOutputDataModel
 from src.dbz import ReleaseVersion, DataFile, DepositStatus, FilePermissions, DataFileWorkState
 from src.models.bridge_output_model import IdentifierItem, IdentifierProtocol, TargetResponse, ResponseContentType
 
@@ -28,10 +27,10 @@ class DataverseIngester(Bridge):
         if self.target.input:
             input_from_prev_target = db_manager.find_target_repo(self.dataset_id, self.target.input.from_target_name)
             md_json.update({"input_from_prev_target":
-                                json.loads(input_from_prev_target.target_output)['response']['identifiers'][0][
-                                    'value']})
+                            json.loads(input_from_prev_target.target_output)['response']['identifiers'][0]['value']})
 
-        logger(f"md_json - after update (input_from_prev_target): {json.dumps(md_json)}", 'debug', self.app_name)
+        logger(f"md_json - after update (input_from_prev_target): {json.dumps(md_json)}", LOG_LEVEL_DEBUG,
+               self.app_name)
 
         files_metadata = jmespath.search('"file-metadata"[*]', md_json)
         generated_files = self.__create_generated_files()
@@ -44,7 +43,7 @@ class DataverseIngester(Bridge):
         # updating mimetype of user's uploaded files since no mimetype in the form-metadata submission
         for _ in db_manager.find_non_generated_files(dataset_id=self.dataset_id):
             f_json = jmespath.search(f'[?name == \'{_.name}\']', files_metadata)
-            logger(f'{self.__class__.__name__} f_json: {f_json}', 'debug', self.app_name)
+            logger(f'{self.__class__.__name__} f_json: {f_json}', LOG_LEVEL_DEBUG, self.app_name)
             f_json[0].update({"mimetype": _.mime_type})
 
         str_updated_metadata_json = json.dumps(md_json)
@@ -77,7 +76,7 @@ class DataverseIngester(Bridge):
 
             ingest_file = self.__ingest_files(pid, str_updated_metadata_json)
             if ingest_file.get("status") == status.HTTP_200_OK:
-                logger(f'Ingest FILE(s) successfully! {json.dumps(ingest_file)}', 'debug', self.app_name)
+                logger(f'Ingest FILE(s) successfully! {json.dumps(ingest_file)}', LOG_LEVEL_DEBUG, self.app_name)
                 if self.target.initial_release_version == ReleaseVersion.PUBLISHED:
                     logger(f'Publish the dataset', "debug", self.app_name)
                     publish_status = self.__publish_dataset(pid)
@@ -101,7 +100,7 @@ class DataverseIngester(Bridge):
                 self.app_name,
             )
         bridge_output_model = BridgeOutputDataModel(
-            message=message, deposit_status=ingest_status
+                notes=message, deposit_status=ingest_status
         )
         bridge_output_model.deposit_time = datetime.utcnow().strftime(
             "%Y-%m-%d %H:%M:%S.%f"
@@ -110,7 +109,7 @@ class DataverseIngester(Bridge):
                                      identifiers=identifier_items, content=dv_response.text)
         target_repo.content_type = ResponseContentType.JSON
         target_repo.status_code = dv_response.status_code
-        bridge_output_model = BridgeOutputDataModel(message=message, response=target_repo)
+        bridge_output_model = BridgeOutputDataModel(notes=message, response=target_repo)
         bridge_output_model.deposit_time = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S.%f")
         bridge_output_model.deposit_status = ingest_status
         return bridge_output_model
@@ -169,12 +168,12 @@ class DataverseIngester(Bridge):
                 # Print the response
                 logger(
                     f'Adding file {_.name}. Response.status_code: {response_ingest_file.status_code}. Response text: '
-                    f'{response_ingest_file.text}', 'debug', self.app_name)
+                    f'{response_ingest_file.text}', LOG_LEVEL_DEBUG, self.app_name)
 
                 if response_ingest_file.status_code != status.HTTP_200_OK:
                     return {"status": "error", "message": response_ingest_file.text}
                 dv_resp = response_ingest_file.json()
-                logger(f"file ID: {dv_resp['data']['files'][0]['dataFile']['id']}", 'debug', self.app_name)
+                logger(f"file ID: {dv_resp['data']['files'][0]['dataFile']['id']}", LOG_LEVEL_DEBUG, self.app_name)
                 if jsonData.get('embargo'):
                     json_data = {
                         'dateAvailable': jsonData.get('embargo'),
@@ -183,14 +182,16 @@ class DataverseIngester(Bridge):
                             dv_resp['data']['files'][0]['dataFile']['id'],
                         ],
                     }
-                    logger(f'Set EMBARGO to pid {pid} with data is {json.dumps(json_data)}', 'debug', self.app_name)
+                    logger(f'Set EMBARGO to pid {pid} with data is {json.dumps(json_data)}', LOG_LEVEL_DEBUG,
+                           self.app_name)
                     response_embargo = requests.post(
-                        f'{self.target.base_url}/api/datasets/:persistentId/files/actions/:set-embargo?persistentId={pid}',
-                        headers=dmz_dataverse_headers('API_KEY', self.target.password), json=json_data)
+                        f'{self.target.base_url}/api/datasets/:persistentId/files/actions/:set-embargo?persistentId='
+                        f'{pid}', headers=dmz_dataverse_headers('API_KEY', self.target.password),
+                        json=json_data)
 
                     logger(
                         f'Set EMBARGO file {_.name}. Response.status_code: {response_embargo.status_code}. Response'
-                        f'text: {response_embargo.text}', 'debug', self.app_name)
+                        f'text: {response_embargo.text}', LOG_LEVEL_DEBUG, self.app_name)
                     if response_embargo.status_code != status.HTTP_200_OK:
                         return {"status": "error", "message": response_embargo.text}
 

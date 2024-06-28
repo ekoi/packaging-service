@@ -22,23 +22,17 @@ Dependencies:
 """
 
 import importlib.metadata
+import multiprocessing
 import os
 from contextlib import asynccontextmanager
-
-import multiprocessing
-
-from gunicorn.app.wsgiapp import WSGIApplication
-
-from fastapi_events.dispatcher import dispatch
-from fastapi_events.middleware import EventHandlerASGIMiddleware
-from fastapi_events.handlers.local import local_handler
-
 from datetime import datetime, timezone
 
 import emoji
 import uvicorn
 from fastapi import FastAPI, Request, HTTPException, Depends
 from fastapi.security import OAuth2PasswordBearer
+from fastapi_events.middleware import EventHandlerASGIMiddleware
+from gunicorn.app.wsgiapp import WSGIApplication
 from keycloak import KeycloakOpenID, KeycloakAuthenticationError
 
 __version__ = importlib.metadata.metadata("packaging-service")["version"]
@@ -47,7 +41,8 @@ from starlette import status
 from starlette.middleware.cors import CORSMiddleware
 
 from src import public, protected, tus_files
-from src.commons import settings, setup_logger, data, db_manager, logger, send_mail, inspect_bridge_module
+from src.commons import settings, setup_logger, data, db_manager, logger, send_mail, inspect_bridge_module, \
+    LOG_LEVEL_DEBUG, LOG_NAME_PS
 
 from src.tus_files import upload_files
 
@@ -80,10 +75,10 @@ async def lifespan(application: FastAPI):
     """
     print('start up')
     if not os.path.exists(settings.DB_URL):
-        logger('Creating database', 'debug', 'ps')
+        logger('Creating database', LOG_LEVEL_DEBUG, LOG_NAME_PS)
         db_manager.create_db_and_tables()
     else:
-        logger('Database already exists', 'debug', 'ps')
+        logger('Database already exists', LOG_LEVEL_DEBUG, LOG_NAME_PS)
     iterate_saved_bridge_module_dir()
     print(f'Available bridge classes: {sorted(list(data.keys()))}')
     print(emoji.emojize(':thumbs_up:'))
@@ -127,13 +122,13 @@ def auth_header(request: Request, api_key: str = Depends(oauth2_scheme)):
                     realm_name=keycloak_env.REALMS
                 )
                 user_info = keycloak_openid.userinfo(api_key)
-                logger(str(user_info.items()), 'debug', "ps")
+                logger(str(user_info.items()), LOG_LEVEL_DEBUG, "ps")
 
                 return
             except KeycloakAuthenticationError as e:
-                logger(e.response_code, 'error', 'ps')
+                logger(e.response_code, 'error', LOG_NAME_PS)
             except BaseException as e:
-                logger(e, 'error', 'ps')
+                logger(e, 'error', LOG_NAME_PS)
 
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -143,25 +138,10 @@ def auth_header(request: Request, api_key: str = Depends(oauth2_scheme)):
 
 def pre_startup_routine(app: FastAPI) -> None:
     setup_logger()
-    logger(f'MELT_ENABLE = {settings.get("MELT_ENABLE")}', 'debug', 'ps')
+    logger(f'MELT_ENABLE = {settings.get("MELT_ENABLE")}', LOG_LEVEL_DEBUG, LOG_NAME_PS)
     # add middlewares
     if settings.get("MELT_ENABLE", False):
-        melt_agent_host_name = settings.get("MELT_AGENT_HOST_NAME", "localhost")
-        # Set up the tracer provider
-        trace.set_tracer_provider(
-            TracerProvider(resource=Resource.create({SERVICE_NAME: "Packaging Service"}))
-        )
-        tracer_provider = trace.get_tracer_provider()
-
-        # Configure Jaeger exporter
-        jaeger_exporter = JaegerExporter(
-            agent_host_name=melt_agent_host_name,
-            agent_port=6831,
-        )
-
-        # Add the Jaeger exporter to the tracer provider
-        tracer_provider.add_span_processor(BatchSpanProcessor(jaeger_exporter))
-        FastAPIInstrumentor.instrument_app(app)
+        enable_otel(app)
 
     # Enable CORS
     app.add_middleware(
@@ -184,6 +164,23 @@ def pre_startup_routine(app: FastAPI) -> None:
         app.include_router(tus_files.router, prefix="")
 
 
+def enable_otel(app):
+    melt_agent_host_name = settings.get("MELT_AGENT_HOST_NAME", "localhost")
+    # Set up the tracer provider
+    trace.set_tracer_provider(
+        TracerProvider(resource=Resource.create({SERVICE_NAME: "Packaging Service"}))
+    )
+    tracer_provider = trace.get_tracer_provider()
+    # Configure Jaeger exporter
+    jaeger_exporter = JaegerExporter(
+        agent_host_name=melt_agent_host_name,
+        agent_port=6831,
+    )
+    # Add the Jaeger exporter to the tracer provider
+    tracer_provider.add_span_processor(BatchSpanProcessor(jaeger_exporter))
+    FastAPIInstrumentor.instrument_app(app)
+
+
 # create FastAPI app instance
 app = FastAPI(
     title=settings.FASTAPI_TITLE,
@@ -193,11 +190,6 @@ app = FastAPI(
 )
 
 pre_startup_routine(app)
-
-
-# oauth2_scheme = OAuth2AuthorizationCodeBearer(
-#     tokenUrl="http://localhost:9090/realms/ekoi/protocol/openid-connect/token",
-#     authorizationUrl="http://localhost:9090/auth/realms/ekoi/protocol/openid-connect/auth")
 
 
 @app.get('/')
@@ -245,7 +237,7 @@ class PackagingServiceApplication(WSGIApplication):
 
 
 def run():
-    logger('MULTIPLE WORKERS', 'debug', 'ps')
+    logger('MULTIPLE WORKERS', LOG_LEVEL_DEBUG, LOG_NAME_PS)
     options = {
         "bind": "0.0.0.0:10124",
         "workers": (multiprocessing.cpu_count() * 2) + 1,
@@ -262,20 +254,16 @@ def handle_all_cat_events(event: Event):
 
 
 if __name__ == "__main__":
-
+    logger('START Packaging Service', LOG_LEVEL_DEBUG, LOG_NAME_PS)
     if settings.get("SENDMAIL_ENABLE"):
         send_mail(f'Starting the packaging service',
                   f'Started at {datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S.%f")}')
-    logger('START Packaging Service', 'debug', 'ps')
-
     import platform
+    logger(f'Python version: {platform.python_version()}', LOG_LEVEL_DEBUG, 'ps')
 
-    print(f'Python version: {platform.python_version()}')
-    logger(f'Python version: {platform.python_version()}', 'debug', 'ps')
-
-    if os.environ.get('run-local', False):
-        logger('SINGLE WORKER', 'debug', 'ps')
-        uvicorn.run("src.main:app", host="0.0.0.0", port=10124, reload=False, workers=1)
-
-    else:
+    if settings.get("MULTIPLE_WORKERS_ENABLE", False):
+        logger('MULTIPLE WORKERS', LOG_LEVEL_DEBUG, 'ps')
         run()
+    else:
+        logger('SINGLE WORKER', LOG_LEVEL_DEBUG, 'ps')
+        uvicorn.run("src.main:app", host="0.0.0.0", port=10124, reload=False, workers=1)

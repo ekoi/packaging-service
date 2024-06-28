@@ -2,7 +2,6 @@ import ast
 import logging
 import os
 import platform
-import re
 import smtplib
 import time
 from datetime import datetime
@@ -10,17 +9,17 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from functools import wraps
 from logging.handlers import TimedRotatingFileHandler
-from typing import Any, Callable, List
+from typing import Any, Callable
 
 import requests
 from dynaconf import Dynaconf
 from fastapi import HTTPException
-from fastapi_mail import ConnectionConfig, MessageSchema
-from pydantic import EmailStr, BaseModel
-import os
 
 from src.dbz import DatabaseManager, DepositStatus
 from src.models.bridge_output_model import BridgeOutputDataModel, TargetResponse
+
+LOG_NAME_PS = 'ps'
+LOG_LEVEL_DEBUG = 'debug'
 
 conf_path = os.getenv("BASE_DIR") if os.getenv("BASE_DIR") is not None else os.getcwd()
 
@@ -78,13 +77,13 @@ def get_class(kls) -> Any:
         return m
     except ModuleNotFoundError as e:
         print(f'error: {kls}')
-        logger(f'ModuleNotFoundError: {e}', 'error', 'ps')
+        logger(f'ModuleNotFoundError: {e}', 'error', LOG_NAME_PS)
     return None
 
 
 def transform(transformer_url: str, str_tobe_transformed: str) -> str:
-    logger(f'transformer_url: {transformer_url}', 'debug', 'ps')
-    logger(f'str_tobe_transformed: {str_tobe_transformed}', 'debug', 'ps')
+    logger(f'transformer_url: {transformer_url}', LOG_LEVEL_DEBUG, LOG_NAME_PS)
+    logger(f'str_tobe_transformed: {str_tobe_transformed}', LOG_LEVEL_DEBUG, LOG_NAME_PS)
     if type(str_tobe_transformed) is not str:
         raise ValueError(f"Error - str_tobe_transformed is not a string. It is : {type(str_tobe_transformed)}")
 
@@ -92,27 +91,27 @@ def transform(transformer_url: str, str_tobe_transformed: str) -> str:
     if transformer_response.status_code == 200:
         transformed_metadata = transformer_response.json()
         str_transformed_metadata = transformed_metadata.get('result')
-        logger(f'Transformer result: {str_transformed_metadata}', 'debug', 'ps')
+        logger(f'Transformer result: {str_transformed_metadata}', LOG_LEVEL_DEBUG, LOG_NAME_PS)
         return str_transformed_metadata
 
-    logger(f'transformer_response.status_code: {transformer_response.status_code}', 'error', 'ps')
+    logger(f'transformer_response.status_code: {transformer_response.status_code}', 'error', LOG_NAME_PS)
     raise ValueError(f"Error - Transformer response status code: {transformer_response.status_code}")
 
 
 # def transform(transformer_url: str, input: str) -> str:
-#     logger(transformer_url: {transformer_url}', 'debug', 'ps')
-#     logger(f'input: {input}', 'debug', 'ps')
+#     logger(transformer_url: {transformer_url}', LOGGER_LEVEL_DEBUG, LOG_NAME_PS)
+#     logger(f'input: {input}', LOGGER_LEVEL_DEBUG, LOG_NAME_PS)
 #     try:
 #         transformer_response = requests.post(transformer_url, headers=transformer_headers, data=input)
 #         if transformer_response.status_code == 200:
 #             transformed_metadata = transformer_response.json()
 #             str_transformed_metadata = transformed_metadata.get('result')
-#             logger(f'Transformer result: {str_transformed_metadata}', 'debug', 'ps')
+#             logger(f'Transformer result: {str_transformed_metadata}', LOGGER_LEVEL_DEBUG, LOG_NAME_PS)
 #             return str_transformed_metadata
-#         logger(transformer_response.status_code: {transformer_response.status_code}', 'error', 'ps')
+#         logger(transformer_response.status_code: {transformer_response.status_code}', 'error', LOG_NAME_PS)
 #         raise ValueError(f"Error - Transformer response status code: {transformer_response.status_code}")
 #     except ConnectionError as ce:
-#         logger(f'Errors during transformer: {ce.with_traceback(ce.__traceback__)}', 'debug', 'ps')
+#         logger(f'Errors during transformer: {ce.with_traceback(ce.__traceback__)}', LOGGER_LEVEL_DEBUG, LOG_NAME_PS)
 #         raise ValueError(f"Error - {ce.with_traceback(ce.__traceback__)}")
 #     except Exception as ex:
 #         raise ValueError(f"Error - {ex.with_traceback(ex.__traceback__)}")
@@ -134,7 +133,7 @@ def transform(transformer_url: str, str_tobe_transformed: str) -> str:
 #             except Exception as ex:
 #                 # Handle the exception and provide the default response
 #                 logger(f'Errors in {func.__name__}: {ex.with_traceback(ex.__traceback__)}',
-#                        'debug', 'ps')
+#                        LOGGER_LEVEL_DEBUG, LOG_NAME_PS)
 #                 bridge_output_model.deposit_status = DepositStatus.ERROR
 #                 target_response = TargetResponse()
 #                 target_response.duration=10100
@@ -169,13 +168,13 @@ def save_duration(target_id: int) -> type(None):
 def handle_deposit_exceptions(func) -> Callable[[tuple[Any, ...], dict[str, Any]], BridgeOutputDataModel | Any]:
     @wraps(func)
     def wrapper(*args, **kwargs):
-        logger(f'Enter to handle_deposit_exceptions for {func.__name__}. args: {args}', 'debug', 'ps')
+        logger(f'Enter to handle_deposit_exceptions for {func.__name__}. args: {args}', LOG_LEVEL_DEBUG, LOG_NAME_PS)
         try:
             rv = func(*args, **kwargs)
             return rv
         except Exception as ex:
             logger(f'Errors in {func.__name__}: {ex} - {ex.with_traceback(ex.__traceback__)}',
-                   'debug', 'ps')
+                   LOG_LEVEL_DEBUG, LOG_NAME_PS)
             target = args[0].target
             bom = BridgeOutputDataModel()
             bom.deposit_status = DepositStatus.ERROR
@@ -194,7 +193,7 @@ def handle_ps_exceptions(func) -> Any:
     @wraps(func)
     def wrapper(*args, **kwargs):
         try:
-            logger(f'Enter to handle_ps_exceptions:: {func.__name__}', 'debug', 'ps')
+            logger(f'Enter to handle_ps_exceptions:: {func.__name__}', LOG_LEVEL_DEBUG, LOG_NAME_PS)
             rv = func(*args, **kwargs)
             return rv
         except HTTPException as ex:
@@ -202,19 +201,19 @@ def handle_ps_exceptions(func) -> Any:
             #                                                               f'\nDetails: {ex.detail}.')
             logger(
                 f'handle_ps_exceptions: Errors in {func.__name__}. status code: {ex.status_code}. Details: {ex.detail}. '
-                f'args: {args}', 'debug', 'ps')
+                f'args: {args}', LOG_LEVEL_DEBUG, LOG_NAME_PS)
             raise ex
         except Exception as ex:
             send_mail(f'handle_ps_exceptions: Errors in {func.__name__}', f'{ex} - '
                                                                           f'{ex.with_traceback(ex.__traceback__)}.')
             logger(f'handle_ps_exceptions: Errors in {func.__name__}: {ex} - {ex.with_traceback(ex.__traceback__)}',
-                   'debug', 'ps')
+                   LOG_LEVEL_DEBUG, LOG_NAME_PS)
             raise ex
         except BaseException as ex:
             send_mail(f'handle_ps_exceptions: Errors in {func.__name__}', f'{ex} - '
                                                                           f'{ex.with_traceback(ex.__traceback__)}.')
             logger(f'handle_ps_exceptions: Errors in {func.__name__}:  {ex} - {ex.with_traceback(ex.__traceback__)}',
-                   'debug', 'ps')
+                   LOG_LEVEL_DEBUG, LOG_NAME_PS)
             raise ex
 
     return wrapper
@@ -239,7 +238,8 @@ def inspect_bridge_module(py_file_path: str):
                                 root = root.value
                         if root.id != 'Bridge':
                             continue
-                        module_name = py_file_path.replace(f'{os.getenv("BASE_DIR", os.getcwd())}/', '').replace('/', '.')
+                        module_name = py_file_path.replace(f'{os.getenv("BASE_DIR", os.getcwd())}/', '').replace('/',
+                                                                                                                 '.')
                         name_of_bridge_subclass = module_name[:-len('.py')] + '.' + class_name
                         results.append({class_name: name_of_bridge_subclass})
 
@@ -273,7 +273,7 @@ def send_mail(subject: str, text: str):
                 server.starttls()
                 server.login(sender_email, app_password)
                 text = message.as_string()
-                server.sendmail(sender_email,  recipient_email, text)
+                server.sendmail(sender_email, recipient_email, text)
             print("Email sent successfully!")
             logger(f"Email sent successfully to {recipient_email}", "debug", "ps")
         except Exception as e:
@@ -281,7 +281,7 @@ def send_mail(subject: str, text: str):
             logger(f"Unsuccessful sent email to {recipient_email}", "error", "ps")
 
     else:
-        logger(f"{settings.get('send_mail', False)} - Sending email is disabled.", 'debug', 'ps')
+        logger(f"{settings.get('send_mail', False)} - Sending email is disabled.", LOG_LEVEL_DEBUG, LOG_NAME_PS)
 
 
 def dmz_dataverse_headers(username, password) -> {}:

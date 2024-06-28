@@ -13,7 +13,8 @@ from simple_file_checksum import get_checksum
 from sword2 import Connection
 
 from src.bridge import Bridge, BridgeOutputDataModel
-from src.commons import (settings, transform, logger, db_manager, handle_deposit_exceptions, dmz_dataverse_headers)
+from src.commons import (settings, transform, logger, db_manager, handle_deposit_exceptions, dmz_dataverse_headers,
+                         LOG_LEVEL_DEBUG)
 from src.dbz import DataFile, DepositStatus, FilePermissions
 from src.models.bridge_output_model import TargetResponse, ResponseContentType, IdentifierProtocol, IdentifierItem
 
@@ -34,18 +35,18 @@ class DansSwordDepositor(Bridge):
         # updating mimetype of user's uploaded files since no mimetype in the form-metadata submission
         for _ in db_manager.find_non_generated_files(dataset_id=self.dataset_id):
             f_json = jmespath.search(f'[?name == \'{_.name}\']', files_metadata)
-            logger(f'{self.__class__.__name__} f_json: {f_json}', 'debug', self.app_name)
+            logger(f'{self.__class__.__name__} f_json: {f_json}', LOG_LEVEL_DEBUG, self.app_name)
             f_json[0].update({"mimetype": _.mime_type})
 
         str_updated_metadata_json = json.dumps(md_json)
-        logger(f'str_updated_metadata_json: {str_updated_metadata_json}', 'debug', self.app_name)
+        logger(f'str_updated_metadata_json: {str_updated_metadata_json}', LOG_LEVEL_DEBUG, self.app_name)
         bagit_path = self.__create_bag(str_updated_metadata_json)
         output_response = self.__ingest(bagit_path=bagit_path)
-        logger(f'dans_sword_response_xml: {output_response}', 'debug', self.app_name)
+        logger(f'dans_sword_response_xml: {output_response}', LOG_LEVEL_DEBUG, self.app_name)
         # if ingest is successfully, clean bagit
         if output_response.deposit_status == DepositStatus.ACCEPTED:
-            logger(f'Successfully ingested {output_response}: {output_response}', 'debug', self.app_name)
-            logger(f'Deleting bagit file: {bagit_path}', 'debug', self.app_name)
+            logger(f'Successfully ingested {output_response}: {output_response}', LOG_LEVEL_DEBUG, self.app_name)
+            logger(f'Deleting bagit file: {bagit_path}', LOG_LEVEL_DEBUG, self.app_name)
             os.remove(bagit_path)
             shutil.rmtree(self.dataset_dir)
 
@@ -54,7 +55,7 @@ class DansSwordDepositor(Bridge):
     def __ingest(self, bagit_path: str) -> BridgeOutputDataModel:
         sword_conn = Connection(self.target.target_url, headers=dmz_dataverse_headers('API_KEY',
                                                                                       self.target.password))
-        logger(f'SENDING SWORD for {bagit_path} filename: {bagit_path}', 'debug', self.app_name)
+        logger(f'SENDING SWORD for {bagit_path} filename: {bagit_path}', LOG_LEVEL_DEBUG, self.app_name)
         error_occured = False
         with open(bagit_path, "rb") as pkg:
             # try:
@@ -64,10 +65,10 @@ class DansSwordDepositor(Bridge):
                                         in_progress=False)  # As the deposit isn't yet finished
 
             resp_link = receipt.links['http://purl.org/net/sword/terms/statement'][0]['href']
-            logger(f'resp_link: {resp_link}', 'debug', self.app_name)
+            logger(f'resp_link: {resp_link}', LOG_LEVEL_DEBUG, self.app_name)
 
             while True:  # TODO: User Tenacity!
-                logger(f'CHECKING every {settings.interval_check_sword} secs', 'debug', self.app_name)
+                logger(f'CHECKING every {settings.interval_check_sword} secs', LOG_LEVEL_DEBUG, self.app_name)
                 target_resp = self.__is_published(resp_link=resp_link)
                 deposit_state = target_resp.status
                 retries = True if deposit_state in [DepositStatus.SUBMITTED.value, DepositStatus.FINALIZING.value] \
@@ -76,7 +77,7 @@ class DansSwordDepositor(Bridge):
                 if retries:
                     logger(
                         f"I'm going to sleep for {settings.interval_check_sword} seconds. "
-                        f"Please wait for me! deposit_state: {deposit_state}", 'debug', self.app_name)
+                        f"Please wait for me! deposit_state: {deposit_state}", LOG_LEVEL_DEBUG, self.app_name)
                     sleep(settings.interval_check_sword)
                 else:
                     break
@@ -92,13 +93,13 @@ class DansSwordDepositor(Bridge):
         bag = bagit.Bag(self.dataset_dir)
         bag.info['Created'] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.000+00:00")
         bag.save(manifests=True)
-        logger("BagIt file created successfully!", 'debug', self.app_name)
+        logger("BagIt file created successfully!", LOG_LEVEL_DEBUG, self.app_name)
 
         bag.validate()
-        logger("BagIt file validated successfully!", 'debug', self.app_name)
+        logger("BagIt file validated successfully!", LOG_LEVEL_DEBUG, self.app_name)
         bagit_path = f'{self.dataset_dir}.zip'
         self.__create_bagit_file(self.dataset_dir, bagit_path, self.app_name)
-        logger(f'bagit_path: {bagit_path}', 'debug', self.app_name)
+        logger(f'bagit_path: {bagit_path}', LOG_LEVEL_DEBUG, self.app_name)
         return bagit_path
 
     def __generated_dans_sword_files(self, str_updated_metadata) -> type(None):
@@ -151,26 +152,27 @@ class DansSwordDepositor(Bridge):
         _format = _base.split('.')[1]
         archive_from = os.path.dirname(source)
         archive_to = os.path.basename(source.strip(os.sep))
-        logger(f'source:{source} dest:{destination}, from:{archive_from}, to:{archive_to}', 'debug', app_name)
+        logger(f'source:{source} dest:{destination}, from:{archive_from}, to:{archive_to}', LOG_LEVEL_DEBUG, app_name)
         shutil.make_archive(name, _format, archive_from, archive_to)
         shutil.move('%s.%s' % (name, _format), destination)
 
     def __is_published(self, resp_link: str) -> TargetResponse:
-        logger(f'is_publish: {resp_link}. ds_api_key: {self.target.password}', 'debug', self.app_name)
+        logger(f'is_publish: {resp_link}. ds_api_key: {self.target.password}', LOG_LEVEL_DEBUG, self.app_name)
         retries = False
         identifier_items = []
         deposit_state = DepositStatus.SUCCESS
         message = ''
-        sword_resp = requests.get(resp_link, headers=dmz_dataverse_headers('API_KEY', self.target.password), verify=False)
-        logger(f'sword_resp.status_code: {sword_resp.status_code}', 'debug', self.app_name)
+        sword_resp = requests.get(resp_link, headers=dmz_dataverse_headers('API_KEY', self.target.password),
+                                  verify=False)
+        logger(f'sword_resp.status_code: {sword_resp.status_code}', LOG_LEVEL_DEBUG, self.app_name)
         if sword_resp.status_code == 200:
-            logger(f'dans_sword_response_xml: {sword_resp.text}', 'debug', self.app_name)
+            logger(f'dans_sword_response_xml: {sword_resp.text}', LOG_LEVEL_DEBUG, self.app_name)
             root = ET.fromstring(sword_resp.text)
             namespace = {'atom': 'http://www.w3.org/2005/Atom'}
             category_element = root.find('.//atom:category[@label="State"]', namespace)
             message = category_element.text
             deposit_state = category_element.attrib['term'].lower()
-            logger(f'deposit_state: {deposit_state}', 'debug', self.app_name)
+            logger(f'deposit_state: {deposit_state}', LOG_LEVEL_DEBUG, self.app_name)
             if deposit_state == DepositStatus.ACCEPTED.value:
                 # link_element = root.find('.//atom:link[@rel="self"][@href]', namespace)
                 db_manager.set_dataset_published(self.dataset_id)
@@ -184,7 +186,7 @@ class DansSwordDepositor(Bridge):
                 f'Error. sword_resp.status_code:{sword_resp.status_code} sword_resp.tex: '
                 f'{sword_resp.text}', 'error', self.app_name)
             raise ValueError(f'Error word_resp.status_code:{sword_resp.status_code} - {sword_resp.text}')
-        logger(f'sword_resp.text: {sword_resp.text}', 'debug', self.app_name)
+        logger(f'sword_resp.text: {sword_resp.text}', LOG_LEVEL_DEBUG, self.app_name)
         target_repo = TargetResponse(url=resp_link, status=deposit_state, message=message,
                                      identifiers=identifier_items, content=sword_resp.text)
         target_repo.content_type = ResponseContentType.XML

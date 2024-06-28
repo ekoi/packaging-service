@@ -1,30 +1,28 @@
 # Import necessary modules and packages
 # Import necessary libraries and modules
-import shutil
-import time
-from datetime import datetime
 import hashlib
 import json
 import mimetypes
 import os
+import shutil
 import threading
+import time
+from datetime import datetime
 from typing import Callable, Awaitable
 
 import jmespath
 import requests
 from fastapi import APIRouter, Request, UploadFile, Form, File, HTTPException
+from fastapi.responses import JSONResponse
 from starlette.responses import FileResponse
 
-from fastapi.encoders import jsonable_encoder
-from fastapi.responses import JSONResponse
-
-# Import custom modules and classes
-from src.models.assistant_datamodel import RepoAssistantDataModel, Target
 from src.commons import settings, logger, data, db_manager, get_class, assistant_repo_headers, handle_ps_exceptions, \
-    send_mail
+    send_mail, LOG_LEVEL_DEBUG, LOG_NAME_PS
 from src.dbz import TargetRepo, DataFile, Dataset, ReleaseVersion, DepositStatus, FilePermissions, \
     DatasetWorkState, DataFileWorkState
 from src.models.app_model import ResponseDataModel, InboxDatasetDataModel
+# Import custom modules and classes
+from src.models.assistant_datamodel import RepoAssistantDataModel, Target
 from src.models.target_datamodel import TargetsCredentialsModel
 
 # Create an API router instance
@@ -34,7 +32,7 @@ router = APIRouter()
 # Endpoint to register a bridge module
 @router.post("/register-bridge-module/{name}/{overwrite}")
 async def register_module(name: str, bridge_file: Request, overwrite: bool | None = False) -> {}:
-    logger(f'Registering {name}', 'debug', 'ps')
+    logger(f'Registering {name}', LOG_LEVEL_DEBUG, LOG_NAME_PS)
     if not overwrite and name in data["bridge-modules"]:
         raise HTTPException(status_code=400,
                             detail=f'The {name} is already exist. Consider /register-bridge-module/{name}/true')
@@ -61,7 +59,7 @@ async def register_module(name: str, bridge_file: Request, overwrite: bool | Non
 async def get_inbox_dataset_dc(request: Request, release_version: ReleaseVersion) -> (
         Callable)[[Request, ReleaseVersion], Awaitable[InboxDatasetDataModel]]:
     req_body = await request.json()
-    logger(f'METADATA: \n{req_body}', 'debug', 'ps')
+    logger(f'METADATA: \n{req_body}', LOG_LEVEL_DEBUG, LOG_NAME_PS)
     title = jmespath.search('title', req_body)
     return InboxDatasetDataModel(assistant_name=request.headers.get('assistant-config-name'),
                                  release_version=release_version, owner_id=request.headers.get('user-id'),
@@ -74,7 +72,7 @@ async def get_inbox_dataset_dc(request: Request, release_version: ReleaseVersion
 async def process_inbox_dataset_metadata(request: Request, release_version: ReleaseVersion) -> {}:
     idh = await get_inbox_dataset_dc(request, release_version)
     datasetId = jmespath.search("id", idh.metadata)
-    logger(f'Start inbox for metadata id: {datasetId}- release version: {release_version}   - assistant name: {idh.assistant_name}', 'debug', 'ps')
+    logger(f'Start inbox for metadata id: {datasetId}- release version: {release_version}   - assistant name: {idh.assistant_name}', LOG_LEVEL_DEBUG, LOG_NAME_PS)
     if db_manager.is_dataset_published(datasetId):
         raise HTTPException(status_code=400, detail='Dataset is already published.')
     repo_config = retrieve_targets_configuration(idh.assistant_name)
@@ -83,7 +81,7 @@ async def process_inbox_dataset_metadata(request: Request, release_version: Rele
             repo_config)  # TODO: Check the given transformer exist.
         # Create temp folder
         dataset_folder = os.path.join(settings.DATA_TMP_BASE_DIR, repo_assistant.app_name, datasetId)
-        logger(f'Creating dataset folder: {dataset_folder} if it not exist', 'debug', 'ps')
+        logger(f'Creating dataset folder: {dataset_folder} if it not exist', LOG_LEVEL_DEBUG, LOG_NAME_PS)
         if not os.path.exists(dataset_folder):
             os.makedirs(dataset_folder)
 
@@ -95,7 +93,7 @@ async def process_inbox_dataset_metadata(request: Request, release_version: Rele
     except HTTPException as ex:
         return ex
     except Exception as ex:
-        logger(f'Errors during dataset ingest: {ex.with_traceback(ex.__traceback__)}', 'debug', 'ps')
+        logger(f'Errors during dataset ingest: {ex.with_traceback(ex.__traceback__)}', LOG_LEVEL_DEBUG, LOG_NAME_PS)
         raise HTTPException(status_code=400, detail='Error occurred. Please contact application owner.')
     # Check whether all files uploaded
     start_process = db_manager.is_dataset_ready(datasetId)
@@ -121,7 +119,7 @@ def delete_dataset_metadata(request: Request, metadata_id: str):
         raise HTTPException(status_code=404, detail='No target found')
 
     #TThe delete mechanism will be executed when an error is occurred in the first target.
-    logger(f'Deposit Status: {target_repos[0].deposit_status}', 'debug', 'ps')
+    logger(f'Deposit Status: {target_repos[0].deposit_status}', LOG_LEVEL_DEBUG, LOG_NAME_PS)
     if target_repos[0].deposit_status not in (DepositStatus.ACCEPTED, DepositStatus.DEPOSITED, DepositStatus.FINISH):
         db_manager.delete_by_dataset_id(dataset_id=metadata_id)
         return {"status": "ok", "metadata-id": metadata_id}
@@ -147,16 +145,16 @@ def process_metadata_record(datasetId, idh, repo_assistant, tmp_dir):
     already_uploaded_files = [f.name for f in db_manager.find_files(datasetId)]
     list_files_from_metadata = file_names
     files_name_to_be_deleted = list(set(already_uploaded_files).difference(list_files_from_metadata))
-    logger(f'files_name_to_be_deleted: {files_name_to_be_deleted}', 'debug', 'ps')
+    logger(f'files_name_to_be_deleted: {files_name_to_be_deleted}', LOG_LEVEL_DEBUG, LOG_NAME_PS)
     files_name_to_be_added = list(set(list_files_from_metadata).difference(already_uploaded_files))
-    logger(f'files_name_to_be_added: {files_name_to_be_added}', 'debug', 'ps')
+    logger(f'files_name_to_be_added: {files_name_to_be_added}', LOG_LEVEL_DEBUG, LOG_NAME_PS)
 
     for f_name_to_be_deleted in files_name_to_be_deleted:
         f = os.path.join(str(tmp_dir), f_name_to_be_deleted)
         # if os.path.exists(f):
         #     os.remove(f)
         os.remove(f)
-        logger(f'{f} ---- {f} is deleted', 'debug', 'ps')
+        logger(f'{f} ---- {f} is deleted', LOG_LEVEL_DEBUG, LOG_NAME_PS)
         db_manager.delete_datafile(datasetId, f_name_to_be_deleted)
 
     for f_name_tobe_added in files_name_to_be_added:
@@ -183,7 +181,7 @@ def process_target_repos(repo_assistant, target_creds) -> [TargetRepo]:
             raise HTTPException(status_code=404, detail=f'Module "{repo_target.bridge_module_class}" not found.',
                                 headers={})
         target_repo_name = repo_target.repo_name
-        logger(f'target_repo_name: {target_repo_name}', 'debug', 'ps')
+        logger(f'target_repo_name: {target_repo_name}', LOG_LEVEL_DEBUG, LOG_NAME_PS)
         for depositor_cred in input_target_cred_model.targets_credentials:
             if depositor_cred.target_repo_name == repo_target.repo_name and depositor_cred.credentials.username:
                 repo_target.username = depositor_cred.credentials.username
@@ -201,7 +199,7 @@ async def process_inbox_dataset_file(datasetId: str = Form(), fileName: str = Fo
                                      file: UploadFile = File(...)) -> {}:
     files_name = []
     submitted_filename = fileName
-    logger(f"submitted_filename: {submitted_filename} from metadataid: {datasetId}", 'debug', 'ps')
+    logger(f"submitted_filename: {submitted_filename} from metadataid: {datasetId}", LOG_LEVEL_DEBUG, LOG_NAME_PS)
     db_record_metadata = db_manager.find_dataset(datasetId)
     dataset_folder = os.path.join(settings.DATA_TMP_BASE_DIR, db_record_metadata.app_name, datasetId)
 
@@ -252,7 +250,7 @@ async def process_inbox_dataset_file(datasetId: str = Form(), fileName: str = Fo
 
 def bridge_task(datasetId: str, msg: str) -> type(None):
     print("bridge_task")
-    logger(f">> START THREADING from {msg} for datasetId: {datasetId}-------------------", 'debug', 'ps')
+    logger(f">> START THREADING from {msg} for datasetId: {datasetId}-------------------", LOG_LEVEL_DEBUG, LOG_NAME_PS)
     # Start the threads
     print(f"Thread executed: {msg}")
     try:
@@ -261,22 +259,22 @@ def bridge_task(datasetId: str, msg: str) -> type(None):
         print(f'follow_bridge_task: {follow_bridge_task}')
     except Exception as e:
         logger(f"ERROR: Follow bridge: {msg}. For datasetId: {datasetId}. Exception: "
-               f"{e.with_traceback(e.__traceback__)}", 'error', 'ps')
+               f"{e.with_traceback(e.__traceback__)}", 'error', LOG_NAME_PS)
     print(f"Thread execution completed: {msg}")
-    logger(f">> Thread execution for {datasetId} is completed. {msg}", 'debug', 'ps')
+    logger(f">> Thread execution for {datasetId} is completed. {msg}", LOG_LEVEL_DEBUG, LOG_NAME_PS)
 
 
 def follow_bridge(datasetId) -> type(None):
-    logger("Follow bridge", 'debug', 'ps')
-    logger(f"-------------- EXECUTE follow_bridge for datasetId: {datasetId}", 'debug', 'ps')
+    logger("Follow bridge", LOG_LEVEL_DEBUG, LOG_NAME_PS)
+    logger(f"-------------- EXECUTE follow_bridge for datasetId: {datasetId}", LOG_LEVEL_DEBUG, LOG_NAME_PS)
     db_manager.submitted_now(datasetId)
     target_repo_recs = db_manager.find_target_repos_by_dataset_id(datasetId)
     execute_bridges(datasetId, target_repo_recs)
 
 
 def execute_bridges(datasetId, targets) -> type(None):
-    logger("execute_bridges", 'debug', 'ps')
-    logger(f"-------------- EXECUTE execute_bridges for datasetId: {datasetId}", 'debug', 'ps')
+    logger("execute_bridges", LOG_LEVEL_DEBUG, LOG_NAME_PS)
+    logger(f"-------------- EXECUTE execute_bridges for datasetId: {datasetId}", LOG_LEVEL_DEBUG, LOG_NAME_PS)
     result = []
     rsp = {"dataset-id": datasetId, "targets-result": result}
     for target_repo_rec in targets:
@@ -285,58 +283,58 @@ def execute_bridges(datasetId, targets) -> type(None):
         tg = Target(**target_repo_json)
         bridge_class = data[tg.bridge_module_class]
 
-        logger(f'EXECUTING {bridge_class} for target_repo_id: {target_repo_id}', 'debug', 'ps')
+        logger(f'EXECUTING {bridge_class} for target_repo_id: {target_repo_id}', LOG_LEVEL_DEBUG, LOG_NAME_PS)
         start = time.perf_counter()
         a = get_class(bridge_class)
         k = a(dataset_id=datasetId, target=tg)
         m = k.deposit()  # deposit return type: s BridgeOutputModel
         finish = time.perf_counter()
         m.response.duration = round(finish - start, 2)
-        logger(f'Result from Deposit: {m.model_dump_json()}', 'debug', 'ps')
+        logger(f'Result from Deposit: {m.model_dump_json()}', LOG_LEVEL_DEBUG, LOG_NAME_PS)
         k.save_state(m)
         if m.deposit_status in [DepositStatus.FINISH, DepositStatus.ACCEPTED, DepositStatus.SUCCESS]:
-            logger(f'Finish deposit for {bridge_class} to target_repo_id: {target_repo_id}. Result: {m}', 'debug', 'ps')
+            logger(f'Finish deposit for {bridge_class} to target_repo_id: {target_repo_id}. Result: {m}', LOG_LEVEL_DEBUG, LOG_NAME_PS)
             result.append(m)
         else:
-            logger(f'Executing {bridge_class} is FAILED. Resp: {m.model_dump_json()}', 'debug', 'ps')
+            logger(f'Executing {bridge_class} is FAILED. Resp: {m.model_dump_json()}', LOG_LEVEL_DEBUG, LOG_NAME_PS)
             send_mail(f'Executing {bridge_class} is FAILED.', f'Resp:\n {m.model_dump_json()}')
             break
 
-    logger(f"----------- END follow_bridge for datasetId: {datasetId}", 'debug', 'ps')
-    logger(f'>>>>Executed: {len(result)} of {len(targets)}', 'debug', 'ps')
+    logger(f"----------- END follow_bridge for datasetId: {datasetId}", LOG_LEVEL_DEBUG, LOG_NAME_PS)
+    logger(f'>>>>Executed: {len(result)} of {len(targets)}', LOG_LEVEL_DEBUG, LOG_NAME_PS)
 
     if len(result) == len(targets):
         # Delete dataset directory
         dataset = db_manager.find_dataset(ds_id=datasetId)
         app_name = dataset.app_name
         dataset_folder = os.path.join(settings.DATA_TMP_BASE_DIR, app_name, datasetId)
-        logger(f'Ingest successful, DELETE {dataset_folder}', 'debug', 'ps')
+        logger(f'Ingest successful, DELETE {dataset_folder}', LOG_LEVEL_DEBUG, LOG_NAME_PS)
         shutil.rmtree(dataset_folder)
 
 
 @handle_ps_exceptions
 def retrieve_targets_configuration(assistant_config_name: str) -> str:
     repo_url = f'{settings.ASSISTANT_CONFIG_URL}/{assistant_config_name}'
-    logger('>>>>>', 'debug', 'ps')
-    logger(f'repo_url: {repo_url}', 'debug', 'ps')
-    logger('<<<<<', 'debug', 'ps')
+    logger('>>>>>', LOG_LEVEL_DEBUG, LOG_NAME_PS)
+    logger(f'repo_url: {repo_url}', LOG_LEVEL_DEBUG, LOG_NAME_PS)
+    logger('<<<<<', LOG_LEVEL_DEBUG, LOG_NAME_PS)
     rsp = requests.get(repo_url, headers=assistant_repo_headers)
     if rsp.status_code != 200:
-        logger(f'repo_url: {repo_url} NOT FOUND!', 'error', 'ps')
+        logger(f'repo_url: {repo_url} NOT FOUND!', 'error', LOG_NAME_PS)
         raise HTTPException(status_code=404, detail=f"{repo_url} not found")
     repo_config = rsp.json()
-    logger(f'Given repo config: {json.dumps(repo_config)}', 'debug', 'ps')
+    logger(f'Given repo config: {json.dumps(repo_config)}', LOG_LEVEL_DEBUG, LOG_NAME_PS)
     return repo_config
 
 
 @router.post("/inbox/resubmit/{datasetId}")
 async def resubmit(datasetId: str):
-    logger(f'Resubmit {datasetId}', 'debug', 'ps')
+    logger(f'Resubmit {datasetId}', LOG_LEVEL_DEBUG, LOG_NAME_PS)
     targets = db_manager.find_unfinished_target_repo(datasetId)
     if not targets:
         return 'No targets'
 
-    logger(f'Resubmitting {len(targets)}', 'debug', 'ps')
+    logger(f'Resubmitting {len(targets)}', LOG_LEVEL_DEBUG, LOG_NAME_PS)
     try:
         execute_bridges_task = threading.Thread(target=execute_bridges, args=(datasetId, targets, ))
         execute_bridges_task.start()
@@ -361,27 +359,27 @@ async def get_settings():
 
 @router.get('/logs/{app_name}', include_in_schema=False)
 def get_log(app_name: str):
-    logger('logs', 'debug', 'ps')
+    logger('logs', LOG_LEVEL_DEBUG, 'ps')
     return FileResponse(path=f"{os.environ['BASE_DIR']}/logs/{app_name}.log", filename=f"{app_name}.log",
                         media_type='text/plain')
 
 
 @router.get("/logs-list", include_in_schema=False)
 def get_log_list():
-    logger('logs-list', 'debug', 'ps')
+    logger('logs-list', LOG_LEVEL_DEBUG, 'ps')
     return os.listdir(path=f"{os.environ['BASE_DIR']}/logs")
 
 
 @router.get("/db-download", include_in_schema=False)
 def get_db():
-    logger('db-download', 'debug', 'ps')
+    logger('db-download', LOG_LEVEL_DEBUG, 'ps')
     return FileResponse(path=settings.DB_URL, filename="dans_packaging.db",
                         media_type='application/octet-stream')
 
 
 @router.delete("/db-delete-all", include_in_schema=False)
 def delete_all_recs():
-    logger('Deleting all', 'debug', 'ps')
+    logger('Deleting all', LOG_LEVEL_DEBUG, 'ps')
     return db_manager.delete_all()
 
 

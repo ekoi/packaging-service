@@ -18,7 +18,9 @@ tus_files_dir = "@format {env[BASE_DIR]}/data/tmp/tus"
 
 jinja_template_dir =  "@format {env[BASE_DIR]}/resources/datastation/metadata"
 sendmail_enable = false
-
+melt_enable = true
+melt_agent_host_name = "localhost"
+multiple_workers_enable = true
 assistant_config_url = "http://localhost:2810" #"https://repository-assistant.labs.dansdemo.nl" #http://localhost:2810"
 transformer_url = "http://localhost:1745l/transfor" #"https://transformer.labs.dans.knaw.nl/transform" #http://localhost:1745l/transform"
 deployment= "demo"
