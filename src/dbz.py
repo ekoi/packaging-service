@@ -141,104 +141,66 @@ class DatabaseManager:
             from src.commons import logger
             logger('TABLES ALREADY CREATED', LOG_LEVEL_DEBUG, LOG_NAME_PS)
 
-    def insert_dataset_and_target_repo(self, ds_record: Dataset, repo_records: [TargetRepo]) -> type(None):
+    def insert_dataset_and_target_repo(self, ds_record: Dataset, repo_records: List[TargetRepo]) -> None:
         with Session(self.engine) as session:
             session.add(ds_record)
-            session.commit()
             for tr in repo_records:
                 tr.ds_id = ds_record.id
                 session.add(tr)
             session.commit()
 
-    def insert_datafiles(self, file_records: [DataFile]) -> type(None):
+    def insert_datafiles(self, file_records: [DataFile]) -> None:
         with Session(self.engine) as session:
             for file_record in file_records:
                 session.add(file_record)
                 session.commit()
                 session.refresh(file_record)
 
-    def delete_datafile(self, dataset_id: str, filename: str) -> type(None):
+    def delete_datafile(self, dataset_id: str, filename: str) -> None:
         with Session(self.engine) as session:
-            statement = select(DataFile).where(DataFile.ds_id == dataset_id, DataFile.name == filename)
-            results = session.exec(statement)
-            file_record = results.one_or_none()
+            file_record = session.exec(select(DataFile).where(DataFile.ds_id == dataset_id, DataFile.name == filename)).one_or_none()
             if file_record:
                 session.delete(file_record)
                 session.commit()
 
-    def delete_all(self) -> type(None):
+    def delete_all(self) -> dict:
         with Session(self.engine) as session:
-            tabs = {}
-            for _ in [DataFile, TargetRepo, Dataset]:
-                statement = delete(_)
-                result = session.exec(statement)
-                session.commit()
-                tabs.update({str(_.__qualname__): result.rowcount})
-            return tabs
+            tabs = {cls.__qualname__: session.exec(delete(cls)).rowcount for cls in [DataFile, TargetRepo, Dataset]}
+            session.commit()
+        return tabs
 
     def delete_by_dataset_id(self, dataset_id) -> type(None):
         with Session(self.engine) as session:
-            # Delete DataFiles
-            statement = select(DataFile).where(DataFile.ds_id == dataset_id)
-            results = session.exec(statement)
-            file_records = results.all()
-            for file_record in file_records:
-                session.delete(file_record)
-                session.commit()
-
-            # Delete TargetRepos
-            statement = select(TargetRepo).where(TargetRepo.ds_id == dataset_id)
-            results = session.exec(statement)
-            target_records = results.all()
-            for target_record in target_records:
-                session.delete(target_record)
-                session.commit()
+            # Delete DataFiles and TargetRepos in a single transaction
+            for model in [DataFile, TargetRepo]:
+                session.exec(delete(model).where(model.ds_id == dataset_id))
+            session.commit()
 
             # Delete Dataset
-            statement = select(Dataset).where(Dataset.id == dataset_id)
-            results = session.exec(statement)
-            dataset_record = results.one_or_none()
-            if dataset_record:
-                session.delete(dataset_record)
-                session.commit()
+            session.delete(session.exec(select(Dataset).where(Dataset.id == dataset_id)).one_or_none())
+            session.commit()
 
     def is_dataset_exist(self, dataset_id: str) -> bool:
-        with Session(self.engine) as session:
-            statement = select(Dataset).where(Dataset.id == dataset_id)
-            results = session.exec(statement)
-            result = results.one_or_none()
-        return result is not None
+        return Session(self.engine).exec(select(Dataset).where(Dataset.id == dataset_id)).first() is not None
 
     def is_dataset_published(self, dataset_id: str) -> bool:
-        with Session(self.engine) as session:
-            statement = select(Dataset).where(Dataset.id == dataset_id,
-                                              Dataset.release_version == ReleaseVersion.PUBLISHED)
-            results = session.exec(statement)
-            result = results.one_or_none()
-        return result is not None
+        return Session(self.engine).exec(select(Dataset).where(Dataset.id == dataset_id,
+                                                               Dataset.release_version == ReleaseVersion.PUBLISHED)).first() is not None
 
     def find_dataset(self, ds_id: str) -> Dataset:
         with Session(self.engine) as session:
-            statement = select(Dataset).where(Dataset.id == ds_id)
-            results = session.exec(statement)
-            result = results.one_or_none()
-        return result
+            return session.exec(select(Dataset).where(Dataset.id == ds_id)).one_or_none()
 
     def find_target_repo(self, dataset_id: str, target_name: str) -> TargetRepo:
-        with Session(self.engine) as session:
-            statement = select(TargetRepo).where(TargetRepo.ds_id == dataset_id, TargetRepo.name == target_name)
-            results = session.exec(statement)
-            result = results.one_or_none()
-        return result
+        return (Session(self.engine).exec(
+            select(TargetRepo).where(TargetRepo.ds_id == dataset_id, TargetRepo.name == target_name))
+                .one_or_none())
 
     def find_unfinished_target_repo(self, dataset_id: str) -> Sequence[TargetRepo]:
         with Session(self.engine) as session:
-            statement = select(TargetRepo).where(TargetRepo.ds_id == dataset_id,
-                                                 TargetRepo.deposit_status != DepositStatus.FINISH).order_by(
-                TargetRepo.id)
-            results = session.exec(statement)
-            result = results.all()
-        return result
+            return session.exec(select(TargetRepo).where(TargetRepo.ds_id == dataset_id,
+                                                         TargetRepo.deposit_status != DepositStatus.FINISH).
+                                order_by(TargetRepo.id)).all()
 
     def find_all_datasets(self) -> Sequence[Dataset]:
         with Session(self.engine) as session:
@@ -313,13 +275,13 @@ class DatabaseManager:
                 rst.append(json.loads(result[0]))
         return rst
 
-    # def find_file_by_dataset_id_and_name(self, ds_id: str, file_name: str) -> DataFile:
-    #     with Session(self.engine) as session:
-    #         statement = select(DataFile).where(DataFile.ds_id == ds_id,
-    #                                            DataFile.name == file_name)
-    #         results = session.exec(statement)
-    #         result = results.one()
-    #     return result
+    def find_file_by_dataset_id_and_name(self, ds_id: str, file_name: str) -> DataFile:
+        with Session(self.engine) as session:
+            statement = select(DataFile).where(DataFile.ds_id == ds_id,
+                                               DataFile.name == file_name)
+            results = session.exec(statement)
+            result = results.one_or_none()
+        return result
 
     def find_owner_assets(self, owner_id: str) -> OwnerAssetsModel | None:
         with Session(self.engine) as session:
@@ -329,14 +291,14 @@ class DatabaseManager:
                 oam.owner_id = owner_id
                 for dataset in datasets:
                     asset = Asset()
-                    asset.dataset_id = dataset.id
-                    asset.release_version = dataset.release_version
+                    asset.dataset_id = str(dataset.id)
+                    asset.release_version = dataset.release_version.name
                     asset.title = dataset.title
-                    asset.created_date = dataset.created_date
-                    asset.saved_date = dataset.saved_date
-                    asset.submitted_date = dataset.submitted_date
-                    asset.release_version = dataset.release_version
-                    asset.version = dataset.version
+                    asset.created_date = dataset.created_date.strftime('%Y-%m-%d %H:%M:%S')
+                    asset.saved_date = dataset.saved_date.strftime('%Y-%m-%d %H:%M:%S')
+                    asset.submitted_date = dataset.submitted_date.strftime('%Y-%m-%d %H:%M:%S') if dataset.submitted_date else ''
+                    asset.release_version = dataset.release_version.name
+                    asset.version = dataset.version if dataset.version else ''
                     targets_repo = session.exec(
                         select(TargetRepo).where(TargetRepo.ds_id == dataset.id).order_by(TargetRepo.id)).all()
                     for target_repo in targets_repo:
@@ -344,10 +306,9 @@ class DatabaseManager:
                         target.repo_name = target_repo.name
                         target.display_name = target_repo.display_name
                         target.deposit_status = target_repo.deposit_status
-                        target.deposit_time = target_repo.deposit_time
-                        target.duration = target_repo.duration
-                        if target_repo.target_output is not None and target_repo.target_output != '':
-                            target.output_response = json.loads(target_repo.target_output)
+                        target.deposit_time = target_repo.deposit_time.strftime('%Y-%m-%d %H:%M:%S') if target_repo.deposit_time else ''
+                        target.duration = str(target_repo.duration)
+                        target.output_response = json.loads(target_repo.target_output) if target_repo.target_output else {}
                         asset.targets.append(target)
                     oam.assets.append(asset)
 
@@ -393,7 +354,7 @@ class DatabaseManager:
                 session.commit()
                 session.refresh(ds_record)
 
-    def set_ready_for_ingest(self, id: str) -> type(None):
+    def set_dataset_ready_for_ingest(self, id: str) -> type(None):
         with Session(self.engine) as session:
             statement = select(Dataset).where(Dataset.id == id)
             results = session.exec(statement)

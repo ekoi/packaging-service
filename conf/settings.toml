@@ -9,6 +9,8 @@ db_dialect="sqlite"
 db_url = "@format ///{env[BASE_DIR]}/data/db/dans_packaging.db"
 data_db_file = "sqlite:{@format {env[BASE_DIR]}/data/db/dans_packaging.db}"
 data_tmp_base_dir = "@format {env[BASE_DIR]}/data/tmp"
+data_tmp_base_tus_files_dir = "@format {env[BASE_DIR]}/data/tmp/tus-files"
+tus_base_url = "http://localhost:10124"
 
 # In the implementation, APP_NAME will be replaced by app_name from Metadata record using str.replace(old, new)
 #data_tmp_base_dir_inbox =  "@format {env[BASE_DIR]}/data/tmp/-APP_NAME-/inbox"
@@ -20,7 +22,7 @@ jinja_template_dir =  "@format {env[BASE_DIR]}/resources/datastation/metadata"
 sendmail_enable = false
 melt_enable = true
 melt_agent_host_name = "localhost"
-multiple_workers_enable = true
+multiple_workers_enable = false
 assistant_config_url = "http://localhost:2810" #"https://repository-assistant.labs.dansdemo.nl" #http://localhost:2810"
 transformer_url = "http://localhost:1745l/transfor" #"https://transformer.labs.dans.knaw.nl/transform" #http://localhost:1745l/transform"
 deployment= "demo"

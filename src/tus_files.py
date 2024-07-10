@@ -5,7 +5,11 @@ from fastapi import APIRouter
 from fastapi.responses import HTMLResponse
 from fastapi_tusd import TusRouter
 
-upload_files = TusRouter(store_dir="./tus-files", location="/files", tags=["Files"])
+from src.commons import settings
+
+if not os.path.exists(settings.DATA_TMP_BASE_TUS_FILES_DIR):
+    os.makedirs(settings.DATA_TMP_BASE_TUS_FILES_DIR)
+upload_files = TusRouter(store_dir=settings.DATA_TMP_BASE_TUS_FILES_DIR, location=f'{settings.TUS_BASE_URL}/files', tags=["Files"])
 router = APIRouter()
 
 router.include_router(upload_files, prefix="/files")

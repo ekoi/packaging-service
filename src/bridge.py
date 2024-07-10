@@ -82,15 +82,13 @@ class Bridge(ABC):
             output_data_model (BridgeOutputModel, optional): An instance of BridgeOutputModel representing the
                 output of the deposit process. Defaults to None.
         """
-        deposit_status = DepositStatus.PROGRESS
-        output = ''
-        duration = 0.0
+
+        deposit_status = output_data_model.deposit_status if output_data_model else DepositStatus.PROGRESS
+        duration = output_data_model.response.duration if output_data_model else 0.0
+        output = output_data_model.model_dump_json() if output_data_model else ''
         if output_data_model:
-            deposit_status = output_data_model.deposit_status
-            duration = output_data_model.response.duration
-            output = output_data_model.model_dump_json()
-            logger(f'Save state for dataset_id: {self.dataset_id}. Target: {self.target.repo_name}', LOG_LEVEL_DEBUG,
-                   self.app_name)
+            logger(f'Save state for dataset_id: {self.dataset_id}. Target: {self.target.repo_name}',
+                   LOG_LEVEL_DEBUG, self.app_name)
         db_manager.update_target_repo_deposit_status(TargetRepo(ds_id=self.dataset_id, name=self.target.repo_name,
                                                                 deposit_status=deposit_status, target_output=output,
                                                                 duration=duration))

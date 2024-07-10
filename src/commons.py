@@ -42,6 +42,23 @@ assistant_repo_headers = {
 
 
 def setup_logger():
+    """
+    This function sets up the logger for the application.
+
+    It iterates over the list of loggers specified in the settings, and for each logger, it:
+    - Gets or creates a logger with the specified name.
+    - Creates a formatter with the specified format.
+    - Creates a file handler that writes to the specified log file in append mode, and sets its formatter.
+    - Creates a stream handler (which writes to stdout by default) and sets its formatter.
+    - Creates a timed rotating file handler that rotates the log file every 8 hours and keeps the last 10 log files, and adds it to the logger.
+    - Sets the log level of the logger.
+    - Adds the file handler and the stream handler to the logger.
+    - Logs a startup message at the debug level, which includes the current time and the Python version.
+
+    The logger settings (name, format, log file, and log level) are read from the `LOGGERS` setting in the application's configuration.
+
+    The startup message is logged using the `logger` function defined elsewhere in this module.
+    """
     now = datetime.utcnow()
     for log in settings.LOGGERS:
         log_setup = logging.getLogger(log.get('name'))
@@ -68,6 +85,21 @@ def logger(msg, level, logfile):
 
 
 def get_class(kls) -> Any:
+    """
+    This function dynamically imports a class from a module.
+
+    It takes a string `kls` as input, which should be the fully qualified name of a class (i.e., including its module path).
+    The string is split into parts, and the module path is reconstructed by joining all parts except the last one.
+    The module is then imported using the `__import__` function, and the class is retrieved using `getattr`.
+
+    If the module cannot be found, a `ModuleNotFoundError` is caught and logged, and the function returns `None`.
+
+    Parameters:
+    kls (str): The fully qualified name of a class to import.
+
+    Returns:
+    Any: The class if it can be imported, or `None` otherwise.
+    """
     parts = kls.split('.')
     module = ".".join(parts[:-1])
     try:
@@ -165,7 +197,23 @@ def save_duration(target_id: int) -> type(None):
     return decorator
 
 
-def handle_deposit_exceptions(func) -> Callable[[tuple[Any, ...], dict[str, Any]], BridgeOutputDataModel | Any]:
+def handle_deposit_exceptions(
+        func) -> Callable[[tuple[Any, ...], dict[str, Any]], BridgeOutputDataModel | Any]:
+    """
+    This function is a decorator that wraps around a function to handle exceptions during the deposit process.
+
+    It logs the entry into the function it is decorating, then attempts to execute the function.
+    If an exception is raised during the execution of the function, it logs the error and creates a BridgeOutputDataModel
+    instance with an error status and a TargetResponse instance containing the error details.
+
+    The decorated function should take a BridgeOutputDataModel instance as its first argument.
+
+    Parameters:
+    func (Callable): The function to be decorated.
+
+    Returns:
+    Callable: The decorated function.
+    """
     @wraps(func)
     def wrapper(*args, **kwargs):
         logger(f'Enter to handle_deposit_exceptions for {func.__name__}. args: {args}', LOG_LEVEL_DEBUG, LOG_NAME_PS)
@@ -190,6 +238,21 @@ def handle_deposit_exceptions(func) -> Callable[[tuple[Any, ...], dict[str, Any]
 
 
 def handle_ps_exceptions(func) -> Any:
+    """
+    This function is a decorator that wraps around a function to handle exceptions during the execution of the function.
+
+    It logs the entry into the function it is decorating, then attempts to execute the function.
+    If an HTTPException is raised during the execution of the function, it logs the error and re-raises the exception.
+    If any other exception is raised, it sends an email with the error details, logs the error, and re-raises the exception.
+
+    The decorated function can take any number of positional and keyword arguments.
+
+    Parameters:
+    func (Callable): The function to be decorated.
+
+    Returns:
+    Callable: The decorated function.
+    """
     @wraps(func)
     def wrapper(*args, **kwargs):
         try:
@@ -220,29 +283,33 @@ def handle_ps_exceptions(func) -> Any:
 
 
 def inspect_bridge_module(py_file_path: str):
+    """
+    This function inspects a Python module and returns a list of classes that inherit from the 'Bridge' class.
+
+    It opens the Python file at the given path and parses it into an AST (Abstract Syntax Tree) using the `ast.parse` function.
+    It then iterates over the nodes in the AST, and for each class definition, it checks if it inherits from the 'Bridge' class.
+    If it does, it constructs the fully qualified name of the class and adds it to the results list.
+
+    The fully qualified name of a class is constructed by replacing the base directory path in the file path with an empty string,
+    replacing all slashes with dots, and appending the class name.
+
+    Parameters:
+    py_file_path (str): The path to the Python file to inspect.
+
+    Returns:
+    list[dict[str, str]]: A list of dictionaries, where each dictionary has one key-value pair.
+                           The key is the name of a class that inherits from the 'Bridge' class,
+                           and the value is the fully qualified name of the class.
+    """
     with open(py_file_path, 'r') as f:
         bridge_mdl = ast.parse(f.read())
     results = []
-    if isinstance(bridge_mdl, ast.Module):
-        for node in bridge_mdl.body:
-            if isinstance(node, ast.ClassDef):
-                class_name = node.name
-                super_class = ""
-                if len(node.bases):
-                    for base in node.bases:
-                        root = base
-                        max_depth = 100
-                        while not isinstance(root, ast.Name) and max_depth:
-                            if "value" in root.__dir__():
-                                super_class = f".{root.attr}" + super_class
-                                root = root.value
-                        if root.id != 'Bridge':
-                            continue
-                        module_name = py_file_path.replace(f'{os.getenv("BASE_DIR", os.getcwd())}/', '').replace('/',
-                                                                                                                 '.')
-                        name_of_bridge_subclass = module_name[:-len('.py')] + '.' + class_name
-                        results.append({class_name: name_of_bridge_subclass})
-
+    for node in bridge_mdl.body:
+        if isinstance(node, ast.ClassDef) and any(
+                isinstance(base, ast.Name) and base.id == 'Bridge' for base in node.bases):
+            module_name = py_file_path.replace(f'{os.getenv("BASE_DIR", os.getcwd())}/', '').replace('/', '.')
+            name_of_bridge_subclass = f"{module_name[:-3]}.{node.name}"
+            results.append({node.name: name_of_bridge_subclass})
     return results
 
 
@@ -254,42 +321,32 @@ def inspect_bridge_module(py_file_path: str):
 
 def send_mail(subject: str, text: str):
     sender_email = settings.MAIL_USR
-    app_password = settings.MAIL_PASS  #
-    # recipient_emails = ["eko.indarto@dans.knaw.nl", "eko.indarto.huc@di.huc.knaw.nl", "umar.fth@gmail.com"]
+    app_password = settings.MAIL_PASS
     recipient_email = settings.MAIL_TO
-    # Create the email message
-    subject = subject
-    body = text
     message = MIMEMultipart()
     message['From'] = sender_email
     message['To'] = recipient_email
     message['Subject'] = f'{settings.DEPLOYMENT}: {subject}'
-    message.attach(MIMEText(body, 'plain'))
+    message.attach(MIMEText(text, 'plain'))
 
     if settings.get('send_mail', True):
-        # Establish a connection to the SMTP server
         try:
             with smtplib.SMTP("smtp.gmail.com", 587) as server:
                 server.starttls()
                 server.login(sender_email, app_password)
-                text = message.as_string()
-                server.sendmail(sender_email, recipient_email, text)
+                server.sendmail(sender_email, recipient_email, message.as_string())
             print("Email sent successfully!")
             logger(f"Email sent successfully to {recipient_email}", "debug", "ps")
         except Exception as e:
             print(f"Error: {e}")
             logger(f"Unsuccessful sent email to {recipient_email}", "error", "ps")
-
     else:
-        logger(f"{settings.get('send_mail', False)} - Sending email is disabled.", LOG_LEVEL_DEBUG, LOG_NAME_PS)
+        logger("Sending email is disabled.", LOG_LEVEL_DEBUG, "ps")
 
 
-def dmz_dataverse_headers(username, password) -> {}:
-    headers = {}
-    if settings.exists("dmz_x_authorization_value", fresh=False):
-        headers.update({'X-Authorization': settings.dmz_x_authorization_value})
-
+def dmz_dataverse_headers(username, password) -> dict:
+    headers = {'X-Authorization': settings.dmz_x_authorization_value} if settings.exists("dmz_x_authorization_value",
+                                                                                         fresh=False) else {}
     if username == 'API_KEY':
-        headers.update({"X-Dataverse-key": password})
-
+        headers["X-Dataverse-key"] = password
     return headers

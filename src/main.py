@@ -26,11 +26,12 @@ import multiprocessing
 import os
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
+from typing import Annotated
 
 import emoji
 import uvicorn
 from fastapi import FastAPI, Request, HTTPException, Depends
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import OAuth2PasswordBearer, HTTPBearer, HTTPAuthorizationCredentials
 from fastapi_events.middleware import EventHandlerASGIMiddleware
 from gunicorn.app.wsgiapp import WSGIApplication
 from keycloak import KeycloakOpenID, KeycloakAuthenticationError
@@ -88,53 +89,35 @@ async def lifespan(application: FastAPI):
 
 api_keys = [settings.DANS_PACKAGING_SERVICE_API_KEY]
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")  # use token authentication
+security = HTTPBearer()
 
 
-def auth_header(request: Request, api_key: str = Depends(oauth2_scheme)):
+def auth_header(request: Request, auth_cred: Annotated[HTTPAuthorizationCredentials, Depends(security)]):
     """
-    Authentication header dependency function.
+    Simplified authentication header dependency function.
 
-    This function is used as a dependency for protected routes.
-    It checks the provided API key against a list of valid keys.
-    If the key is not valid, it attempts to authenticate using Keycloak.
+    This function checks the provided API key against a list of valid keys or attempts to authenticate using Keycloak.
 
     Args:
         request (Request): The FastAPI request object.
-        api_key (str): The API key provided in the request.
+        auth_cred: The authorization credentials from the request.
 
     Raises:
         HTTPException: Raised if authentication fails.
-
-    Returns:
-        None: No return value if authentication is successful.
-
     """
+    api_key = auth_cred.credentials
+    if api_key in api_keys:
+        return
 
-    if api_key not in api_keys:
-        keycloak_env_name = f"keycloak_{request.headers['auth-env-name']}"
-        keycloak_env = settings.get(keycloak_env_name)
-        if keycloak_env is not None:
-            try:
-                keycloak_openid = KeycloakOpenID(
-                    server_url=keycloak_env.URL,
-                    client_id=keycloak_env.CLIENT_ID,
-                    realm_name=keycloak_env.REALMS
-                )
-                user_info = keycloak_openid.userinfo(api_key)
-                logger(str(user_info.items()), LOG_LEVEL_DEBUG, "ps")
+    keycloak_env = settings.get(f"keycloak_{request.headers['auth-env-name']}")
+    if not keycloak_env:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Forbidden")
 
-                return
-            except KeycloakAuthenticationError as e:
-                logger(e.response_code, 'error', LOG_NAME_PS)
-            except BaseException as e:
-                logger(e, 'error', LOG_NAME_PS)
-
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Forbidden"
-        )
-
+    try:
+        keycloak_openid = KeycloakOpenID(server_url=keycloak_env.URL, client_id=keycloak_env.CLIENT_ID, realm_name=keycloak_env.REALMS)
+        keycloak_openid.userinfo(api_key)
+    except KeycloakAuthenticationError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Forbidden")
 
 def pre_startup_routine(app: FastAPI) -> None:
     setup_logger()
@@ -150,6 +133,10 @@ def pre_startup_routine(app: FastAPI) -> None:
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
+        expose_headers=["Upload-Offset", "Location", "Upload-Length", "Tus-Version", "Tus-Resumable", "Tus-Max-Size",
+                        "Tus-Extension", "Upload-Metadata", "Upload-Defer-Length", "Upload-Concat", "Upload-Incomplete",
+                        "Upload-Complete", "Upload-Draft-Interop-Version"],
+
     )
 
     app.add_middleware(EventHandlerASGIMiddleware,
@@ -160,8 +147,8 @@ def pre_startup_routine(app: FastAPI) -> None:
     app.include_router(protected.router, tags=["Protected"], prefix="", dependencies=[Depends(auth_header)])
 
     if settings.DEPLOYMENT in ['demo', 'local']:
-        app.include_router(upload_files, prefix="/files", dependencies=[Depends(auth_header)])
-        app.include_router(tus_files.router, prefix="")
+        app.include_router(upload_files, prefix="/files", include_in_schema=False)
+        app.include_router(tus_files.router, prefix="", include_in_schema=False)
 
 
 def enable_otel(app):
@@ -175,6 +162,7 @@ def enable_otel(app):
     jaeger_exporter = JaegerExporter(
         agent_host_name=melt_agent_host_name,
         agent_port=6831,
+        udp_split_oversized_batches=True,
     )
     # Add the Jaeger exporter to the tracer provider
     tracer_provider.add_span_processor(BatchSpanProcessor(jaeger_exporter))

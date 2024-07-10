@@ -72,7 +72,9 @@ async def get_inbox_dataset_dc(request: Request, release_version: ReleaseVersion
 async def process_inbox_dataset_metadata(request: Request, release_version: ReleaseVersion) -> {}:
     idh = await get_inbox_dataset_dc(request, release_version)
     datasetId = jmespath.search("id", idh.metadata)
-    logger(f'Start inbox for metadata id: {datasetId}- release version: {release_version}   - assistant name: {idh.assistant_name}', LOG_LEVEL_DEBUG, LOG_NAME_PS)
+    logger(
+        f'Start inbox for metadata id: {datasetId}- release version: {release_version}   - assistant name: {idh.assistant_name}',
+        LOG_LEVEL_DEBUG, LOG_NAME_PS)
     if db_manager.is_dataset_published(datasetId):
         raise HTTPException(status_code=400, detail='Dataset is already published.')
     repo_config = retrieve_targets_configuration(idh.assistant_name)
@@ -107,23 +109,24 @@ async def process_inbox_dataset_metadata(request: Request, release_version: Rele
 
 @router.delete("/inbox/dataset/{metadata_id}")
 def delete_dataset_metadata(request: Request, metadata_id: str):
+    logger(f'Delete dataset: {metadata_id}', LOG_LEVEL_DEBUG, LOG_NAME_PS)
     user_id = request.headers.get('user-id')
-    if user_id is None:
+    if not user_id:
         raise HTTPException(status_code=401, detail='No user id provided')
-
     if metadata_id not in db_manager.find_dataset_ids_by_owner(user_id):
         raise HTTPException(status_code=404, detail='No Dataset found')
-
-    target_repos = db_manager.find_target_repos_by_dataset_id(metadata_id)
-    if target_repos is None:
+    target_repo = db_manager.find_target_repos_by_dataset_id(metadata_id)
+    if not target_repo:
         raise HTTPException(status_code=404, detail='No target found')
+    if target_repo[0].deposit_status not in (DepositStatus.ACCEPTED, DepositStatus.DEPOSITED, DepositStatus.FINISH):
+        # Before deleting the dataset, we need get the dataset folder and delete it
+        dataset_folder = os.path.join(settings.DATA_TMP_BASE_DIR, db_manager.find_dataset(metadata_id).app_name,
+                                      metadata_id)
+        logger(f'Delete dataset folder: {dataset_folder}', LOG_LEVEL_DEBUG, LOG_NAME_PS)
+        shutil.rmtree(dataset_folder)
+        db_manager.delete_by_dataset_id(metadata_id)
 
-    #TThe delete mechanism will be executed when an error is occurred in the first target.
-    logger(f'Deposit Status: {target_repos[0].deposit_status}', LOG_LEVEL_DEBUG, LOG_NAME_PS)
-    if target_repos[0].deposit_status not in (DepositStatus.ACCEPTED, DepositStatus.DEPOSITED, DepositStatus.FINISH):
-        db_manager.delete_by_dataset_id(dataset_id=metadata_id)
         return {"status": "ok", "metadata-id": metadata_id}
-
     raise HTTPException(status_code=404, detail=f'Delete of {metadata_id} is not allowed.')
 
 
@@ -233,7 +236,7 @@ async def process_inbox_dataset_file(datasetId: str = Form(), fileName: str = Fo
             break
     # Update record
     if all_files_uploaded:
-        db_manager.set_ready_for_ingest(datasetId)
+        db_manager.set_dataset_ready_for_ingest(datasetId)
 
     start_process = db_manager.is_dataset_ready(datasetId)
 
@@ -244,6 +247,84 @@ async def process_inbox_dataset_file(datasetId: str = Form(), fileName: str = Fo
 
     rdm = ResponseDataModel(status="OK")
     rdm.dataset_id = datasetId
+    rdm.start_process = start_process
+    return rdm.model_dump(by_alias=True)
+
+
+@router.patch("/inbox/files/{metadata_id}/{file_uuid}")
+async def update_file_metadata(metadata_id: str, file_uuid: str) -> {}:  # noqa: E501
+    """Update file metadata"""
+    logger(f'Update file metadata: {metadata_id}', LOG_LEVEL_DEBUG, LOG_NAME_PS)
+    # Find a file from tus-files directory
+    file_path = os.path.join(settings.DATA_TMP_BASE_TUS_FILES_DIR, f'{file_uuid}.info')
+    if not os.path.exists(file_path):
+        return HTTPException(status_code=404, detail='File not found')
+
+    with open(file_path, "r") as f:
+        file_metadata = json.load(f)
+    logger(f'File metadata: {file_metadata}', LOG_LEVEL_DEBUG, LOG_NAME_PS)
+    # get name from file_metadata
+    file_name: str = file_metadata['metadata']['fileName']
+    # if not db_manager.find_file_by_dataset_id_and_name(metadata_id, file_name):
+    #     return HTTPException(status_code=404, detail='File not found')
+
+    db_record_metadata = db_manager.find_dataset(metadata_id)
+    dataset_folder: str = str(os.path.join(settings.DATA_TMP_BASE_DIR, db_record_metadata.app_name, metadata_id))
+    # Copy the file from the source to the destination
+    source_file_path = os.path.join(settings.DATA_TMP_BASE_TUS_FILES_DIR, file_uuid)
+    dest_dir_path = os.path.join(dataset_folder, file_name)
+
+    db_records_uploaded_file = db_manager.find_files(metadata_id)
+    # Process the files
+    f_upload_st = []
+    for db_rec_uploaded_f in db_records_uploaded_file:
+        uploaded = file_name == db_rec_uploaded_f.name or db_rec_uploaded_f.date_added is not None
+        if file_name == db_rec_uploaded_f.name:
+            logger(f'Copy file from {source_file_path} to {dest_dir_path}', LOG_LEVEL_DEBUG, LOG_NAME_PS)
+            shutil.copy(source_file_path, dest_dir_path)
+            # Calculate the checksum value of the file
+            with open(file_path, 'rb') as file:
+                md5_hash = hashlib.md5(file.read()).hexdigest()
+            file_type = file_metadata['metadata'].get('filetype', mimetypes.guess_type(dest_dir_path)[0])
+
+            db_manager.update_file(df=DataFile(ds_id=metadata_id, name=file_name, checksum_value=md5_hash,
+                                               size=os.path.getsize(file_path),
+                                               mime_type=file_type,
+                                               path=dest_dir_path, date_added=datetime.utcnow(),
+                                               state=DataFileWorkState.UPLOADED))
+
+            # Remove the original file on TUS folder
+            logger(f'Remove file: {source_file_path}, {source_file_path}.info, {source_file_path}.lock'
+                   , LOG_LEVEL_DEBUG, LOG_NAME_PS)
+            os.remove(source_file_path)
+            os.remove(f'{source_file_path}.info')
+            os.remove(f'{source_file_path}.lock')
+        logger(f'File name on DB: {db_rec_uploaded_f.name} Uploaded: {uploaded}', LOG_LEVEL_DEBUG, LOG_NAME_PS)
+        f_upload_st.append({"name": db_rec_uploaded_f.name, "uploaded": uploaded})
+
+    # Update file metadata
+    # if "storage" in file_metadata:
+    #     del file_metadata["storage"]
+    # logger(f'File metadata: {file_metadata}', LOG_LEVEL_DEBUG, LOG_NAME_PS)
+
+    all_files_uploaded = True
+    for fus in f_upload_st:
+        if fus['uploaded'] is False:
+            all_files_uploaded = False
+            break
+    # Update record
+    if all_files_uploaded:
+        db_manager.set_dataset_ready_for_ingest(metadata_id)
+
+    start_process = db_manager.is_dataset_ready(metadata_id)
+
+    if start_process:
+        # func_name = inspect.currentframe().f_code.co_name # Slow
+        # func_name = sys._getframe().f_code.co_name  # Faster 3x, but it uses 'private' method _getframe()
+        bridge_task(metadata_id, f'/inbox/files/{metadata_id}/{file_uuid}')
+
+    rdm = ResponseDataModel(status="OK")
+    rdm.dataset_id = metadata_id
     rdm.start_process = start_process
     return rdm.model_dump(by_alias=True)
 
@@ -293,7 +374,8 @@ def execute_bridges(datasetId, targets) -> type(None):
         logger(f'Result from Deposit: {m.model_dump_json()}', LOG_LEVEL_DEBUG, LOG_NAME_PS)
         k.save_state(m)
         if m.deposit_status in [DepositStatus.FINISH, DepositStatus.ACCEPTED, DepositStatus.SUCCESS]:
-            logger(f'Finish deposit for {bridge_class} to target_repo_id: {target_repo_id}. Result: {m}', LOG_LEVEL_DEBUG, LOG_NAME_PS)
+            logger(f'Finish deposit for {bridge_class} to target_repo_id: {target_repo_id}. Result: {m}',
+                   LOG_LEVEL_DEBUG, LOG_NAME_PS)
             result.append(m)
         else:
             logger(f'Executing {bridge_class} is FAILED. Resp: {m.model_dump_json()}', LOG_LEVEL_DEBUG, LOG_NAME_PS)
@@ -336,7 +418,7 @@ async def resubmit(datasetId: str):
 
     logger(f'Resubmitting {len(targets)}', LOG_LEVEL_DEBUG, LOG_NAME_PS)
     try:
-        execute_bridges_task = threading.Thread(target=execute_bridges, args=(datasetId, targets, ))
+        execute_bridges_task = threading.Thread(target=execute_bridges, args=(datasetId, targets,))
         execute_bridges_task.start()
         print(f'follow_bridge_task: {execute_bridges_task}')
     except Exception as e:
