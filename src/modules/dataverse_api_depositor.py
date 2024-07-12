@@ -1,6 +1,8 @@
 import json
 import mimetypes
 import os
+import uuid
+import zipfile
 from datetime import datetime
 
 import jmespath
@@ -37,7 +39,8 @@ class DataverseIngester(Bridge):
         for gf in generated_files:
             files_metadata.append({"name": gf.name, "mimetype": gf.mime_type,
                                    "private": True if gf.permissions == FilePermissions.PRIVATE else False})
-        if generated_files: db_manager.insert_datafiles(generated_files)
+        if generated_files:
+            db_manager.insert_datafiles(generated_files)
         # Update the file-metadata: added some attributes
         md_json.update({"file-metadata": files_metadata})
         # updating mimetype of user's uploaded files since no mimetype in the form-metadata submission
@@ -65,149 +68,102 @@ class DataverseIngester(Bridge):
         message = "Error"
 
         identifier_items = []
+        logger(f'Ingesting metadata {self.dataset_id}', "debug", self.app_name)
+        logger(f'Ingesting metadata to {self.target.target_url}', "debug", self.app_name)
+        logger(f'Response status code for ingesting metadata: {dv_response.status_code}', "debug", self.app_name)
         if dv_response.status_code == 201:
             dv_response_json = dv_response.json()
             logger(f"Data ingest successfully! {json.dumps(dv_response_json)}", "debug", self.app_name)
             pid = dv_response_json["data"]["persistentId"]
-            ideni = IdentifierItem(value=pid, url=f'{self.target.base_url}/dataset.xhtml?persistentId={pid}',
-                                   protocol=IdentifierProtocol('doi'))
-            identifier_items.append(ideni)
+            identifier_items.append(IdentifierItem(value=pid, url=f'{self.target.base_url}/dataset.xhtml?persistentId={pid}',
+                                                   protocol=IdentifierProtocol('doi')))
             logger(f"pid: {pid}", "debug", self.app_name)
 
             ingest_file = self.__ingest_files(pid, str_updated_metadata_json)
             if ingest_file.get("status") == status.HTTP_200_OK:
+                ingest_status, message = DepositStatus.FINISH, "The dataset and its file is successfully ingested"
                 logger(f'Ingest FILE(s) successfully! {json.dumps(ingest_file)}', LOG_LEVEL_DEBUG, self.app_name)
                 if self.target.initial_release_version == ReleaseVersion.PUBLISHED:
                     logger(f'Publish the dataset', "debug", self.app_name)
                     publish_status = self.__publish_dataset(pid)
-                    if publish_status == status.HTTP_200_OK:
-                        ingest_status = DepositStatus.FINISH
-                        message = "The dataset is successfully published"
-                    else:
-                        ingest_status = DepositStatus.ERROR
-                        message = "The dataset is unsuccessfully published"
-                else:
-                    ingest_status = DepositStatus.FINISH
-                    message = "The dataset and its file is successfully ingested"
+                    message = "The dataset is successfully published" if publish_status == status.HTTP_200_OK else "The dataset is unsuccessfully published"
             else:
-                ingest_status = DepositStatus.ERROR
-                message = ingest_file.get("message")
-
+                ingest_status, message = DepositStatus.ERROR, ingest_file.get("message")
         else:
-            logger(
-                f"Ingest failed with status code {dv_response.status_code}:",
-                "debug",
-                self.app_name,
-            )
-        bridge_output_model = BridgeOutputDataModel(
-                notes=message, deposit_status=ingest_status
-        )
-        bridge_output_model.deposit_time = datetime.utcnow().strftime(
-            "%Y-%m-%d %H:%M:%S.%f"
-        )
+            logger(f"Ingest failed with status code {dv_response.status_code}:", "debug", self.app_name)
+            ingest_status, message = DepositStatus.ERROR, "Error"
+        bridge_output_model = BridgeOutputDataModel(notes=message, deposit_status=ingest_status)
+        current_time = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S.%f")
+        bridge_output_model.deposit_time = current_time
         target_repo = TargetResponse(url=self.target.target_url, status=DepositStatus.FINISH, message=message,
                                      identifiers=identifier_items, content=dv_response.text)
         target_repo.content_type = ResponseContentType.JSON
         target_repo.status_code = dv_response.status_code
         bridge_output_model = BridgeOutputDataModel(notes=message, response=target_repo)
-        bridge_output_model.deposit_time = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S.%f")
+        bridge_output_model.deposit_time = current_time
         bridge_output_model.deposit_status = ingest_status
         return bridge_output_model
 
     def __create_generated_files(self) -> [DataFile]:
         generated_files = []
-        # Create generated file in target-dir. The base directory is the app_name/target-dir
         for gnr_file in self.target.metadata.transformed_metadata:
-            gf_dir = gnr_file.target_dir
-            if gf_dir:
-                continue  # exclude target-dir="metadata"
-            else:
-                gf_filename = gnr_file.name
-                gf_restricted = gnr_file.restricted
-                gf_path = os.path.join(self.dataset_dir, gf_filename)
-                if gnr_file.transformer_url:
-                    # generate file content
-                    gf_str = transform(gnr_file.transformer_url, self.metadata_rec.md)
-                    # write file
-                    with open(gf_path, mode="wt") as f:
-                        f.write(gf_str)
-                else:
-                    # No transformer-url, so the file content is from the original input metadata
-                    with open(gf_path, mode="wt") as f:
-                        f.write(self.metadata_rec.md)
-
+            if not gnr_file.target_dir:  # Skip if target-dir is "metadata"
+                gf_path = os.path.join(self.dataset_dir, gnr_file.name)
+                content = transform(gnr_file.transformer_url, self.metadata_rec.md) if gnr_file.transformer_url else self.metadata_rec.md
+                with open(gf_path, "wt") as f:
+                    f.write(content)
                 gf_mimetype = mimetypes.guess_type(gf_path)[0]
-                fp = FilePermissions.PRIVATE if gf_restricted else FilePermissions.PUBLIC
-                generated_files.append(DataFile(ds_id=self.dataset_id, name=gf_filename, path=gf_path,
-                                                size=os.path.getsize(gf_path), mime_type=gf_mimetype,
-                                                checksum_value=get_checksum(gf_path, algorithm="MD5"),
-                                                date_added=datetime.utcnow(), permissions=fp,
-                                                state=DataFileWorkState.GENERATED))
+                permissions = FilePermissions.PRIVATE if gnr_file.restricted else FilePermissions.PUBLIC
+                generated_files.append(DataFile(
+                    ds_id=self.dataset_id, name=gnr_file.name, path=gf_path,
+                    size=os.path.getsize(gf_path), mime_type=gf_mimetype,
+                    checksum_value=get_checksum(gf_path, algorithm="MD5"),
+                    date_added=datetime.utcnow(), permissions=permissions,
+                    state=DataFileWorkState.GENERATED))
         return generated_files
 
-    def __ingest_files(self, pid: str, str_updated_metadata_json: str) -> {}:
+    def __ingest_files(self, pid: str, str_updated_metadata_json: str) -> dict:
         logger(f'Ingesting files to {pid}', "debug", self.app_name)
         str_dv_file = transform(
             transformer_url=self.target.metadata.transformed_metadata[1].transformer_url,
             str_tobe_transformed=str_updated_metadata_json
         )
 
-        for _ in db_manager.find_non_generated_files(dataset_id=self.dataset_id):
-            jsonData = json.loads(str_dv_file).get(_.name)
+        for file in db_manager.find_non_generated_files(dataset_id=self.dataset_id):
+            logger(f'Ingesting file {file.name}. Size: {file.size} Path: {file.path} ', "debug", self.app_name)
+            jsonData = json.loads(str_dv_file).get(file.name)
             if jsonData:
-                data = {
-                    "jsonData": f'{json.dumps(jsonData)}'
-                }
-                files = {
-                    "file": (_.name, open(_.path, "rb")),
-                }
-
-                response_ingest_file = requests.post(
-                    f"{self.target.base_url}/api/datasets/:persistentId/add?persistentId={pid}",
-                    headers=dmz_dataverse_headers('API_KEY', self.target.password), data=data, files=files)
-                # Print the response
-                logger(
-                    f'Adding file {_.name}. Response.status_code: {response_ingest_file.status_code}. Response text: '
-                    f'{response_ingest_file.text}', LOG_LEVEL_DEBUG, self.app_name)
-
+                data = {"jsonData": json.dumps(jsonData)}
+                if file.mime_type == "application/zip":
+                    zipped_path = f'{file.path}.zip'
+                    logger(f'Start zipping file {file.name} to {zipped_path}', LOG_LEVEL_DEBUG, self.app_name)
+                    with zipfile.ZipFile(zipped_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                        zipf.write(file.path, arcname=file.name)
+                    file.path = zipped_path
+                    logger(f'Finished zipping file {file.name} to {zipped_path}', LOG_LEVEL_DEBUG, self.app_name)
+                with open(file.path, "rb") as f:
+                    files = {"file": (file.name, f)}
+                    response_ingest_file = requests.post(
+                        f"{self.target.base_url}/api/datasets/:persistentId/add?persistentId={pid}",
+                        headers=dmz_dataverse_headers('API_KEY', self.target.password), data=data, files=files)
                 if response_ingest_file.status_code != status.HTTP_200_OK:
                     return {"status": "error", "message": response_ingest_file.text}
-                dv_resp = response_ingest_file.json()
-                logger(f"file ID: {dv_resp['data']['files'][0]['dataFile']['id']}", LOG_LEVEL_DEBUG, self.app_name)
                 if jsonData.get('embargo'):
                     json_data = {
                         'dateAvailable': jsonData.get('embargo'),
                         'reason': '',
-                        'fileIds': [
-                            dv_resp['data']['files'][0]['dataFile']['id'],
-                        ],
+                        'fileIds': [response_ingest_file.json()['data']['files'][0]['dataFile']['id']],
                     }
-                    logger(f'Set EMBARGO to pid {pid} with data is {json.dumps(json_data)}', LOG_LEVEL_DEBUG,
-                           self.app_name)
                     response_embargo = requests.post(
-                        f'{self.target.base_url}/api/datasets/:persistentId/files/actions/:set-embargo?persistentId='
-                        f'{pid}', headers=dmz_dataverse_headers('API_KEY', self.target.password),
-                        json=json_data)
-
-                    logger(
-                        f'Set EMBARGO file {_.name}. Response.status_code: {response_embargo.status_code}. Response'
-                        f'text: {response_embargo.text}', LOG_LEVEL_DEBUG, self.app_name)
+                        f'{self.target.base_url}/api/datasets/:persistentId/files/actions/:set-embargo?persistentId={pid}',
+                        headers=dmz_dataverse_headers('API_KEY', self.target.password), json=json_data)
                     if response_embargo.status_code != status.HTTP_200_OK:
                         return {"status": "error", "message": response_embargo.text}
 
         return {"status": status.HTTP_200_OK}
 
     def __publish_dataset(self, pid) -> int:
-        url = f"{self.target.base_url}/api/datasets/:persistentId/actions/:publish?persistentId={pid}&type=major"
-        headers = {
-            "Content-Type": "application/json",
-            "X-Dataverse-key": self.target.password,
-        }
-        logger(f"published url: {url}", "debug", self.app_name)
-        response = requests.post(url, headers=headers)
-        logger(
-            f"response code for published: {response.status_code} with response.text: {response.text}",
-            "debug",
-            self.app_name,
-        )
-        return response.status_code
+        return requests.post(
+            f"{self.target.base_url}/api/datasets/:persistentId/actions/:publish?persistentId={pid}&type=major",
+            headers={"Content-Type": "application/json", "X-Dataverse-key": self.target.password},
+        ).status_code

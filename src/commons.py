@@ -123,7 +123,7 @@ def transform(transformer_url: str, str_tobe_transformed: str) -> str:
     if transformer_response.status_code == 200:
         transformed_metadata = transformer_response.json()
         str_transformed_metadata = transformed_metadata.get('result')
-        logger(f'Transformer result: {str_transformed_metadata}', LOG_LEVEL_DEBUG, LOG_NAME_PS)
+        # logger(f'Transformer result: {str_transformed_metadata}', LOG_LEVEL_DEBUG, LOG_NAME_PS)
         return str_transformed_metadata
 
     logger(f'transformer_response.status_code: {transformer_response.status_code}', 'error', LOG_NAME_PS)

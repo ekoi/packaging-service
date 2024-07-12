@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "packaging-service"
-version = "0.4.24"
+version = "0.4.29"
 description = "The Packaging Service is a Python-based application developed by DANS. It is designed to create deposit packages based on user input, which consist of metadata, files, and repository targets. The service streamlines and simplifies the creation of deposit packages by harmonizing user input, repository configurations, bridge modules, and transformers to create deposit packages tailored to the specific needs of each repository target."
 authors = ["Eko Indarto <eko.indarto@dans.knaw.nl>"]
 readme = "README.md"

@@ -36,6 +36,11 @@ from fastapi_events.middleware import EventHandlerASGIMiddleware
 from gunicorn.app.wsgiapp import WSGIApplication
 from keycloak import KeycloakOpenID, KeycloakAuthenticationError
 
+import multiprocessing
+import platform
+from datetime import datetime, timezone
+
+
 __version__ = importlib.metadata.metadata("packaging-service")["version"]
 
 from starlette import status
@@ -208,50 +213,21 @@ def iterate_saved_bridge_module_dir():
                 data.update(cls_name)
 
 
-class PackagingServiceApplication(WSGIApplication):
-    def __init__(self, app_uri, options=None):
-        self.options = options or {}
-        self.app_uri = app_uri
-        super().__init__()
-
-    def load_config(self):
-        config = {
-            key: value
-            for key, value in self.options.items()
-            if key in self.cfg.settings and value is not None
-        }
-        for key, value in config.items():
-            self.cfg.set(key.lower(), value)
-
-
-def run():
-    logger('MULTIPLE WORKERS', LOG_LEVEL_DEBUG, LOG_NAME_PS)
-    options = {
-        "bind": "0.0.0.0:10124",
-        "workers": (multiprocessing.cpu_count() * 2) + 1,
-        "worker_class": "uvicorn.workers.UvicornWorker",
-        "--preload": True
-    }
-    PackagingServiceApplication("src.main:app", options).run()
-
-
-@local_handler.register(event_name="cat*")
-def handle_all_cat_events(event: Event):
-    event_name, payload = event
-    print(f'event_name: {event_name}, payload: {payload}')
-
+def run_server():
+    """Configures and runs the server based on the environment settings."""
+    if settings.get("MULTIPLE_WORKERS_ENABLE", False):
+        uvicorn.run("src.main:app", host="0.0.0.0", port=10124, reload=False,
+                    workers=(multiprocessing.cpu_count() * 2) + 1,
+                    # worker_class="uvicorn.workers.UvicornWorker",
+                    timeout_keep_alive= 300,
+                    # preload=True
+                    )
+    else:
+        uvicorn.run("src.main:app", host="0.0.0.0", port=10124, reload=False, workers=1)
 
 if __name__ == "__main__":
     logger('START Packaging Service', LOG_LEVEL_DEBUG, LOG_NAME_PS)
     if settings.get("SENDMAIL_ENABLE"):
-        send_mail(f'Starting the packaging service',
+        send_mail('Starting the packaging service',
                   f'Started at {datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S.%f")}')
-    import platform
-    logger(f'Python version: {platform.python_version()}', LOG_LEVEL_DEBUG, 'ps')
-
-    if settings.get("MULTIPLE_WORKERS_ENABLE", False):
-        logger('MULTIPLE WORKERS', LOG_LEVEL_DEBUG, 'ps')
-        run()
-    else:
-        logger('SINGLE WORKER', LOG_LEVEL_DEBUG, 'ps')
-        uvicorn.run("src.main:app", host="0.0.0.0", port=10124, reload=False, workers=1)
+    run_server()
