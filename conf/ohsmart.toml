@@ -5,6 +5,8 @@ loggers = [{"name"="ohsmart", "log_file"="@format {env[BASE_DIR]}/logs/ohsmart.l
 #interval in seconds
 interval_check_sword = 30
 
+dataverse_response_timeout = 1200
+
 
 [default.keycloak_ohsmart_demo]
     url="https://keycloak.dansdemo.nl"
