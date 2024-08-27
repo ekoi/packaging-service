@@ -20,8 +20,8 @@ Dependencies:
 - `emoji`: Library for adding emoji support to Python applications.
 
 """
-
-import importlib.metadata
+import importlib
+# import importlib.metadata
 import multiprocessing
 import os
 from contextlib import asynccontextmanager
@@ -151,9 +151,9 @@ def pre_startup_routine(app: FastAPI) -> None:
     app.include_router(public.router, tags=["Public"], prefix="")
     app.include_router(protected.router, tags=["Protected"], prefix="", dependencies=[Depends(auth_header)])
 
-    if settings.DEPLOYMENT in ['demo', 'local']:
-        app.include_router(upload_files, prefix="/files", include_in_schema=False)
-        app.include_router(tus_files.router, prefix="", include_in_schema=False)
+    # if settings.DEPLOYMENT in ['demo', 'local']:
+    app.include_router(upload_files, prefix="/files", include_in_schema=True, dependencies=[Depends(auth_header)])
+    # app.include_router(tus_files.router, prefix="", include_in_schema=False)
 
 
 def enable_otel(app):

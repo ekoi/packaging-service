@@ -53,30 +53,22 @@ class ZenodoApiDepositor(Bridge):
         return bridge_output_model
 
     @handle_deposit_exceptions
-    def __create_initial_dataset(self) -> json or None:
+    def __create_initial_dataset(self) -> dict | None:
         logger('Create an initial zenodo dataset', LOG_LEVEL_DEBUG, self.app_name)
-        url = f"{self.target.target_url}?{self.target.username}={self.target.password}"
-        logger(f"Send to {url}", LOG_LEVEL_DEBUG, self.app_name)
-        r = requests.post(url, data="{}", headers={"Content-Type": "application/json"})
-        logger(f"Response status code: {r.status_code}", LOG_LEVEL_DEBUG, self.app_name)
-        if r.status_code == 201:
-            r_json = r.json()
-            return r_json
-        return None
+        response = requests.post(f"{self.target.target_url}?{self.target.username}={self.target.password}",
+                                 data="{}", headers={"Content-Type": "application/json"})
+        logger(f"Response status code: {response.status_code}", LOG_LEVEL_DEBUG, self.app_name)
+        return response.json() if response.status_code == 201 else None
 
-    def __ingest_files(self, bucket_url: str) -> {}:
+    def __ingest_files(self, bucket_url: str) -> dict:
         logger(f'Ingesting files to {bucket_url}', "debug", self.app_name)
         params = {'access_token': self.target.password, 'access_right': 'restricted'}
-        for _ in db_manager.find_non_generated_files(dataset_id=self.dataset_id):
-            logger(f'Ingesting file {_.path}/{_.name}', "debug", self.app_name)
-            with open(_.path, "rb") as fp:
-                r = requests.put(
-                    "%s/%s" % (bucket_url, _.name),
-                    data=fp,
-                    params=params,
-                )
-            logger(f"Response status code: {r.status_code} and message: {r.text}", LOG_LEVEL_DEBUG, self.app_name)
-
+        for file in db_manager.find_non_generated_files(dataset_id=self.dataset_id):
+            file_path = f"{file.path}/{file.name}"
+            logger(f'Ingesting file {file_path}', "debug", self.app_name)
+            with open(file_path, "rb") as fp:
+                response = requests.put(f"{bucket_url}/{file.name}", data=fp, params=params)
+            logger(f"Response status code: {response.status_code} and message: {response.text}", LOG_LEVEL_DEBUG, self.app_name)
         return {"status": status.HTTP_200_OK}
 
 

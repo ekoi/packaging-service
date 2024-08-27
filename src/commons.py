@@ -2,7 +2,13 @@ import ast
 import logging
 import os
 import platform
+import shutil
 import smtplib
+import zipfile
+import re
+from tempfile import NamedTemporaryFile
+
+import psutil
 import time
 from datetime import datetime
 from email.mime.multipart import MIMEMultipart
@@ -10,10 +16,12 @@ from email.mime.text import MIMEText
 from functools import wraps
 from logging.handlers import TimedRotatingFileHandler
 from typing import Any, Callable
+from requests_toolbelt.multipart.encoder import MultipartEncoder, MultipartEncoderMonitor
 
 import requests
 from dynaconf import Dynaconf
 from fastapi import HTTPException
+from starlette import status
 
 from src.dbz import DatabaseManager, DepositStatus
 from src.models.bridge_output_model import BridgeOutputDataModel, TargetResponse
@@ -28,7 +36,7 @@ settings = Dynaconf(root_path=f'{os.getenv("BASE_DIR", os.getcwd())}/conf', sett
 
 data = {}
 
-db_manager = DatabaseManager(db_dialect=settings.DB_DIALECT, db_url=settings.DB_URL)
+db_manager = DatabaseManager(db_dialect=settings.DB_DIALECT, db_url=settings.DB_URL, encryption_key='Jum@t#10&h@yy1hdr@M%12@maL2004In')
 
 transformer_headers = {
     'Content-Type': 'application/json',
@@ -115,7 +123,7 @@ def get_class(kls) -> Any:
 
 def transform(transformer_url: str, str_tobe_transformed: str) -> str:
     logger(f'transformer_url: {transformer_url}', LOG_LEVEL_DEBUG, LOG_NAME_PS)
-    logger(f'str_tobe_transformed: {str_tobe_transformed}', LOG_LEVEL_DEBUG, LOG_NAME_PS)
+    # logger(f'str_tobe_transformed: {str_tobe_transformed}', LOG_LEVEL_DEBUG, LOG_NAME_PS)
     if type(str_tobe_transformed) is not str:
         raise ValueError(f"Error - str_tobe_transformed is not a string. It is : {type(str_tobe_transformed)}")
 
@@ -214,9 +222,10 @@ def handle_deposit_exceptions(
     Returns:
     Callable: The decorated function.
     """
+
     @wraps(func)
     def wrapper(*args, **kwargs):
-        logger(f'Enter to handle_deposit_exceptions for {func.__name__}. args: {args}', LOG_LEVEL_DEBUG, LOG_NAME_PS)
+        #logger(f'Enter to handle_deposit_exceptions for {func.__name__}. args: {args}', LOG_LEVEL_DEBUG, LOG_NAME_PS)
         try:
             rv = func(*args, **kwargs)
             return rv
@@ -253,6 +262,7 @@ def handle_ps_exceptions(func) -> Any:
     Returns:
     Callable: The decorated function.
     """
+
     @wraps(func)
     def wrapper(*args, **kwargs):
         try:
@@ -350,3 +360,146 @@ def dmz_dataverse_headers(username, password) -> dict:
     if username == 'API_KEY':
         headers["X-Dataverse-key"] = password
     return headers
+
+
+def upload_large_file(url, file_path, json_data, api_key, file_name=None):
+    def create_callback(encoder):
+        encoder_len = encoder.len
+        last_reported_progress = -5  # Initialize to -5 so it prints at 0%
+
+        def callback(monitor):
+            nonlocal last_reported_progress  # To modify the outer variable
+            progress = (monitor.bytes_read / encoder_len) * 100
+            if progress >= last_reported_progress + 5 or progress > 95:
+                memory_usage_msg = f", Memory usage: {psutil.Process().memory_info().rss / (1024 * 1024):.2f} MB" \
+                    if progress >= last_reported_progress + 5 else ""
+                logger(f"Upload Progress: {progress:.2f}%{memory_usage_msg}", LOG_LEVEL_DEBUG, LOG_NAME_PS)
+                last_reported_progress = progress if progress >= last_reported_progress + 5 else last_reported_progress
+
+        return callback
+
+    with open(file_path, 'rb') as f:
+        encoder = MultipartEncoder(
+            fields={'file': (file_name if file_name else os.path.basename(file_path), f, 'application/octet-stream'),
+                    'jsonData': (None, json_data['jsonData'])}
+        )
+        callback = create_callback(encoder)
+        monitor = MultipartEncoderMonitor(encoder, callback)
+        logger(f'upload_large_file  api_key: {api_key}', LOG_LEVEL_DEBUG, LOG_NAME_PS)
+        response = requests.post(url, data=monitor, headers={"X-Dataverse-key": api_key,
+                                                             'X-Authorization': settings.dmz_x_authorization_value,
+                                                             'Content-Type': monitor.content_type})
+
+        logger(f'upload_large_file response: {response.status_code}', LOG_LEVEL_DEBUG, LOG_NAME_PS)
+        if response.status_code == status.HTTP_502_BAD_GATEWAY:
+            logger(f'ERROR 502 upload_large_file response: {response.text}', 'error', LOG_NAME_PS)
+
+    return response
+
+
+def zip_with_progress(file_path, zip_path):
+    # Resolve the file_path if it's a symlink
+    if os.path.islink(file_path):
+        real_file_path = os.readlink(file_path)
+        print(f"'{file_path}' is a symlink, including the real file '{real_file_path}'.")
+    else:
+        real_file_path = file_path
+
+    file_size = os.path.getsize(real_file_path)
+    chunk_size = 10 * 1024 * 1024  # 10MB chunks
+    processed_size = 0
+    last_printed_progress = 0
+    arcname = os.path.basename(file_path)
+
+    with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+        with open(real_file_path, 'rb') as f:
+            while True:
+                chunk = f.read(chunk_size)
+                if not chunk:
+                    break
+
+                # Create a temporary file to write the chunk
+                temp_chunk_path = 'temp_chunk'
+                with open(temp_chunk_path, 'wb') as tempf:
+                    tempf.write(chunk)
+
+                zipf.write(temp_chunk_path, arcname=arcname)
+
+                processed_size += len(chunk)
+                progress = processed_size / file_size * 100
+                if progress - last_printed_progress >= 10:
+                    logger(f"Zipping Progress of {arcname}: {progress:.0f}%", LOG_LEVEL_DEBUG, LOG_NAME_PS)
+                    last_printed_progress += 10
+
+                # Remove the temporary file
+                os.remove(temp_chunk_path)
+
+    logger(f"Zipping completed.", LOG_LEVEL_DEBUG, LOG_NAME_PS)
+
+
+def delete_symlink_and_target(link_name):
+    if os.path.islink(link_name):
+        target = os.readlink(link_name)
+        if os.path.isdir(target):
+            shutil.rmtree(target)
+        else:
+            os.remove(target)
+        os.remove(link_name)
+        logger(f'{link_name} and its target {target} DELETED successfully.', LOG_LEVEL_DEBUG, LOG_NAME_PS)
+
+
+def compress_zip_file(original_zip_path):
+    if not os.path.exists(original_zip_path):
+        print(f"File {original_zip_path} does not exist.")
+        return
+
+    with NamedTemporaryFile(delete=False) as temp_file:
+        temp_file_path = temp_file.name
+
+    try:
+        with zipfile.ZipFile(original_zip_path, 'r') as original_zip:
+            total_size = sum([zinfo.file_size for zinfo in original_zip.infolist()])
+            processed_size = 0
+
+            with zipfile.ZipFile(temp_file_path, 'w', compression=zipfile.ZIP_DEFLATED,
+                                 compresslevel=9) as compressed_zip:
+                for file_info in original_zip.infolist():
+                    with original_zip.open(file_info.filename) as file:
+                        file_content = file.read()
+                        compressed_zip.writestr(file_info, file_content)
+                        processed_size += file_info.file_size
+                        progress = (processed_size / total_size) * 100
+                        print(f"Progress: {progress:.2f}%")
+
+        shutil.move(temp_file_path, original_zip_path)
+        print(f"Compression of {original_zip_path} completed successfully.")
+    except Exception as e:
+        os.remove(temp_file_path)
+        print(f"An error occurred: {e}")
+
+
+def zip_a_zipfile_with_progress(original_zip_path, new_zip_path):
+    # Get the size of the original zip file
+    original_zip_size = os.path.getsize(original_zip_path)
+    arcname = original_zip_path.split('/')[-1]
+    # Create a new zip file (outer zip)
+    with zipfile.ZipFile(new_zip_path, 'w', zipfile.ZIP_DEFLATED) as new_zip:
+        # Add the original zip file to the new zip file
+        new_zip.write(original_zip_path, arcname=arcname)
+
+        # Calculate the progress (since we're adding the file in one go, it'll jump to 100%)
+        progress = 100  # In a real-world scenario, you'd calculate this based on bytes written vs total size
+
+        # Print the progress
+        logger(f"Zipping Progress of {arcname} : {progress}%", LOG_LEVEL_DEBUG, LOG_NAME_PS)
+
+
+
+
+
+def escape_invalid_json_characters(json_string: str) -> str:
+    # Replace invalid control characters with their escaped equivalents
+    escaped_string = re.sub(r'[\x00-\x1F\x7F]', lambda match: '\\u{:04x}'.format(ord(match.group())), json_string)
+    return escaped_string
+
+

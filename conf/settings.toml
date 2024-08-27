@@ -28,3 +28,5 @@ assistant_config_url = "http://localhost:2810" #"https://repository-assistant.la
 transformer_url = "http://localhost:1745/transform" #"https://transformer.labs.dans.knaw.nl/transform" #http://localhost:1745l/transform"
 deployment= "demo"
 #send_mail = false
+max_ingest_size_using_python = 1073741824
+shell_script_path = "@format {env[BASE_DIR]}/resources/utils/ingest.sh"

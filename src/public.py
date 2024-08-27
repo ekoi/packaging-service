@@ -4,7 +4,7 @@ from fastapi import APIRouter
 from starlette.responses import Response
 
 # from src import db
-from src.commons import logger, data, db_manager, LOG_LEVEL_DEBUG, LOG_NAME_PS
+from src.commons import logger, data, db_manager, LOG_LEVEL_DEBUG, LOG_NAME_PS, settings
 
 # import logging
 
@@ -47,3 +47,10 @@ async def find_dataset(datasetId: str):
         dataset.md = json.loads(dataset.md)
         return Response(content=dataset.model_dump_json(by_alias=True), media_type="application/json")
     return {}
+
+
+@router.get("/utils/languages")
+async def get_languages():
+    with open(settings.LANGUAGES_PATH, "r") as f:
+        j = json.load(f)
+    return j

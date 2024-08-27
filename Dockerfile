@@ -1,6 +1,6 @@
 FROM python:3.11.3-slim-bullseye
 
-ARG VERSION=0.4.29
+ARG VERSION=0.4.82
 
 RUN  apt-get update -y && \
      apt-get upgrade -y && \
@@ -28,7 +28,8 @@ RUN mkdir -p ${BASE_DIR} && \
     mkdir -p ${BASE_DIR}/data/tmp/zips  && \
     mkdir -p ${BASE_DIR}/data/tmp/tus-files  && \
     pip install --no-cache-dir *.whl && rm -rf *.whl && \
-    tar xf packaging_service-${VERSION}.tar.gz -C ${BASE_DIR} --strip-components 1
+    tar xf packaging_service-${VERSION}.tar.gz -C ${BASE_DIR} --strip-components 1 && \
+    chmod +x ${BASE_DIR}//resources/utils/ingest.sh
 
 #RUN mkdir -p ${BASE_DIR} && mkdir -p ${BASE_DIR}/data/tmp/bags ${BASE_DIR}/data/tmp/zips  && \
 #    pip install --no-cache-dir *.whl && rm -rf *.whl && \
