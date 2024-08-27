@@ -22,7 +22,7 @@ class InboxDatasetDataModel:
     release_version: str
 
 
-class Target(BaseModel):
+class TargetApp(BaseModel):
     repo_name: str = Field(None, alias='repo-name')
     display_name: str = Field(None, alias='display-name')
     deposit_status: str = Field(None, alias='deposit-status')
@@ -40,7 +40,7 @@ class Asset(BaseModel):
     submitted_date: str = Field(None, alias='submitted-date')
     release_version: str = Field(None, alias='release-version')
     version: str = ''
-    targets: List[Target] = []
+    targets: List[TargetApp] = []
 
 
 # x = Asset()
