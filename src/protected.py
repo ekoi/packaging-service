@@ -573,9 +573,13 @@ def delete_inbox(dir: str):
 
 
 # Endpoint to retrieve application settings
-@router.get("/settings", include_in_schema=False)
+@router.get("/settings-reload", include_in_schema=False)
 async def get_settings():
-    return settings
+    logger(f"Getting settings Before Load: {settings.as_dict()}", "debug", "ps")
+    logger("Reload settings", "debug", "ps")
+    settings.reload()
+    logger(f"Getting settings After Load: {settings.as_dict()}", "debug", "ps")
+    return settings.as_dict()
 
 
 @router.get('/logs/{app_name}', include_in_schema=False)
